@@ -1,0 +1,133 @@
+<% const title = proyecto.titulo + ' — Calificar'; const active = 'home'; %>
+<%- include('partials/header', { title, active, docente, CRITERIOS, ESCALA_MAX }) %>
+
+<main class="app-shell">
+  <a href="/materias/<%= proyecto.materia_id %>" class="back-link"><%= proyecto.materia_nombre %></a>
+  <h1><%= proyecto.titulo %></h1>
+
+  <% if (proyecto.integrantes && proyecto.integrantes.trim()) { %>
+    <p class="eyebrow" style="margin-top:16px">Integrantes</p>
+    <div class="integrantes-list"><%= proyecto.integrantes %></div>
+  <% } %>
+
+  <div id="saved-alert"  class="alert ok" style="display:none">✓ Rúbrica del proyecto guardada.</div>
+  <div id="saved-alert-ind" class="alert ok" style="display:none">✓ Rúbrica individual guardada.</div>
+
+  <%/* ───── RÚBRICA DEL PROYECTO ───── */%>
+  <p class="eyebrow" style="margin-top:24px">Rúbrica del proyecto · escala 0 — <%= ESCALA_MAX %></p>
+
+  <form method="POST" action="/proyectos/<%= proyecto.id %>/calificar" id="califForm">
+    <% CRITERIOS.forEach(c => { %>
+      <div class="crit-row">
+        <div class="crit-label"><%= c.label %></div>
+        <input type="hidden" name="crit_<%= c.key %>" id="input_<%= c.key %>"
+               value="<%= misCalifMap[c.key] !== undefined ? misCalifMap[c.key] : '' %>" />
+        <div class="score-buttons" data-target="input_<%= c.key %>">
+          <% for (let i = 0; i <= ESCALA_MAX; i++) { %>
+            <button type="button" class="score-btn <%= misCalifMap[c.key] === i ? 'selected' : '' %>"
+                    data-val="<%= i %>"><%= i %></button>
+          <% } %>
+        </div>
+      </div>
+    <% }) %>
+
+    <button type="submit" class="btn block" style="margin-top:18px">Guardar rúbrica del proyecto</button>
+  </form>
+
+  <%/* ───── RÚBRICA INDIVIDUAL ───── */%>
+  <% if (integrantes.length > 0) { %>
+    <p class="eyebrow" style="margin-top:36px">Rúbrica individual · escala 0 — <%= ESCALA_MAX %></p>
+    <p style="color:var(--ink-mute); font-size:13px; margin: -4px 0 18px">
+      Califica a cada integrante por separado.
+    </p>
+
+    <form method="POST" action="/proyectos/<%= proyecto.id %>/calificar-ind" id="califIndForm">
+      <% integrantes.forEach((nombre, idx) => { %>
+        <div class="member-card">
+          <div class="member-name"><%= nombre %></div>
+
+          <% CRITERIOS_IND.forEach(c => { %>
+            <div class="crit-row" style="margin-bottom:8px">
+              <div class="crit-label"><%= c.label %></div>
+              <input type="hidden"
+                     name="ind_<%= idx %>_<%= c.key %>"
+                     id="input_ind_<%= idx %>_<%= c.key %>"
+                     value="<%= (misCalifIndMap[nombre] && misCalifIndMap[nombre][c.key] !== undefined) ? misCalifIndMap[nombre][c.key] : '' %>" />
+              <div class="score-buttons" data-target="input_ind_<%= idx %>_<%= c.key %>">
+                <% for (let i = 0; i <= ESCALA_MAX; i++) { %>
+                  <% const prev = misCalifIndMap[nombre] && misCalifIndMap[nombre][c.key]; %>
+                  <button type="button"
+                          class="score-btn <%= prev === i ? 'selected' : '' %>"
+                          data-val="<%= i %>"><%= i %></button>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        </div>
+      <% }) %>
+
+      <button type="submit" class="btn block" style="margin-top:18px">Guardar rúbrica individual</button>
+    </form>
+
+    <%/* ── Resumen de promedios (todos los docentes) ── */%>
+    <p class="eyebrow" style="margin-top:28px">Promedio por estudiante</p>
+    <div class="resumen-ind-grid">
+      <div class="resumen-ind-head">
+        <div>Estudiante</div>
+        <% CRITERIOS_IND.forEach(() => { %><div></div><% }) %>
+      </div>
+      <% integrantes.forEach(nombre => {
+           const r = resumenInd[nombre] || {};
+      %>
+        <div class="resumen-ind-row">
+          <div class="resumen-nombre"><%= nombre %></div>
+          <% CRITERIOS_IND.forEach(c => { %>
+            <div class="resumen-val <%= r[c.key] == null ? 'mute' : '' %>">
+              <%= r[c.key] != null ? r[c.key].toFixed(1) : '—' %>
+            </div>
+          <% }) %>
+          <div class="resumen-val resumen-total <%= r._promedio == null ? 'mute' : '' %>">
+            <%= r._promedio != null ? r._promedio.toFixed(2) : '—' %>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <div style="margin-top:32px; text-align:right">
+    <form method="POST" action="/proyectos/<%= proyecto.id %>/delete"
+          onsubmit="return confirm('¿Eliminar este proyecto y todas sus calificaciones?');"
+          style="display:inline">
+      <button type="submit" class="btn danger">Eliminar proyecto</button>
+    </form>
+  </div>
+</main>
+
+<script>
+  // Score-buttons: actualizan el input oculto correspondiente vía data-target
+  document.querySelectorAll('.score-buttons').forEach(group => {
+    group.addEventListener('click', (e) => {
+      const btn = e.target.closest('.score-btn');
+      if (!btn) return;
+      const targetId = group.dataset.target;
+      document.getElementById(targetId).value = btn.dataset.val;
+      group.querySelectorAll('.score-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+
+  // Mensajes de confirmación según query param
+  const params = new URLSearchParams(location.search);
+  const ok = params.get('ok');
+  if (ok === '1') {
+    document.getElementById('saved-alert').style.display = 'block';
+    setTimeout(() => document.getElementById('saved-alert').style.display = 'none', 3000);
+  }
+  if (ok === 'ind') {
+    document.getElementById('saved-alert-ind').style.display = 'block';
+    setTimeout(() => document.getElementById('saved-alert-ind').style.display = 'none', 3000);
+  }
+  if (ok) history.replaceState({}, '', location.pathname);
+</script>
+
+<%- include('partials/footer') %>

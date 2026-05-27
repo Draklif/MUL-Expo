@@ -1,0 +1,118 @@
+<% const title = 'Tablero en vivo — Expo Eval'; const active = 'tablero'; %>
+<%- include('partials/header', { title, active, docente, CRITERIOS, ESCALA_MAX }) %>
+
+<main class="app-shell">
+  <div class="tablero-head">
+    <h1>Tablero <em>en vivo</em></h1>
+    <span class="live-dot">EN VIVO</span>
+  </div>
+  <p style="color:var(--ink-mute); font-size:13px; margin-top:6px">
+    Promedios calculados a partir de las calificaciones de todos los docentes. Se actualiza automáticamente.
+  </p>
+  <div style="margin-top:12px">
+    <a href="/api/export.csv" class="btn" download style="font-size:13px; padding:6px 14px;">⬇ Descargar CSV</a>
+  </div>
+
+  <div class="form-row" style="margin-top:20px">
+    <label for="materia-filter">Filtrar por materia</label>
+    <select id="materia-filter">
+      <option value="">Todas las materias</option>
+    </select>
+  </div>
+
+  <div id="ranking-list">
+    <div class="empty">Cargando…</div>
+  </div>
+</main>
+
+<script>
+  const ESCALA_MAX = <%= ESCALA_MAX %>;
+  const CRITERIOS = <%- JSON.stringify(CRITERIOS) %>;
+
+  async function loadMaterias() {
+    // Aprovechamos /api/ranking sin filtro para sacar las materias únicas
+    const res = await fetch('/api/ranking');
+    const data = await res.json();
+    const materias = [...new Set(data.resultados.map(r => r.materia))].sort();
+    const sel = document.getElementById('materia-filter');
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Todas las materias</option>' +
+      materias.map(m => `<option value="${escapeHtml(m)}" ${m === current ? 'selected' : ''}>${escapeHtml(m)}</option>`).join('');
+  }
+
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderItem(r, idx) {
+    const score = r.promedio != null
+      ? `<div class="big">${r.promedio.toFixed(2)}</div><div class="small">/ ${ESCALA_MAX} · ${r.n_jueces} ${r.n_jueces === 1 ? 'juez' : 'jueces'}</div>`
+      : `<div class="no-data">Sin calificar</div>`;
+
+    const breakdownRows = CRITERIOS.map(c => {
+      const v = r.por_criterio[c.key];
+      return `<div>${escapeHtml(c.label)}</div><div>${v != null ? v.toFixed(2) : '—'}</div>`;
+    }).join('');
+
+    const topClass = idx === 0 && r.promedio != null ? 'top1' : '';
+
+    return `
+      <div class="rank-item ${topClass}" data-id="${r.id}">
+        <div class="pos">${idx + 1}</div>
+        <div>
+          <div class="title">${escapeHtml(r.titulo)}</div>
+          <div class="submeta">${escapeHtml(r.materia)}</div>
+          <details class="criterio-detail">
+            <summary>Ver por criterio</summary>
+            <div class="crit-grid">${breakdownRows}</div>
+          </details>
+        </div>
+        <div class="score">${score}</div>
+      </div>
+    `;
+  }
+
+  async function loadRanking() {
+    const filtro = document.getElementById('materia-filter').value;
+    const res = await fetch('/api/ranking');
+    const data = await res.json();
+    let resultados = data.resultados;
+    if (filtro) resultados = resultados.filter(r => r.materia === filtro);
+
+    const list = document.getElementById('ranking-list');
+
+    // Guardar qué details estaban abiertos antes de re-renderizar
+    const abiertos = new Set(
+      [...list.querySelectorAll('.rank-item[data-id] details[open]')]
+        .map(d => d.closest('.rank-item').dataset.id)
+    );
+
+    if (resultados.length === 0) {
+      list.innerHTML = '<div class="empty">No hay proyectos para mostrar.</div>';
+    } else {
+      list.innerHTML = resultados.map(renderItem).join('');
+      // Restaurar los details que estaban abiertos
+      list.querySelectorAll('.rank-item[data-id]').forEach(item => {
+        if (abiertos.has(item.dataset.id)) {
+          const d = item.querySelector('details');
+          if (d) d.open = true;
+        }
+      });
+    }
+  }
+
+  document.getElementById('materia-filter').addEventListener('change', loadRanking);
+
+  (async () => {
+    await loadMaterias();
+    await loadRanking();
+    // Auto-refresh cada 3 segundos
+    setInterval(async () => {
+      await loadMaterias();
+      await loadRanking();
+    }, 3000);
+  })();
+</script>
+
+<%- include('partials/footer') %>

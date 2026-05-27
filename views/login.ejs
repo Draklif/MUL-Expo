@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0f0e0c" />
+  <title>Iniciar sesión — Expo Eval</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="login-shell">
+    <div class="login-card">
+      <div class="logo">Expo<em>Eval</em></div>
+      <div class="tag">Evaluación en vivo — Expo Multimedia</div>
+
+      <% if (error) { %>
+        <div class="alert err"><%= error %></div>
+      <% } %>
+
+      <form method="POST" action="/login">
+        <div class="form-row">
+          <label for="docente_id">Soy…</label>
+          <select id="docente_id" name="docente_id" required>
+            <option value="">— elige tu nombre —</option>
+            <% docentes.forEach(d => { %>
+              <option value="<%= d.id %>"><%= d.name %></option>
+            <% }) %>
+          </select>
+        </div>
+
+        <div class="form-row">
+          <label for="password">Contraseña</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" autocomplete="current-password" required />
+        </div>
+
+        <button type="submit" class="btn block">Entrar</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

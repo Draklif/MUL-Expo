@@ -1,0 +1,37 @@
+<% const title = 'Materias — Expo Eval'; const active = 'home'; %>
+<%- include('partials/header', { title, active, docente, CRITERIOS, ESCALA_MAX }) %>
+
+<main class="app-shell">
+  <h1>Expo <em>Multimedia</em></h1>
+  <p class="eyebrow" style="margin-top:14px">Crear materia</p>
+
+  <form method="POST" action="/materias" class="card" style="margin-top:0">
+    <div class="form-row">
+      <input type="text" name="nombre" placeholder="Nombre de la materia (ej. Diseño Web III)" required maxlength="80" autocomplete="off" />
+    </div>
+    <button type="submit" class="btn block">+ Crear materia</button>
+  </form>
+
+  <div class="section-head">
+    <h2>Materias</h2>
+    <span class="count"><%= materias.length %> total</span>
+  </div>
+
+  <% if (materias.length === 0) { %>
+    <div class="empty">Aún no hay materias. Crea la primera arriba.</div>
+  <% } else { %>
+    <% materias.forEach(m => { %>
+      <a href="/materias/<%= m.id %>" class="list-item">
+        <div class="row">
+          <div>
+            <div class="title"><%= m.nombre %></div>
+            <div class="submeta">Creada por <%= m.creador %></div>
+          </div>
+          <div class="pill"><%= m.n_proyectos %> proyecto<%= m.n_proyectos === 1 ? '' : 's' %></div>
+        </div>
+      </a>
+    <% }) %>
+  <% } %>
+</main>
+
+<%- include('partials/footer') %>
