@@ -955,6 +955,60 @@ details.sub[open] > summary::before { content: "– "; }
   .cert-linea { background: #999; }
 }
 
+/* ------- Semestres ------- */
+.periodo-actual {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--ink-mute);
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  padding: 3px 11px;
+  margin: 10px 0 0;
+}
+.periodo-actual.pasado { color: #ffc861; border-color: #4a3a18; background: #2b2312; }
+
+.punto-activo {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ok);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.filtro.activo .punto-activo { background: var(--ok); }
+
+.aviso-periodo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 18px;
+  border: 1px solid #4a3a18;
+  background: #2b2312;
+  border-radius: var(--r);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: #ffc861;
+}
+.aviso-periodo strong { color: #ffd98a; }
+.aviso-periodo .btn { white-space: nowrap; }
+
+.pick-linea {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13.5px;
+  color: var(--ink-dim);
+  cursor: pointer;
+  margin: 0;
+}
+.pick-linea input { width: 16px; height: 16px; margin-top: 1px; flex: 0 0 auto; }
+
 /* ------- Podio y lista de certificados (vista del docente) ------- */
 .podio { list-style: none; padding: 0; margin: 0; }
 .podio li {

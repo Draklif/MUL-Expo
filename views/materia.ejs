@@ -4,6 +4,9 @@
 <main class="app-shell">
   <a href="/panel" class="back-link">Materias</a>
   <h1><%= materia.nombre %></h1>
+  <p class="periodo-actual <%= periodo.activo ? '' : 'pasado' %>">
+    <%= periodo.codigo %><%= periodo.activo ? '' : ' · semestre cerrado' %>
+  </p>
 
   <% if (query.revisado === 'aprobada') { %>
     <div class="alert ok" style="margin-top:16px">✓ Registro aprobado: el proyecto ya está en la lista y sus integrantes quedaron registrados.</div>

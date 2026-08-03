@@ -22,6 +22,7 @@ Abre `config.js` y:
 
 1. Ajusta el array `DOCENTES`: cada uno con su `name` y su `email`
    institucional, que es con lo que entra.
+   Y `PERIODO_INICIAL`, el semestre con el que arranca la base.
 2. Cambia `PASSWORD`: es la misma para todos los docentes.
 3. Ajusta `CRITERIOS` si quieres otros nombres de rúbrica.
 4. Cambia `ESCALA_MAX` si prefieres 0-10 en vez de 0-5.
@@ -231,6 +232,33 @@ decimales, y quien mande los planos reales solo tiene que pasarlos a esa escala:
 
 El plano actual es **tentativo** y así está rotulado en la página. Al cambiar las
 medidas en el JSON, la landing se redibuja sola.
+
+## Semestres
+
+La app sirve para la Expo de este semestre y para las que vengan. **Las materias
+no se repiten por semestre**: se crean una vez y siguen ahí. Lo que arranca de
+cero cada semestre son los registros, los proyectos, las notas y los
+certificados.
+
+En el panel, arriba, están los semestres. El que tiene el punto verde es el
+**activo**: ahí caen los registros que hagan los estudiantes, sin importar qué
+semestre esté mirando cada docente. Tocar otro semestre cambia lo que se ve
+—materias con sus conteos, proyectos, estudiantes, podio, certificados, tablero
+y CSV— y se recuerda en la sesión.
+
+Para empezar el siguiente: **Abrir un semestre nuevo**, con el código en formato
+`AAAA-NN` (`2027-10` para el primero del año, `2027-20` para el segundo). Con la
+casilla marcada queda activo de una vez; si no, se abre para preparar y se
+activa después con el botón que aparece al verlo.
+
+- El semestre con el que arranca una base nueva sale de `PERIODO_INICIAL` en
+  `config.js`. Después se maneja todo desde el panel.
+- Al actualizar una base existente, todo lo que había queda asignado al semestre
+  inicial.
+- Un mismo estudiante puede repetir materia en otro semestre: la clave única es
+  materia + semestre + correo.
+- Los certificados de semestres pasados siguen públicos y verificables con su
+  QR; nada se reescribe al abrir uno nuevo.
 
 ## Certificados
 

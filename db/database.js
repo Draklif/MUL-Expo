@@ -1,6 +1,6 @@
 const { DatabaseSync } = require("node:sqlite");
 const path = require("path");
-const { DOCENTES } = require("../config");
+const { DOCENTES, PERIODO_INICIAL } = require("../config");
 
 const db = new DatabaseSync(path.join(__dirname, "expo.db"));
 db.exec("PRAGMA journal_mode = WAL");
@@ -8,6 +8,15 @@ db.exec("PRAGMA foreign_keys = ON");
 
 // ---------- Esquema ----------
 db.exec(`
+  -- Semestres. Las materias son las mismas todos los semestres; lo que cambia
+  -- son los estudiantes, sus proyectos, sus notas y sus certificados.
+  CREATE TABLE IF NOT EXISTS periodos (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo     TEXT NOT NULL UNIQUE,
+    activo     INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE TABLE IF NOT EXISTS docentes (
     id     INTEGER PRIMARY KEY AUTOINCREMENT,
     code   TEXT NOT NULL UNIQUE,
@@ -144,35 +153,62 @@ function agregarColumna(tabla, columna, definicion) {
 agregarColumna("estudiantes", "email", "TEXT");
 agregarColumna("proyectos", "sala", "TEXT");
 
-// La identidad de un estudiante pasó a ser el correo institucional: dos
-// personas pueden llamarse igual, pero el correo no se repite. La tabla vieja
-// tenía UNIQUE(materia_id, nombre), así que hay que rehacerla.
+// ---------- Semestre inicial ----------
+// Si no hay ninguno, se crea el de config.js y se marca activo.
+if (!db.prepare("SELECT COUNT(*) AS n FROM periodos").get().n) {
+  db.prepare("INSERT INTO periodos (codigo, activo) VALUES (?, 1)").run(PERIODO_INICIAL);
+}
+// Siempre tiene que haber exactamente uno activo.
+if (!db.prepare("SELECT COUNT(*) AS n FROM periodos WHERE activo = 1").get().n) {
+  db.prepare("UPDATE periodos SET activo = 1 WHERE id = (SELECT MAX(id) FROM periodos)").run();
+}
+
+const periodoBase = db.prepare("SELECT id FROM periodos WHERE activo = 1").get().id;
+
+// ---------- Cada dato de estudiante cuelga de un semestre ----------
+for (const tabla of ["proyectos", "solicitudes", "estudiantes", "certificados"]) {
+  agregarColumna(tabla, "periodo_id", "INTEGER REFERENCES periodos(id)");
+  // Lo que existía antes de esta versión es del semestre inicial.
+  db.prepare(`UPDATE ${tabla} SET periodo_id = ? WHERE periodo_id IS NULL`).run(periodoBase);
+}
+
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_proy_periodo ON proyectos(periodo_id);
+  CREATE INDEX IF NOT EXISTS idx_sol_periodo  ON solicitudes(periodo_id, materia_id);
+  CREATE INDEX IF NOT EXISTS idx_cert_periodo ON certificados(periodo_id);
+`);
+
+// La identidad de un estudiante es su correo, pero dentro de un semestre: la
+// misma persona puede volver a cursar la materia el año siguiente. Como SQLite
+// no deja cambiar un UNIQUE con ALTER, la tabla se rehace.
 const sqlEstudiantes = db
   .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'estudiantes'")
   .get();
 
-if (sqlEstudiantes && /UNIQUE \(materia_id, nombre\)/.test(sqlEstudiantes.sql)) {
+if (sqlEstudiantes && !/UNIQUE \(materia_id, periodo_id, email\)/.test(sqlEstudiantes.sql)) {
   db.exec("BEGIN");
   try {
     db.exec(`
       CREATE TABLE estudiantes_nuevo (
         id          INTEGER PRIMARY KEY AUTOINCREMENT,
         materia_id  INTEGER NOT NULL,
+        periodo_id  INTEGER,
         nombre      TEXT NOT NULL,
         email       TEXT COLLATE NOCASE,
         created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE (materia_id, email),
-        FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
+        UNIQUE (materia_id, periodo_id, email),
+        FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE,
+        FOREIGN KEY (periodo_id) REFERENCES periodos(id)
       );
 
-      INSERT INTO estudiantes_nuevo (id, materia_id, nombre, email, created_at)
-        SELECT id, materia_id, nombre, email, created_at FROM estudiantes;
+      INSERT INTO estudiantes_nuevo (id, materia_id, periodo_id, nombre, email, created_at)
+        SELECT id, materia_id, periodo_id, nombre, email, created_at FROM estudiantes;
 
       DROP TABLE estudiantes;
       ALTER TABLE estudiantes_nuevo RENAME TO estudiantes;
     `);
     db.exec("COMMIT");
-    console.log("  ✓ estudiantes: el correo pasó a ser la clave única");
+    console.log("  ✓ estudiantes: la clave única ahora incluye el semestre");
   } catch (e) {
     db.exec("ROLLBACK");
     throw e;

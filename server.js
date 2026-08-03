@@ -14,6 +14,8 @@ const proyectosRouter = require("./routes/proyectos");
 const apiRouter = require("./routes/api");
 const registroRouter = require("./routes/registro");
 const certificadosRouter = require("./routes/certificados");
+const periodosRouter = require("./routes/periodos");
+const { conPeriodo } = require("./lib/periodos");
 
 const app = express();
 
@@ -61,9 +63,10 @@ function requireAuth(req, res, next) {
 
 // ---------- Rutas ----------
 app.use("/", authRouter);
-app.use("/materias", requireAuth, materiasRouter);
-app.use("/proyectos", requireAuth, proyectosRouter);
-app.use("/api", requireAuth, apiRouter);
+app.use("/materias", requireAuth, conPeriodo, materiasRouter);
+app.use("/proyectos", requireAuth, conPeriodo, proyectosRouter);
+app.use("/api", requireAuth, conPeriodo, apiRouter);
+app.use("/periodos", requireAuth, periodosRouter);
 
 // Landing pública de la Expo Multimedia
 app.get("/", (req, res) => {
@@ -84,7 +87,7 @@ app.use("/registro", registroRouter);
 app.use("/certificado", certificadosRouter);
 
 // Panel de docentes: listado de materias
-app.get("/panel", requireAuth, (req, res) => {
+app.get("/panel", requireAuth, conPeriodo, (req, res) => {
   const docenteId = req.session.docente.id;
 
   // El filtro se recuerda en la sesión: al volver de calificar una materia,
@@ -97,15 +100,17 @@ app.get("/panel", requireAuth, (req, res) => {
   const materias = db
     .prepare(
       `SELECT m.*, d.name AS creador,
-              (SELECT COUNT(*) FROM proyectos p WHERE p.materia_id = m.id) AS n_proyectos,
+              (SELECT COUNT(*) FROM proyectos p
+                WHERE p.materia_id = m.id AND p.periodo_id = ?) AS n_proyectos,
               (SELECT COUNT(*) FROM solicitudes s
-                WHERE s.materia_id = m.id AND s.estado = 'pendiente') AS n_pendientes
+                WHERE s.materia_id = m.id AND s.estado = 'pendiente'
+                  AND s.periodo_id = ?) AS n_pendientes
        FROM materias m
        JOIN docentes d ON d.id = m.created_by
        WHERE (? = 0 OR m.created_by = ?)
        ORDER BY m.created_at DESC`
     )
-    .all(soloMias ? 1 : 0, docenteId);
+    .all(req.periodo.id, req.periodo.id, soloMias ? 1 : 0, docenteId);
 
   const totales = db
     .prepare(
@@ -116,8 +121,8 @@ app.get("/panel", requireAuth, (req, res) => {
   res.render("home", { materias, soloMias, totales, docenteId });
 });
 
-// Tablero público con ranking general (visible para docentes logueados)
-app.get("/tablero", requireAuth, (req, res) => {
+// Tablero con ranking del semestre que se esté viendo
+app.get("/tablero", requireAuth, conPeriodo, (req, res) => {
   res.render("tablero");
 });
 

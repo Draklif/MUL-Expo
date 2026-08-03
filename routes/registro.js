@@ -5,6 +5,7 @@ const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
 const { etiquetaPuesto } = require("../lib/certificados");
+const periodos = require("../lib/periodos");
 const {
   generarCodigo,
   limpiarEmail,
@@ -52,6 +53,8 @@ router.get("/", (req, res) => {
 router.post("/", (req, res) => {
   const registro = estadoRegistro();
   const { salas } = contenidoExpo();
+  // Todo registro nuevo entra al semestre activo, mire lo que mire el docente.
+  const periodoActivo = periodos.activo();
 
   const valores = {
     materia_id: String(req.body.materia_id || ""),
@@ -106,16 +109,17 @@ router.post("/", (req, res) => {
     );
   }
 
-  // Mismo título en la misma materia esperando revisión: casi siempre es un
-  // doble envío del formulario. La comparación va en JS porque el COLLATE
-  // NOCASE de SQLite solo ignora mayúsculas en ASCII (no en "QUEDÓ"/"quedó").
+  // Mismo título en la misma materia y el mismo semestre esperando revisión:
+  // casi siempre es un doble envío del formulario. La comparación va en JS
+  // porque el COLLATE NOCASE de SQLite solo ignora mayúsculas en ASCII.
   if (materia && valores.titulo) {
     const objetivo = valores.titulo.toLowerCase();
     const repetida = db
       .prepare(
-        "SELECT codigo, titulo FROM solicitudes WHERE materia_id = ? AND estado != 'rechazada'"
+        `SELECT codigo, titulo FROM solicitudes
+         WHERE materia_id = ? AND periodo_id = ? AND estado != 'rechazada'`
       )
-      .all(materia.id)
+      .all(materia.id, periodoActivo.id)
       .find((s) => s.titulo.toLowerCase() === objetivo);
     if (repetida) {
       errores.push(
@@ -148,12 +152,14 @@ router.post("/", (req, res) => {
     const info = db
       .prepare(
         `INSERT INTO solicitudes
-           (codigo, materia_id, titulo, sala, descripcion, contacto_nombre, contacto_email)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`
+           (codigo, materia_id, periodo_id, titulo, sala, descripcion,
+            contacto_nombre, contacto_email)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         codigo,
         materia.id,
+        periodoActivo.id,
         valores.titulo,
         valores.sala,
         valores.descripcion || null,

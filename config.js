@@ -3,6 +3,10 @@
 //  Al reiniciar, los docentes se sincronizan automáticamente con esta lista.
 // =====================================================================
 
+// Semestre con el que arranca la base la primera vez. Después se crean y se
+// cambian desde el panel; esto ya no se vuelve a mirar.
+const PERIODO_INICIAL = "2026-20";
+
 // Dominio institucional. Todo correo (docentes y estudiantes) tiene que
 // terminar en @DOMINIO; cualquier otro se rechaza.
 const DOMINIO = "uniboyaca.edu.co";
@@ -45,4 +49,12 @@ const CRITERIOS_IND = [
 // Escala máxima por criterio (0 a ESCALA_MAX).
 const ESCALA_MAX = 5;
 
-module.exports = { DOMINIO, PASSWORD, DOCENTES, CRITERIOS, CRITERIOS_IND, ESCALA_MAX };
+module.exports = {
+  PERIODO_INICIAL,
+  DOMINIO,
+  PASSWORD,
+  DOCENTES,
+  CRITERIOS,
+  CRITERIOS_IND,
+  ESCALA_MAX,
+};

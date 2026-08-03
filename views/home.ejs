@@ -11,7 +11,77 @@
     </div>
   <% } %>
 
-  <p class="eyebrow" style="margin-top:14px">Crear materia</p>
+  <%/* ───── SEMESTRE ───── */%>
+  <% if (query.periodo_nuevo) { %>
+    <div class="alert ok" style="margin-top:16px">✓ Semestre <%= query.periodo_nuevo %> abierto.</div>
+  <% } else if (query.periodo_activo) { %>
+    <div class="alert ok" style="margin-top:16px">
+      ✓ <%= query.periodo_activo %> es ahora el semestre activo: los registros nuevos entran ahí.
+    </div>
+  <% } else if (query.periodo_error) { %>
+    <div class="alert err" style="margin-top:16px">
+      <%= query.periodo_error === 'existe' ? 'Ese semestre ya existe.' : 'El código va en formato AAAA-NN, por ejemplo 2027-10.' %>
+    </div>
+  <% } %>
+
+  <div class="section-head" style="margin-top:18px">
+    <h2>Semestre</h2>
+    <span class="count"><%= periodo.codigo %></span>
+  </div>
+
+  <div class="filtros">
+    <% periodos.forEach(p => { %>
+      <a href="/panel?periodo=<%= p.id %>" class="filtro <%= p.id === periodo.id ? 'activo' : '' %>"
+         title="<%= p.activo ? 'Semestre activo: aquí entran los registros nuevos' : 'Semestre cerrado' %>">
+        <%= p.codigo %><% if (p.activo) { %><span class="punto-activo"></span><% } %>
+      </a>
+    <% }) %>
+  </div>
+
+  <% if (!periodo.activo) { %>
+    <div class="aviso-periodo">
+      <div>
+        Estás viendo <strong><%= periodo.codigo %></strong>, que ya no es el semestre
+        activo. Lo que registren los estudiantes hoy entra en
+        <strong><%= periodoActivo.codigo %></strong>.
+      </div>
+      <form method="POST" action="/periodos/<%= periodo.id %>/activar"
+            onsubmit="return confirm('¿Hacer de <%= periodo.codigo %> el semestre activo? Los registros nuevos empezarán a entrar ahí.');">
+        <button type="submit" class="btn ghost">Activar <%= periodo.codigo %></button>
+      </form>
+    </div>
+  <% } else { %>
+    <p class="hint" style="margin-top:-4px">
+      Es el semestre activo <span class="punto-activo"></span>: aquí caen los
+      registros que hagan los estudiantes. Las materias son las mismas en todos
+      los semestres.
+    </p>
+  <% } %>
+
+  <details class="panel" style="margin-top:12px">
+    <summary>Abrir un semestre nuevo</summary>
+    <div class="panel-body">
+      <form method="POST" action="/periodos">
+        <div class="form-row">
+          <label for="codigo">Código del semestre</label>
+          <input type="text" id="codigo" name="codigo" placeholder="2027-10" required
+                 pattern="\d{4}-\d{2}" title="Formato AAAA-NN, por ejemplo 2027-10"
+                 maxlength="7" autocomplete="off" />
+          <p class="hint">
+            Las materias siguen siendo las mismas; lo que empieza de cero son los
+            estudiantes, sus proyectos y sus notas.
+          </p>
+        </div>
+        <label class="pick-linea">
+          <input type="checkbox" name="activar" value="1" checked />
+          <span>Activarlo de una vez (los registros nuevos entrarán ahí)</span>
+        </label>
+        <button type="submit" class="btn block ghost" style="margin-top:14px">+ Abrir semestre</button>
+      </form>
+    </div>
+  </details>
+
+  <p class="eyebrow" style="margin-top:26px">Crear materia</p>
 
   <form method="POST" action="/materias" class="card" style="margin-top:0">
     <div class="form-row">
@@ -47,6 +117,10 @@
       Solo las mías (<%= totales.mias %>)
     </a>
   </div>
+
+  <p class="hint" style="margin:-6px 0 12px">
+    Los conteos son de <strong><%= periodo.codigo %></strong>.
+  </p>
 
   <% if (materias.length === 0) { %>
     <div class="empty">

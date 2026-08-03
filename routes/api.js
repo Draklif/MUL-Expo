@@ -15,12 +15,13 @@ router.get("/ranking", (req, res) => {
     ? db.prepare(
         `SELECT p.id, p.titulo, p.integrantes, m.nombre AS materia_nombre
          FROM proyectos p JOIN materias m ON m.id = p.materia_id
-         WHERE p.materia_id = ?`
-      ).all(materiaFilter)
+         WHERE p.periodo_id = ? AND p.materia_id = ?`
+      ).all(req.periodo.id, materiaFilter)
     : db.prepare(
         `SELECT p.id, p.titulo, p.integrantes, m.nombre AS materia_nombre
-         FROM proyectos p JOIN materias m ON m.id = p.materia_id`
-      ).all();
+         FROM proyectos p JOIN materias m ON m.id = p.materia_id
+         WHERE p.periodo_id = ?`
+      ).all(req.periodo.id);
 
   // Para cada proyecto: agrupamos calificaciones por docente, sacamos
   // el promedio de criterios de cada docente, y luego el promedio entre docentes.
@@ -91,9 +92,10 @@ router.get("/export.csv", (req, res) => {
   const proyectos = db
     .prepare(
       `SELECT p.id, p.titulo, p.integrantes, m.nombre AS materia_nombre
-       FROM proyectos p JOIN materias m ON m.id = p.materia_id`
+       FROM proyectos p JOIN materias m ON m.id = p.materia_id
+       WHERE p.periodo_id = ?`
     )
-    .all();
+    .all(req.periodo.id);
 
   const califsStmt = db.prepare(
     `SELECT docente_id, criterio, puntaje FROM calificaciones WHERE proyecto_id = ?`
@@ -229,7 +231,10 @@ router.get("/export.csv", (req, res) => {
     toCSV(headersI, rowsI);
 
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
-  res.setHeader("Content-Disposition", 'attachment; filename="expo-resultados.csv"');
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename="expo-resultados-${req.periodo.codigo}.csv"`
+  );
   res.send("﻿" + csv); // BOM para Excel
 });
 

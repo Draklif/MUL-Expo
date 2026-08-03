@@ -21,8 +21,8 @@ const nombresDeMaterias = db.prepare("SELECT nombre FROM materias");
 // ejemplo, porque expone en dos proyectos) se deja el nombre del primer
 // registro aprobado, para que no cambie a espaldas del docente.
 const upsertEstudiante = db.prepare(`
-  INSERT INTO estudiantes (materia_id, nombre, email) VALUES (?, ?, ?)
-  ON CONFLICT (materia_id, email) DO NOTHING
+  INSERT INTO estudiantes (materia_id, periodo_id, nombre, email) VALUES (?, ?, ?, ?)
+  ON CONFLICT (materia_id, periodo_id, email) DO NOTHING
 `);
 const integrantesDeSolicitud = db.prepare(
   "SELECT nombre, email FROM solicitud_integrantes WHERE solicitud_id = ? ORDER BY orden, id"
@@ -73,20 +73,20 @@ router.get("/:id", (req, res) => {
       `SELECT p.*,
               (SELECT COUNT(DISTINCT docente_id) FROM calificaciones c WHERE c.proyecto_id = p.id) AS n_jueces
        FROM proyectos p
-       WHERE p.materia_id = ?
+       WHERE p.materia_id = ? AND p.periodo_id = ?
        ORDER BY p.created_at DESC`
     )
-    .all(req.params.id);
+    .all(req.params.id, req.periodo.id);
 
   // Estudiantes que se registraron y ya fueron aprobados. Los que no aparecen
   // aquí no tienen proyecto y no se pueden calificar.
   const estudiantes = db
     .prepare(
       `SELECT id, nombre, email FROM estudiantes
-       WHERE materia_id = ? AND email IS NOT NULL
+       WHERE materia_id = ? AND periodo_id = ? AND email IS NOT NULL
        ORDER BY nombre COLLATE NOCASE`
     )
-    .all(req.params.id);
+    .all(req.params.id, req.periodo.id);
 
   // A qué proyecto pertenece cada uno (por correo, que es la identidad)
   const proyectoPorCorreo = {};
@@ -95,9 +95,10 @@ router.get("/:id", (req, res) => {
       `SELECT si.email, s.titulo
        FROM solicitud_integrantes si
        JOIN solicitudes s ON s.id = si.solicitud_id
-       WHERE s.materia_id = ? AND s.estado = 'aprobada' AND si.email IS NOT NULL`
+       WHERE s.materia_id = ? AND s.periodo_id = ? AND s.estado = 'aprobada'
+         AND si.email IS NOT NULL`
     )
-    .all(req.params.id)) {
+    .all(req.params.id, req.periodo.id)) {
     const clave = fila.email.toLowerCase();
     if (!proyectoPorCorreo[clave]) proyectoPorCorreo[clave] = [];
     proyectoPorCorreo[clave].push(fila.titulo);
@@ -113,10 +114,10 @@ router.get("/:id", (req, res) => {
       `SELECT s.*, d.name AS revisor
        FROM solicitudes s
        LEFT JOIN docentes d ON d.id = s.revisado_por
-       WHERE s.materia_id = ?
+       WHERE s.materia_id = ? AND s.periodo_id = ?
        ORDER BY (s.estado = 'pendiente') DESC, s.created_at DESC`
     )
-    .all(req.params.id);
+    .all(req.params.id, req.periodo.id);
 
   const { salas } = contenidoExpo();
   for (const s of solicitudes) {
@@ -128,9 +129,9 @@ router.get("/:id", (req, res) => {
   const revisadas = solicitudes.filter((s) => s.estado !== "pendiente");
 
   // Podio y certificados ya emitidos
-  const ranking = rankingDeMateria(req.params.id);
+  const ranking = rankingDeMateria(req.params.id, req.periodo.id);
   const podio = ranking.filter((p) => p.puesto && p.puesto <= 3);
-  const certificados = deMateria(req.params.id).map((c) => ({
+  const certificados = deMateria(req.params.id, req.periodo.id).map((c) => ({
     ...c,
     etiqueta: etiquetaPuesto(c.puesto),
   }));
@@ -152,7 +153,7 @@ router.post("/:id/certificados", (req, res) => {
   const materia = db.prepare("SELECT id FROM materias WHERE id = ?").get(materiaId);
   if (!materia) return res.status(404).send("Materia no encontrada");
 
-  const r = emitirDeMateria(materiaId, req.session.docente.name);
+  const r = emitirDeMateria(materiaId, req.periodo.id, req.session.docente.name);
   res.redirect(
     `/materias/${materiaId}?emitidos=${r.emitidos}&actualizados=${r.actualizados}#certificados`
   );
@@ -176,19 +177,22 @@ router.post("/:id/solicitudes/:sid/aprobar", (req, res) => {
 
   db.exec("BEGIN");
   try {
+    // El proyecto entra al semestre del registro, no al que esté mirando el
+    // docente: si aprueba algo viejo, sigue perteneciendo a su semestre.
     const info = db
       .prepare(
-        "INSERT INTO proyectos (materia_id, titulo, integrantes, sala) VALUES (?, ?, ?, ?)"
+        "INSERT INTO proyectos (materia_id, periodo_id, titulo, integrantes, sala) VALUES (?, ?, ?, ?, ?)"
       )
       .run(
         materiaId,
+        solicitud.periodo_id,
         solicitud.titulo,
         integrantes.map((i) => i.nombre).join("\n"),
         solicitud.sala
       );
 
     for (const i of integrantes) {
-      upsertEstudiante.run(materiaId, i.nombre, i.email || null);
+      upsertEstudiante.run(materiaId, solicitud.periodo_id, i.nombre, i.email || null);
     }
 
     db.prepare(
