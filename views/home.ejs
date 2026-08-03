@@ -3,6 +3,14 @@
 
 <main class="app-shell">
   <h1>Expo <em>Multimedia</em></h1>
+
+  <% if (query.nuevas !== undefined) {
+       const n = Number(query.nuevas) || 0, om = Number(query.omitidas) || 0; %>
+    <div class="alert <%= n ? 'ok' : 'err' %>" style="margin-top:16px">
+      <% if (n) { %>✓ <%= n %> materia<%= n === 1 ? '' : 's' %> creada<%= n === 1 ? '' : 's' %><% } else { %>No se creó ninguna materia<% } %><% if (om) { %> · <%= om %> ya existía<%= om === 1 ? '' : 'n' %><% } %>.
+    </div>
+  <% } %>
+
   <p class="eyebrow" style="margin-top:14px">Crear materia</p>
 
   <form method="POST" action="/materias" class="card" style="margin-top:0">
@@ -11,6 +19,20 @@
     </div>
     <button type="submit" class="btn block">+ Crear materia</button>
   </form>
+
+  <details class="panel">
+    <summary>Crear varias materias de una vez</summary>
+    <div class="panel-body">
+      <form method="POST" action="/materias/batch">
+        <div class="form-row">
+          <label for="nombres">Pega la lista — una materia por línea</label>
+          <textarea id="nombres" name="nombres" rows="5" placeholder="Diseño Web III&#10;Animación 2D&#10;Producción Audiovisual"></textarea>
+          <p class="hint">Se omiten las materias que ya existen.</p>
+        </div>
+        <button type="submit" class="btn block ghost">+ Crear todas</button>
+      </form>
+    </div>
+  </details>
 
   <div class="section-head">
     <h2>Materias</h2>

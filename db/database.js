@@ -22,6 +22,15 @@ db.exec(`
     FOREIGN KEY (created_by) REFERENCES docentes(id)
   );
 
+  CREATE TABLE IF NOT EXISTS estudiantes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    materia_id  INTEGER NOT NULL,
+    nombre      TEXT NOT NULL COLLATE NOCASE,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (materia_id, nombre),
+    FOREIGN KEY (materia_id) REFERENCES materias(id) ON DELETE CASCADE
+  );
+
   CREATE TABLE IF NOT EXISTS proyectos (
     id           INTEGER PRIMARY KEY AUTOINCREMENT,
     materia_id   INTEGER NOT NULL,

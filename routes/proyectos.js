@@ -1,14 +1,9 @@
 const express = require("express");
 const db = require("../db/database");
 const { CRITERIOS, CRITERIOS_IND } = require("../config");
+const { parseIntegrantes } = require("../lib/listas");
 
 const router = express.Router();
-
-// Helper: divide el campo integrantes en array limpio
-function parseIntegrantes(texto) {
-  if (!texto) return [];
-  return texto.split("\n").map((s) => s.trim()).filter(Boolean);
-}
 
 // Hoja de evaluación del proyecto
 router.get("/:id", (req, res) => {

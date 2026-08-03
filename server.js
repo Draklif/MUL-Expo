@@ -35,6 +35,7 @@ app.use(
 // Variables globales para las vistas
 app.use((req, res, next) => {
   res.locals.docente = req.session.docente || null;
+  res.locals.query = req.query;
   res.locals.CRITERIOS = CRITERIOS;
   res.locals.CRITERIOS_IND = CRITERIOS_IND;
   res.locals.ESCALA_MAX = ESCALA_MAX;

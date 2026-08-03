@@ -5,17 +5,90 @@
   <a href="/" class="back-link">Materias</a>
   <h1><%= materia.nombre %></h1>
 
-  <p class="eyebrow" style="margin-top:18px">Agregar proyecto</p>
-  <form method="POST" action="/materias/<%= materia.id %>/proyectos" class="card" style="margin-top:0">
+  <% if (query.nuevos !== undefined) {
+       const n = Number(query.nuevos) || 0, rep = Number(query.repetidos) || 0; %>
+    <div class="alert <%= n ? 'ok' : 'err' %>" style="margin-top:16px">
+      <% if (n) { %>✓ <%= n %> estudiante<%= n === 1 ? '' : 's' %> agregado<%= n === 1 ? '' : 's' %><% } else { %>No se agregó ningún estudiante<% } %><% if (rep) { %> · <%= rep %> ya estaba<%= rep === 1 ? '' : 'n' %> en la lista<% } %>.
+    </div>
+  <% } %>
+
+  <%/* ───── ESTUDIANTES DE LA MATERIA ───── */%>
+  <div class="section-head" style="margin-top:22px">
+    <h2>Estudiantes</h2>
+    <span class="count"><%= estudiantes.length %> total</span>
+  </div>
+
+  <% if (estudiantes.length > 0) { %>
+    <div class="chips">
+      <% estudiantes.forEach(e => { const enProyecto = asignados.has(e.nombre.toLowerCase()); %>
+        <div class="chip <%= enProyecto ? 'assigned' : '' %>"
+             title="<%= enProyecto ? 'Ya está en un proyecto' : 'Todavía sin proyecto' %>">
+          <%= enProyecto ? '✓ ' : '' %><%= e.nombre %>
+          <form method="POST" action="/materias/<%= materia.id %>/estudiantes/<%= e.id %>/delete"
+                onsubmit="return confirm('¿Quitar a este estudiante de la lista de la materia? Los proyectos y sus calificaciones no se tocan.');"
+                style="display:inline">
+            <button type="submit" class="x" aria-label="Quitar">×</button>
+          </form>
+        </div>
+      <% }) %>
+    </div>
+  <% } %>
+
+  <details class="panel" <%= estudiantes.length ? '' : 'open' %>>
+    <summary><%= estudiantes.length ? 'Agregar más estudiantes' : 'Agregar estudiantes' %></summary>
+    <div class="panel-body">
+      <form method="POST" action="/materias/<%= materia.id %>/estudiantes">
+        <div class="form-row">
+          <label for="nombres">Pega la lista — un estudiante por línea</label>
+          <textarea id="nombres" name="nombres" rows="5" placeholder="Juan Pérez&#10;María López&#10;Carlos Ruiz"></textarea>
+          <p class="hint">Se ignoran los repetidos y la numeración (“1.”, “-”).</p>
+        </div>
+        <button type="submit" class="btn block ghost">+ Agregar estudiantes</button>
+      </form>
+    </div>
+  </details>
+
+  <%/* ───── NUEVO PROYECTO ───── */%>
+  <p class="eyebrow" style="margin-top:26px">Agregar proyecto</p>
+  <form method="POST" action="/materias/<%= materia.id %>/proyectos" class="card" style="margin-top:0" id="proyectoForm">
     <div class="form-row">
       <label for="titulo">Título del proyecto</label>
       <input type="text" id="titulo" name="titulo" placeholder="Ej. Cortometraje: La luz que queda" required maxlength="120" autocomplete="off" />
     </div>
-    <div class="form-row">
-      <label for="integrantes">Integrantes (uno por línea)</label>
-      <textarea id="integrantes" name="integrantes" placeholder="Juan Pérez&#10;María López&#10;Carlos Ruiz" rows="4"></textarea>
-    </div>
-    <button type="submit" class="btn block">+ Agregar proyecto</button>
+
+    <% if (estudiantes.length > 0) { %>
+      <div class="form-row">
+        <div class="picker-actions">
+          <label style="margin:0">Integrantes — toca para seleccionar</label>
+          <button type="button" class="link-btn" id="toggleTodos">Todos</button>
+        </div>
+        <div class="picker" id="picker">
+          <% estudiantes.forEach(e => { %>
+            <label class="pick">
+              <input type="checkbox" name="estudiantes" value="<%= e.nombre %>" />
+              <span><%= e.nombre %></span>
+            </label>
+          <% }) %>
+        </div>
+        <p class="hint" id="selCount">0 seleccionados</p>
+      </div>
+
+      <details class="sub">
+        <summary>Agregar alguien que no está en la lista</summary>
+        <div class="form-row" style="margin-top:10px; margin-bottom:0">
+          <textarea name="integrantes_extra" rows="3" placeholder="Un nombre por línea"></textarea>
+          <p class="hint">Se sumarán también a la lista de estudiantes de la materia.</p>
+        </div>
+      </details>
+    <% } else { %>
+      <div class="form-row">
+        <label for="integrantes_extra">Integrantes (uno por línea)</label>
+        <textarea id="integrantes_extra" name="integrantes_extra" rows="4" placeholder="Juan Pérez&#10;María López&#10;Carlos Ruiz"></textarea>
+        <p class="hint">Agrega estudiantes a la materia y podrás elegirlos con un toque.</p>
+      </div>
+    <% } %>
+
+    <button type="submit" class="btn block" style="margin-top:4px">+ Agregar proyecto</button>
   </form>
 
   <div class="section-head">
@@ -49,5 +122,29 @@
     </form>
   </div>
 </main>
+
+<script>
+  // Contador de integrantes seleccionados + botón Todos / Ninguno
+  const picker = document.getElementById('picker');
+  if (picker) {
+    const casillas = () => [...picker.querySelectorAll('input[type=checkbox]')];
+    const salida = document.getElementById('selCount');
+    const toggle = document.getElementById('toggleTodos');
+
+    const refrescar = () => {
+      const n = casillas().filter(c => c.checked).length;
+      salida.textContent = n === 1 ? '1 seleccionado' : n + ' seleccionados';
+      toggle.textContent = n === casillas().length ? 'Ninguno' : 'Todos';
+    };
+
+    picker.addEventListener('change', refrescar);
+    toggle.addEventListener('click', () => {
+      const marcar = casillas().some(c => !c.checked);
+      casillas().forEach(c => { c.checked = marcar; });
+      refrescar();
+    });
+    refrescar();
+  }
+</script>
 
 <%- include('partials/footer') %>
