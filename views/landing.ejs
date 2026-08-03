@@ -7,6 +7,7 @@
   <nav class="pub-nav">
     <a href="#recorrido">Recorrido</a>
     <a href="#lugar">El lugar</a>
+    <a href="#horarios">Horarios</a>
     <a href="#evaluacion">Evaluación</a>
     <% if (docente) { %><a href="/panel" class="pub-panel">Mi panel</a><% } %>
   </nav>
@@ -24,9 +25,17 @@
       <div><span>Cuándo</span><strong><%= evento.cuando %></strong></div>
       <div><span>Dónde</span><strong><%= evento.sede %></strong></div>
       <div><span>Recorrido</span><strong><%= salas.length %> experiencias</strong></div>
+      <% if (jornada) { %>
+        <div><span>Jornada</span><strong><%= jornada.apertura %> – <%= jornada.cierre %></strong></div>
+      <% } %>
     </div>
 
-    <a href="#recorrido" class="btn hero-cta">Ver el recorrido</a>
+    <div class="hero-ctas">
+      <a href="#recorrido" class="btn hero-cta">Ver el recorrido</a>
+      <% if (jornada && itinerario.length) { %>
+        <a href="#horarios" class="btn ghost hero-cta">Horarios</a>
+      <% } %>
+    </div>
   </section>
 
   <%/* ───── EL RECORRIDO ───── */%>
@@ -54,6 +63,15 @@
             <% (s.montaje || []).forEach(m => { %><li><%= m %></li><% }) %>
           </ul>
 
+          <% if (s.horario) { %>
+            <p class="sala-horario">
+              <strong><%= s.horario.abre %> – <%= s.horario.cierra %></strong>
+              <% if (s.horario.extendido) { %>
+                <span class="ext">podría seguir hasta <%= s.horario.extendido %></span>
+              <% } %>
+            </p>
+          <% } %>
+
           <p class="sala-pie">
             <%= s.semestres %> · <%= s.asignaturas.length %> asignatura<%= s.asignaturas.length === 1 ? '' : 's' %>
           </p>
@@ -76,32 +94,6 @@
     </div>
   </section>
 
-  <%/* ───── CÓMO SE EVALÚA ───── */%>
-  <section id="evaluacion" class="pub-sec">
-    <p class="eyebrow">Durante la muestra</p>
-    <h2>Cómo se evalúa</h2>
-    <p class="sec-lead">
-      Varios docentes recorren las salas y califican desde el celular con la
-      misma rúbrica. Cada criterio va de 0 a <%= ESCALA_MAX %>, y la nota final
-      del proyecto es el promedio de todos los jurados que lo evaluaron.
-    </p>
-
-    <div class="rubrica">
-      <div class="rubrica-col">
-        <h4>Al proyecto</h4>
-        <ul>
-          <% CRITERIOS.forEach(c => { %><li><%= c.label %></li><% }) %>
-        </ul>
-      </div>
-      <div class="rubrica-col">
-        <h4>A cada integrante</h4>
-        <ul>
-          <% CRITERIOS_IND.forEach(c => { %><li><%= c.label %></li><% }) %>
-        </ul>
-      </div>
-    </div>
-  </section>
-
   <%/* ───── PLANO DEL LUGAR ───── */%>
   <% if (mapa && mapa.espacios && mapa.espacios.length) {
        // Cada espacio resuelve su nombre, color y detalle (los de tipo "sala"
@@ -116,6 +108,7 @@
            detalle: s ? s.desc : (e.desc || ''),
            accent: s ? s.accent : '',
            montaje: s ? (s.montaje || []) : [],
+           horario: s ? s.horario : null,
            ancla: s ? s.id : null,
          };
        });
@@ -156,6 +149,11 @@
               <p class="det-tipo"><%= e.tipo === 'sala' ? 'Sala del recorrido' : (e.tipo === 'acceso' ? 'Acceso' : (e.tipo === 'pasillo' ? 'Circulación' : 'Servicio')) %></p>
               <h3><%= e.nombre %></h3>
               <% if (e.lema) { %><p class="det-lema"><%= e.lema %></p><% } %>
+              <% if (e.horario) { %>
+                <p class="det-horario">
+                  <%= e.horario.abre %> – <%= e.horario.cierra %><% if (e.horario.extendido) { %> · podría seguir hasta <%= e.horario.extendido %><% } %>
+                </p>
+              <% } %>
               <p class="det-desc"><%= e.detalle %></p>
               <% if (e.montaje.length) { %>
                 <ul class="montaje">
@@ -179,6 +177,99 @@
       </div>
     </section>
   <% } %>
+
+  <%/* ───── ITINERARIO ───── */%>
+  <% if (jornada && itinerario.length) {
+       const porSalaIt = Object.fromEntries(salas.map(s => [s.id, s]));
+       // Se ordena por hora de inicio y se agrupa en franjas, así el JSON se
+       // puede escribir en cualquier orden.
+       const franjas = [];
+       itinerario
+         .slice()
+         .sort((a, b) => String(a.hora).localeCompare(String(b.hora)))
+         .forEach(it => {
+           const ultima = franjas[franjas.length - 1];
+           if (ultima && ultima.hora === it.hora) ultima.items.push(it);
+           else franjas.push({ hora: it.hora, items: [it] });
+         });
+  %>
+    <section id="horarios" class="pub-sec">
+      <p class="eyebrow">Horarios</p>
+      <h2><%= jornada.titulo %></h2>
+      <p class="sec-lead"><%= jornada.nota %></p>
+
+      <div class="jornada">
+        <div><span>Apertura</span><strong><%= jornada.apertura %></strong></div>
+        <div><span>Jornada base</span><strong>hasta <%= jornada.cierre %></strong></div>
+        <% if (jornada.cierre_extendido) { %>
+          <div class="por-confirmar">
+            <span>Posible extensión</span>
+            <strong>hasta <%= jornada.cierre_extendido %></strong>
+          </div>
+        <% } %>
+        <% if (jornada.estado) { %>
+          <div><span>Estado</span><strong class="estado-tent"><%= jornada.estado %></strong></div>
+        <% } %>
+      </div>
+
+      <div class="filtros" id="filtros" role="group" aria-label="Filtrar el itinerario por sala">
+        <button type="button" class="filtro activo" data-sala="" aria-pressed="true">Todo</button>
+        <% salas.forEach(s => { %>
+          <button type="button" class="filtro cat-<%= s.accent %>" data-sala="<%= s.id %>" aria-pressed="false"><%= s.name %></button>
+        <% }) %>
+      </div>
+
+      <ol class="timeline" id="timeline">
+        <% franjas.forEach(f => { %>
+          <li class="franja">
+            <div class="franja-hora"><%= f.hora %></div>
+            <div class="franja-items">
+              <% f.items.forEach(it => { const s = it.sala ? porSalaIt[it.sala] : null; %>
+                <article class="acto <%= s ? 'cat-' + s.accent : 'general' %>" data-sala="<%= it.sala || '' %>">
+                  <p class="acto-meta">
+                    <span class="acto-tipo"><%= it.tipo %></span>
+                    <span class="acto-lugar"><%= s ? s.name : (it.lugar || '') %></span>
+                    <% if (it.fin) { %><span class="acto-rango"><%= it.hora %>–<%= it.fin %></span><% } %>
+                  </p>
+                  <h3><%= it.titulo %></h3>
+                  <p class="acto-desc"><%= it.desc %></p>
+                  <% if (it.tentativo && jornada.aviso_tarde) { %>
+                    <p class="acto-aviso"><%= jornada.aviso_tarde %></p>
+                  <% } %>
+                </article>
+              <% }) %>
+            </div>
+          </li>
+        <% }) %>
+      </ol>
+    </section>
+  <% } %>
+
+  <%/* ───── CÓMO SE EVALÚA ───── */%>
+  <section id="evaluacion" class="pub-sec">
+    <p class="eyebrow">Durante la muestra</p>
+    <h2>Cómo se evalúa</h2>
+    <p class="sec-lead">
+      Varios docentes recorren las salas y califican desde el celular con la
+      misma rúbrica. Cada criterio va de 0 a <%= ESCALA_MAX %>, y la nota final
+      del proyecto es el promedio de todos los jurados que lo evaluaron.
+    </p>
+
+    <div class="rubrica">
+      <div class="rubrica-col">
+        <h4>Al proyecto</h4>
+        <ul>
+          <% CRITERIOS.forEach(c => { %><li><%= c.label %></li><% }) %>
+        </ul>
+      </div>
+      <div class="rubrica-col">
+        <h4>A cada integrante</h4>
+        <ul>
+          <% CRITERIOS_IND.forEach(c => { %><li><%= c.label %></li><% }) %>
+        </ul>
+      </div>
+    </div>
+  </section>
 </main>
 
 <footer class="pub-foot">
@@ -219,6 +310,41 @@
 
     espacios.forEach(function (b) {
       b.addEventListener("click", function () { seleccionar(b); });
+    });
+  })();
+
+  // Itinerario: filtrar por sala. Los actos generales (apertura, cierre)
+  // se quedan siempre visibles porque le dan contexto a la jornada.
+  (function () {
+    var filtros = document.getElementById("filtros");
+    if (!filtros) return;
+
+    var botones = Array.prototype.slice.call(filtros.querySelectorAll(".filtro"));
+    var actos = Array.prototype.slice.call(document.querySelectorAll("#timeline .acto"));
+    var franjas = Array.prototype.slice.call(document.querySelectorAll("#timeline .franja"));
+
+    function aplicar(sala) {
+      actos.forEach(function (a) {
+        var propia = a.dataset.sala;
+        a.hidden = Boolean(sala) && Boolean(propia) && propia !== sala;
+      });
+
+      franjas.forEach(function (f) {
+        var visibles = Array.prototype.slice
+          .call(f.querySelectorAll(".acto"))
+          .some(function (a) { return !a.hidden; });
+        f.hidden = !visibles;
+      });
+
+      botones.forEach(function (b) {
+        var activo = b.dataset.sala === sala;
+        b.classList.toggle("activo", activo);
+        b.setAttribute("aria-pressed", activo ? "true" : "false");
+      });
+    }
+
+    botones.forEach(function (b) {
+      b.addEventListener("click", function () { aplicar(b.dataset.sala); });
     });
   })();
 </script>

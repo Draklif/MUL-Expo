@@ -59,13 +59,46 @@ Todo lo que se ve en `/` vive en `data/expo.json`. Se edita el archivo y se
 recarga el navegador: el servidor lo relee cuando cambia, **sin reiniciar**.
 
 - `evento` — nombre, tipo, cuándo, dónde y la descripción del hero.
-- `salas` — las experiencias del recorrido, con su lema, montaje y las
-  asignaturas que exponen ahí. El color sale de `accent`
+- `salas` — las experiencias del recorrido, con su lema, montaje, `horario` y
+  las asignaturas que exponen ahí. El color sale de `accent`
   (`code`, `story`, `realtime` o `design`).
+- `jornada` e `itinerario` — los horarios.
 - `mapa` — el plano interactivo.
 
 El contenido salió del tablero del plan integrador (`Plan/data/*.json`), pero a
 partir de aquí las dos cosas son independientes: editar uno no toca al otro.
+
+### Horarios e itinerario
+
+Mientras no esté cerrada la franja del evento, el contenido lo dice de frente en
+vez de inventarse una hora:
+
+- `jornada` — `apertura` y `cierre` son la jornada base (8:00–12:00);
+  `cierre_extendido` es el "hasta las 18:00" que todavía está por confirmar, y
+  se pinta en ámbar. `estado` y `nota` son el aviso que se lee arriba de todo.
+- Cada sala tiene su `horario` con `abre`, `cierra` y `extendido`. Si
+  `extendido` es `null`, esa sala no se queda en la tarde y no muestra la nota.
+  Hoy están marcadas para extenderse **Indie Alley** y **Trazo Cero** (la
+  galería es la más fácil de dejar montada); cambiar eso es cambiar un campo.
+- `itinerario` — la lista de actividades. Se puede escribir en cualquier orden:
+  la página las ordena por `hora` y agrupa las que coinciden.
+
+```json
+{ "hora": "09:00", "fin": "09:45", "sala": "tras-bambalinas",
+  "tipo": "Función", "titulo": "Función 1 · Del guion al storyboard",
+  "desc": "Proyección y conversación con los equipos." }
+```
+
+- `sala` — id de la experiencia: le da el color y el nombre del lugar. Para algo
+  que no pasa en una sala (apertura, cierre) se pone `"sala": null` y se usa
+  `lugar` con texto libre; esas actividades se ven siempre, aunque el visitante
+  filtre por una sala.
+- `tipo` — texto libre, es la etiqueta pequeña de arriba (Función, Demo por
+  turnos, Taller abierto…).
+- `"tentativo": true` agrega debajo el aviso de `jornada.aviso_tarde`.
+
+Los botones de filtro salen solos de la lista de salas: el visitante toca
+«Tras Bambalinas» y ve solo sus funciones para calcular a qué hora venir.
 
 ### El plano del lugar
 

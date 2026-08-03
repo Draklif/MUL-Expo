@@ -33,6 +33,12 @@
       "name": "Indie Alley",
       "accent": "code",
       "lema": "El pasillo de los estudios",
+      "horario": {
+        "abre": "08:00",
+        "cierra": "12:00",
+        "extendido": "18:00",
+        "nota": "Los estudios se turnan para dejar el stand atendido en la tarde."
+      },
       "desc": "Cada equipo de séptimo y octavo monta su stand como si fuera un estudio independiente: videojuego jugable, entorno de simulación, experiencia RV/RA, tráiler, marca y portafolio. El visitante recorre stands y juega. Es la experiencia que cierra el proyecto integrador.",
       "montaje": [
         "Stands por estudio",
@@ -130,6 +136,12 @@
       "name": "Tunja 2040",
       "accent": "realtime",
       "lema": "La ciudad que viene",
+      "horario": {
+        "abre": "08:00",
+        "cierra": "12:00",
+        "extendido": null,
+        "nota": "La maqueta y las tarjetas NFC necesitan a alguien del equipo al lado."
+      },
       "desc": "Proyectos que imaginan a Tunja en 2040: metro, sistema integrado de buses, biciparking y servicios urbanos. Taller de diseño multimedia construye la PWA del ciudadano —escritorio y móvil, con tarjetas NFC para entrar al metro, tomar una bici o pagar el bus—, Usabilidad y accesibilidad la audita, y Taller de aplicaciones móviles suma su pieza al mismo ecosistema.",
       "montaje": [
         "Maqueta de ciudad",
@@ -172,6 +184,12 @@
       "name": "Trazo Cero",
       "accent": "design",
       "lema": "Donde empieza todo",
+      "horario": {
+        "abre": "08:00",
+        "cierra": "12:00",
+        "extendido": "18:00",
+        "nota": "Al ser una galería de piezas montadas, es la más fácil de dejar abierta."
+      },
       "desc": "Del lápiz al 3D: juegos de mesa ilustrados, perspectivas, dioramas digitales, artbooks de personajes, animación 2D y modelado. Una galería de piezas impresas y láminas de primero a sexto semestre.",
       "montaje": [
         "Galería de láminas",
@@ -240,6 +258,12 @@
       "name": "Tras Bambalinas",
       "accent": "story",
       "lema": "El proceso antes de la función",
+      "horario": {
+        "abre": "08:30",
+        "cierra": "12:00",
+        "extendido": null,
+        "nota": "Funciona por funciones con horario, no como sala de paso."
+      },
       "desc": "Guiones, storyboards, fotografía, montaje y lectura crítica de la imagen. Sala de proyección con horarios: se ve la pieza terminada y también lo que hubo detrás de ella.",
       "montaje": [
         "Sala de proyección",
@@ -277,6 +301,142 @@
         }
       ],
       "semestres": "2.° a 6.° semestre"
+    }
+  ],
+  "jornada": {
+    "_comentario": "Horarios de la Expo. Mientras no esté cerrada la franja, 'cierre_extendido' y el aviso de abajo dejan claro que la tarde está por confirmar. Cada sala tiene además su propio 'horario' dentro de 'salas'.",
+    "titulo": "Itinerario tentativo",
+    "estado": "Horarios por confirmar",
+    "apertura": "08:00",
+    "cierre": "12:00",
+    "cierre_extendido": "18:00",
+    "nota": "La jornada base va de 8:00 a 12:00. Todavía se define si la Expo se extiende hasta las 18:00: las salas que aparecen con «hasta las 18:00» podrían quedarse abiertas toda la tarde según la disponibilidad de cada equipo. Las horas de cada actividad son tentativas y pueden moverse.",
+    "aviso_tarde": "Jornada de la tarde sujeta a confirmación"
+  },
+  "itinerario": [
+    {
+      "hora": "08:00",
+      "fin": "08:30",
+      "sala": null,
+      "lugar": "Ingreso y registro",
+      "tipo": "Apertura",
+      "titulo": "Se abren las puertas",
+      "desc": "Registro de visitantes y entrega del mapa del recorrido."
+    },
+    {
+      "hora": "08:30",
+      "fin": "12:00",
+      "sala": "indie-alley",
+      "tipo": "Stands abiertos",
+      "titulo": "Los estudios abren sus stands",
+      "desc": "Demos jugables, experiencias RV/RA y portafolios disponibles todo el día: se entra y se juega sin horario fijo."
+    },
+    {
+      "hora": "09:00",
+      "fin": "09:45",
+      "sala": "tras-bambalinas",
+      "tipo": "Función",
+      "titulo": "Función 1 · Del guion al storyboard",
+      "desc": "Proyección de las piezas de Narrativa visual y conversación con los equipos sobre cómo llegaron de la idea al plano."
+    },
+    {
+      "hora": "09:00",
+      "fin": "09:40",
+      "sala": "tunja-2040",
+      "tipo": "Recorrido guiado",
+      "titulo": "La ciudad en maqueta",
+      "desc": "Recorrido comentado por la maqueta: metro, biciparking y sistema de buses explicados por quienes los diseñaron."
+    },
+    {
+      "hora": "09:30",
+      "fin": "11:30",
+      "sala": "trazo-cero",
+      "tipo": "Mesas abiertas",
+      "titulo": "Mesas de juego",
+      "desc": "Los juegos de mesa ilustrados se ponen a jugar: cualquiera puede sentarse a una partida."
+    },
+    {
+      "hora": "09:45",
+      "fin": "10:15",
+      "sala": "indie-alley",
+      "tipo": "Proyección",
+      "titulo": "Ronda de tráilers",
+      "desc": "Los teasers y cinemáticas de cada estudio, uno detrás de otro, en la pantalla del pasillo."
+    },
+    {
+      "hora": "10:00",
+      "fin": "10:45",
+      "sala": "tras-bambalinas",
+      "tipo": "Función",
+      "titulo": "Función 2 · Piezas terminadas",
+      "desc": "Cortos y montajes de Edición de audio y video, con los realizadores contando el detrás de cámaras."
+    },
+    {
+      "hora": "10:00",
+      "fin": "11:00",
+      "sala": "tunja-2040",
+      "tipo": "Demo por turnos",
+      "titulo": "Entra al metro con tu tarjeta",
+      "desc": "Prueba de la PWA del ciudadano en escritorio y móvil: se pasa la tarjeta NFC para entrar al metro, tomar una bici o pagar el bus."
+    },
+    {
+      "hora": "10:15",
+      "fin": "11:00",
+      "sala": "trazo-cero",
+      "tipo": "En vivo",
+      "titulo": "Ilustración en vivo",
+      "desc": "Dibujo y modelado en directo sobre la mesa de trabajo, con la pantalla proyectada para el público."
+    },
+    {
+      "hora": "10:30",
+      "fin": "11:15",
+      "sala": "indie-alley",
+      "tipo": "Presentaciones",
+      "titulo": "Pitch de estudios",
+      "desc": "Cada equipo tiene cinco minutos para presentar su estudio, su juego y en qué anda ahora."
+    },
+    {
+      "hora": "11:00",
+      "fin": "11:45",
+      "sala": "tras-bambalinas",
+      "tipo": "Función",
+      "titulo": "Función 3 · Mirar la imagen",
+      "desc": "Fotografía y lectura crítica de la imagen: proyección comentada de las piezas de Video y fotografía digital."
+    },
+    {
+      "hora": "11:00",
+      "fin": "11:45",
+      "sala": "tunja-2040",
+      "tipo": "Taller abierto",
+      "titulo": "Auditoría de usabilidad en vivo",
+      "desc": "Visitantes voluntarios usan la PWA mientras el equipo de Usabilidad y accesibilidad toma nota de dónde se traban."
+    },
+    {
+      "hora": "11:15",
+      "fin": "12:00",
+      "sala": "trazo-cero",
+      "tipo": "Recorrido comentado",
+      "titulo": "De la lámina al artbook",
+      "desc": "Paseo por la galería contando cómo un personaje pasa del boceto al artbook impreso."
+    },
+    {
+      "hora": "12:00",
+      "fin": null,
+      "sala": null,
+      "lugar": "Pasillo central",
+      "tipo": "Cierre",
+      "titulo": "Cierre de la jornada de la mañana",
+      "desc": "Palabras de cierre y reconocimiento a los proyectos destacados."
+    },
+    {
+      "hora": "12:00",
+      "fin": "18:00",
+      "sala": null,
+      "lugar": "Indie Alley y Trazo Cero",
+      "tipo": "Jornada extendida",
+      "titulo": "Salas abiertas por la tarde",
+      "desc": "Si se confirma la jornada completa, estas dos salas siguen abiertas para quien no alcanzó a venir en la mañana.",
+      "tentativo": true
     }
   ],
   "mapa": {
