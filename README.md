@@ -15,7 +15,8 @@ celular durante el evento, con promedios en tiempo real.
 npm install
 ```
 
-Solo descarga Express, EJS y session. **No compila nada nativo.**
+Solo descarga Express, EJS, session y `qrcode-svg` (para el QR de los
+certificados, sin dependencias propias). **No compila nada nativo.**
 
 Abre `config.js` y:
 
@@ -69,6 +70,7 @@ Abre `http://localhost:3000` en el navegador del PC.
 | `/expositores` | Estudiantes, sin login | Guía de montaje: qué debe tener el stand |
 | `/registro` | Estudiantes, sin login | Registro de expositores |
 | `/registro/estado` | Estudiantes, sin login | Consulta del estado con el código |
+| `/certificado/:codigo` | Cualquiera, sin login | Certificado a pantalla completa (a donde apunta su QR) |
 | `/acceso` | Docentes | Login (enlace discreto al pie de la landing) |
 | `/panel` | Docentes | Materias, registros por revisar, estudiantes y proyectos |
 | `/tablero` | Docentes | Ranking en vivo |
@@ -229,6 +231,35 @@ decimales, y quien mande los planos reales solo tiene que pasarlos a esa escala:
 
 El plano actual es **tentativo** y así está rotulado en la página. Al cambiar las
 medidas en el JSON, la landing se redibuja sola.
+
+## Certificados
+
+Al final de cada materia, **Generar certificados** emite **uno por estudiante**:
+puesto para los tres primeros y constancia de participación para el resto.
+
+- El **puesto sale de las notas** con el mismo cálculo del tablero: cada docente
+  promedia los criterios que calificó y la nota del proyecto es el promedio
+  entre docentes. Los empates comparten puesto y el siguiente salta (1.°, 1.°,
+  3.°). Un proyecto sin calificar no entra al podio: sale con participación.
+- Cada certificado lleva un **código de 8 caracteres** y vive en
+  `/certificado/CODIGO`, público y sin login. Su **QR apunta a esa misma
+  página**, así que escanearlo es la verificación.
+- Los datos quedan **congelados** al emitir (nombre, proyecto, materia, sala,
+  compañeros, docente que firma). Si después cambia una nota o se borra el
+  proyecto, lo que alguien ya compartió sigue diciendo lo mismo.
+- **Regenerar es seguro**: actualiza los puestos sin crear certificados nuevos
+  ni cambiar los enlaces que ya circulan.
+
+El estudiante lo encuentra en `/registro/estado` con el mismo código con el que
+consultó su registro. Desde la página puede **compartir** (usa el menú nativo
+del celular, o copia el enlace) y **descargar en PDF**, que imprime solo el
+certificado sobre fondo blanco.
+
+Lo que va en el certificado se decidió así: nombre, puesto, proyecto, materia,
+sala, compañeros de equipo, fecha, firma del docente y «Universidad de Boyacá ·
+Ingeniería en Multimedia». **La nota numérica no aparece.** El emisor se cambia
+con `institucion` en `data/expo.json`, y `evento.fecha` (hoy vacío) reemplaza la
+fecha de emisión cuando se defina el día de la Expo.
 
 ## Crear varias materias de una vez
 

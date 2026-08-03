@@ -4,6 +4,7 @@ const { contenidoExpo } = require("../lib/contenido");
 const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
+const { etiquetaPuesto } = require("../lib/certificados");
 const {
   generarCodigo,
   limpiarEmail,
@@ -217,6 +218,20 @@ function buscarPorCodigo(codigo) {
 
   const { salas } = contenidoExpo();
   solicitud.sala_nombre = (salas.find((s) => s.id === solicitud.sala) || {}).name || solicitud.sala;
+
+  // Certificados del equipo, para que cada quien encuentre el suyo con el
+  // mismo código con el que consulta el registro.
+  const correos = solicitud.integrantes.map((i) => i.email).filter(Boolean);
+  solicitud.certificados = correos.length
+    ? db
+        .prepare(
+          `SELECT codigo, estudiante, puesto FROM certificados
+           WHERE email IN (${correos.map(() => "?").join(",")})
+           ORDER BY (puesto IS NULL), puesto, estudiante COLLATE NOCASE`
+        )
+        .all(...correos)
+        .map((c) => ({ ...c, etiqueta: etiquetaPuesto(c.puesto) }))
+    : [];
 
   return solicitud;
 }

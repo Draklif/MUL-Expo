@@ -78,6 +78,22 @@
         <p class="sol-nota ok">
           Aprobado<% if (solicitud.revisor) { %> por <%= solicitud.revisor %><% } %>. Nos vemos en la Expo.
         </p>
+
+        <% if (solicitud.certificados && solicitud.certificados.length) { %>
+          <p class="eyebrow" style="margin-top:22px">Certificados</p>
+          <ul class="lista-cert">
+            <% solicitud.certificados.forEach(c => { %>
+              <li>
+                <span class="cert-medalla <%= c.etiqueta.cls %>"><%= c.puesto || '·' %></span>
+                <span class="cert-quien">
+                  <strong><%= c.estudiante %></strong>
+                  <em><%= c.etiqueta.label %></em>
+                </span>
+                <a href="/certificado/<%= c.codigo %>" class="cert-link">Ver ↗</a>
+              </li>
+            <% }) %>
+          </ul>
+        <% } %>
       <% } else if (solicitud.estado === 'rechazada') { %>
         <p class="sol-nota no">
           <% if (solicitud.nota_docente) { %>

@@ -13,6 +13,7 @@ const materiasRouter = require("./routes/materias");
 const proyectosRouter = require("./routes/proyectos");
 const apiRouter = require("./routes/api");
 const registroRouter = require("./routes/registro");
+const certificadosRouter = require("./routes/certificados");
 
 const app = express();
 
@@ -78,6 +79,9 @@ app.get("/expositores", (req, res) => {
 
 // Registro de expositores (público: lo llenan los estudiantes)
 app.use("/registro", registroRouter);
+
+// Certificados (públicos: el QR de cada uno apunta a su página)
+app.use("/certificado", certificadosRouter);
 
 // Panel de docentes: listado de materias
 app.get("/panel", requireAuth, (req, res) => {

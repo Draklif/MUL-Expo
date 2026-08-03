@@ -1,0 +1,22 @@
+<%- include('partials/head', { title: 'Certificado no encontrado — Expo Multimedia', descripcion: null }) %>
+  <div class="login-shell">
+    <div class="login-card" style="text-align:center">
+      <div class="logo">Expo<em>Multimedia</em></div>
+      <div class="tag">Verificación de certificados</div>
+
+      <div class="alert err">
+        No existe ningún certificado con el código <strong><%= codigo %></strong>.
+      </div>
+
+      <p class="hint">
+        Revisa que lo hayas copiado completo. Si el enlace te lo compartió
+        alguien más, pídele que lo vuelva a enviar.
+      </p>
+
+      <p style="margin-top:18px">
+        <a href="/" class="back-link" style="margin:0">Ir a la Expo</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

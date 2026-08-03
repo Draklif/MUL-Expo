@@ -154,6 +154,69 @@
     <% }) %>
   <% } %>
 
+  <%/* ───── CERTIFICADOS ───── */%>
+  <div class="section-head" id="certificados" style="margin-top:30px">
+    <h2>Certificados</h2>
+    <span class="count"><%= certificados.length %> emitido<%= certificados.length === 1 ? '' : 's' %></span>
+  </div>
+
+  <% if (query.emitidos !== undefined) {
+       const nuevos = Number(query.emitidos) || 0, act = Number(query.actualizados) || 0; %>
+    <div class="alert ok">
+      ✓ <%= nuevos %> certificado<%= nuevos === 1 ? '' : 's' %> nuevo<%= nuevos === 1 ? '' : 's' %><% if (act) { %> · <%= act %> actualizado<%= act === 1 ? '' : 's' %><% } %>.
+    </div>
+  <% } %>
+
+  <% if (podio.length) { %>
+    <ol class="podio">
+      <% podio.forEach(p => { %>
+        <li class="podio-<%= p.puesto %>">
+          <span class="podio-puesto"><%= p.puesto %>.°</span>
+          <span class="podio-titulo"><%= p.titulo %></span>
+          <span class="podio-nota"><%= p.promedio.toFixed(2) %></span>
+        </li>
+      <% }) %>
+    </ol>
+  <% } else { %>
+    <div class="empty">
+      Todavía no hay proyectos calificados, así que no hay podio. Se pueden
+      emitir igual: todos saldrían con constancia de participación.
+    </div>
+  <% } %>
+
+  <form method="POST" action="/materias/<%= materia.id %>/certificados" style="margin-top:12px"
+        onsubmit="return confirm('Se generan los certificados con las notas de este momento. Si ya existían, se actualizan sin cambiar sus enlaces.');">
+    <button type="submit" class="btn block ghost">
+      <%= certificados.length ? 'Regenerar certificados' : 'Generar certificados' %>
+    </button>
+  </form>
+  <p class="hint" style="margin-top:8px">
+    Uno por estudiante: puesto para los tres primeros y constancia de
+    participación para el resto. Los datos quedan congelados al emitirlos.
+  </p>
+
+  <% if (certificados.length) { %>
+    <details class="panel" style="margin-top:12px">
+      <summary>Ver los <%= certificados.length %> certificados y sus enlaces</summary>
+      <div class="panel-body">
+        <ul class="lista-cert">
+          <% certificados.forEach(c => { %>
+            <li>
+              <span class="cert-medalla <%= c.etiqueta.cls %>"><%= c.puesto || '·' %></span>
+              <span class="cert-quien">
+                <strong><%= c.estudiante %></strong>
+                <em><%= c.etiqueta.label %> · <%= c.proyecto_titulo %></em>
+              </span>
+              <a href="/certificado/<%= c.codigo %>" target="_blank" rel="noopener" class="cert-link">
+                <%= c.codigo %> ↗
+              </a>
+            </li>
+          <% }) %>
+        </ul>
+      </div>
+    </details>
+  <% } %>
+
   <div style="margin-top:30px; text-align:right">
     <form method="POST" action="/materias/<%= materia.id %>/delete" onsubmit="return confirm('¿Eliminar esta materia y todos sus proyectos? Esta acción no se puede deshacer.');" style="display:inline">
       <button type="submit" class="btn danger">Eliminar materia</button>

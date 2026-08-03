@@ -1,13 +1,15 @@
 {
   "_comentario": "Contenido público de la landing. Se edita aquí y se recarga el navegador: el servidor relee el archivo cuando cambia, sin reiniciar. Las notas internas de planeación (pendientes) NO viven en este archivo.",
   "programa": "Ingeniería en Multimedia",
+  "institucion": "Universidad de Boyacá",
   "evento": {
     "name": "Expo Multimedia",
     "tipo": "Muestra académica",
     "estado": "confirmado",
     "cuando": "Cerca del cierre de semestre",
     "sede": "Campus",
-    "desc": "Todos los estudiantes exponen el proyecto final de cada asignatura. No es una sola sala, sino un recorrido por experiencias temáticas que agrupan materias afines."
+    "desc": "Todos los estudiantes exponen el proyecto final de cada asignatura. No es una sola sala, sino un recorrido por experiencias temáticas que agrupan materias afines.",
+    "fecha": ""
   },
   "categorias": {
     "code": {

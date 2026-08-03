@@ -103,6 +103,32 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_sol_int ON solicitud_integrantes(solicitud_id);
+
+  -- Certificados. Los datos se congelan al emitirlos: si después cambia una
+  -- nota o se borra un proyecto, el certificado que alguien ya compartió
+  -- sigue diciendo lo mismo.
+  CREATE TABLE IF NOT EXISTS certificados (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo          TEXT NOT NULL UNIQUE,
+    materia_id      INTEGER NOT NULL,
+    proyecto_id     INTEGER,
+    estudiante      TEXT NOT NULL,
+    email           TEXT COLLATE NOCASE,
+    proyecto_titulo TEXT NOT NULL,
+    materia_nombre  TEXT NOT NULL,
+    sala            TEXT,
+    sala_nombre     TEXT,
+    puesto          INTEGER,
+    companeros      TEXT,
+    docente         TEXT,
+    emitido_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (materia_id, proyecto_id, estudiante),
+    FOREIGN KEY (materia_id)  REFERENCES materias(id)  ON DELETE CASCADE,
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_cert_materia ON certificados(materia_id);
+  CREATE INDEX IF NOT EXISTS idx_cert_email   ON certificados(email);
 `);
 
 // ---------- Migraciones suaves ----------

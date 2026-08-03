@@ -1,0 +1,105 @@
+<%
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio',
+                 'agosto','septiembre','octubre','noviembre','diciembre'];
+  const d = new Date((cert.emitido_at || '').replace(' ', 'T') + 'Z');
+  const emitido = isNaN(d) ? '' : `${d.getUTCDate()} de ${MESES[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
+  const fecha = (evento && evento.fecha) ? evento.fecha : emitido;
+  const companeros = (cert.companeros || '').split('\n').filter(Boolean);
+  const titulo = cert.estudiante + ' — ' + puesto.label + ' · Expo Multimedia';
+%>
+<%- include('partials/head', {
+      title: titulo,
+      descripcion: `${cert.estudiante} · ${puesto.label} en ${cert.materia_nombre} con el proyecto «${cert.proyecto_titulo}».`
+    }) %>
+
+<main class="cert-pantalla <%= puesto.cls %>">
+  <article class="cert">
+    <header class="cert-top">
+      <p class="cert-institucion"><%= institucion || 'Universidad de Boyacá' %></p>
+      <p class="cert-programa"><%= programa %> · <%= evento.name %></p>
+    </header>
+
+    <div class="cert-sello" aria-hidden="true">
+      <span><%= cert.puesto || '★' %></span>
+    </div>
+    <p class="cert-puesto"><%= puesto.label %></p>
+
+    <p class="cert-otorga">Se otorga a</p>
+    <h1 class="cert-nombre"><%= cert.estudiante %></h1>
+
+    <p class="cert-motivo">
+      por su participación en la muestra con el proyecto
+      <strong>«<%= cert.proyecto_titulo %>»</strong>
+    </p>
+    <p class="cert-donde">
+      <%= cert.materia_nombre %><% if (cert.sala_nombre) { %> · <%= cert.sala_nombre %><% } %>
+    </p>
+
+    <% if (companeros.length) { %>
+      <p class="cert-equipo">
+        <span>Equipo</span>
+        <%= companeros.join(' · ') %>
+      </p>
+    <% } %>
+
+    <footer class="cert-pie">
+      <div class="cert-firma">
+        <% if (cert.docente) { %>
+          <span class="cert-linea"></span>
+          <strong><%= cert.docente %></strong>
+          <em>Docente de <%= cert.materia_nombre %></em>
+        <% } %>
+      </div>
+
+      <div class="cert-fecha">
+        <% if (fecha) { %><strong><%= fecha %></strong><% } %>
+        <em>Código <%= cert.codigo %></em>
+      </div>
+
+      <div class="cert-qr">
+        <%- qr %>
+        <span>Verifica escaneando</span>
+      </div>
+    </footer>
+  </article>
+
+  <div class="cert-acciones">
+    <button type="button" class="btn" id="compartir">Compartir</button>
+    <button type="button" class="btn ghost" onclick="window.print()">Descargar PDF</button>
+    <a href="/" class="cert-volver">Ir a la Expo</a>
+  </div>
+
+  <p class="cert-verificado">
+    Certificado verificado por <%= evento.name %> · <%= programa %>
+  </p>
+</main>
+
+<script>
+  (function () {
+    var boton = document.getElementById("compartir");
+    if (!boton) return;
+
+    var url = <%- JSON.stringify(url) %>;
+    var texto = <%- JSON.stringify(puesto.label + " en " + cert.materia_nombre + " — Expo Multimedia") %>;
+
+    boton.addEventListener("click", async function () {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: document.title, text: texto, url: url });
+          return;
+        } catch (e) {
+          if (e && e.name === "AbortError") return;
+        }
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        boton.textContent = "¡Enlace copiado!";
+      } catch (e) {
+        boton.textContent = url;
+      }
+      setTimeout(function () { boton.textContent = "Compartir"; }, 2500);
+    });
+  })();
+</script>
+
+<%- include('partials/footer') %>

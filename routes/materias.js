@@ -2,6 +2,8 @@ const express = require("express");
 const db = require("../db/database");
 const { parseLista } = require("../lib/listas");
 const { contenidoExpo } = require("../lib/contenido");
+const { rankingDeMateria } = require("../lib/ranking");
+const { emitirDeMateria, deMateria, etiquetaPuesto } = require("../lib/certificados");
 
 const router = express.Router();
 
@@ -125,7 +127,35 @@ router.get("/:id", (req, res) => {
   const pendientes = solicitudes.filter((s) => s.estado === "pendiente");
   const revisadas = solicitudes.filter((s) => s.estado !== "pendiente");
 
-  res.render("materia", { materia, proyectos, estudiantes, pendientes, revisadas });
+  // Podio y certificados ya emitidos
+  const ranking = rankingDeMateria(req.params.id);
+  const podio = ranking.filter((p) => p.puesto && p.puesto <= 3);
+  const certificados = deMateria(req.params.id).map((c) => ({
+    ...c,
+    etiqueta: etiquetaPuesto(c.puesto),
+  }));
+
+  res.render("materia", {
+    materia,
+    proyectos,
+    estudiantes,
+    pendientes,
+    revisadas,
+    podio,
+    certificados,
+  });
+});
+
+// Emitir (o actualizar) los certificados de la materia
+router.post("/:id/certificados", (req, res) => {
+  const materiaId = Number(req.params.id);
+  const materia = db.prepare("SELECT id FROM materias WHERE id = ?").get(materiaId);
+  if (!materia) return res.status(404).send("Materia no encontrada");
+
+  const r = emitirDeMateria(materiaId, req.session.docente.name);
+  res.redirect(
+    `/materias/${materiaId}?emitidos=${r.emitidos}&actualizados=${r.actualizados}#certificados`
+  );
 });
 
 // ---------- Revisión de registros de expositores ----------
