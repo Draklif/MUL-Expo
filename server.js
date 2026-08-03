@@ -6,13 +6,20 @@ const path = require("path");
 const db = require("./db/database");
 const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX } = require("./config");
 const { contenidoExpo } = require("./lib/contenido");
+const { DOMINIO, PATRON_HTML } = require("./lib/correos");
 
 const authRouter = require("./routes/auth");
 const materiasRouter = require("./routes/materias");
 const proyectosRouter = require("./routes/proyectos");
 const apiRouter = require("./routes/api");
+const registroRouter = require("./routes/registro");
 
 const app = express();
+
+// Detrás de ngrok (o de cualquier túnel) todas las peticiones llegan desde
+// 127.0.0.1: sin esto, los frenos por IP tratarían al mundo entero como un
+// solo visitante.
+app.set("trust proxy", true);
 
 // ---------- Vistas ----------
 app.set("view engine", "ejs");
@@ -37,6 +44,8 @@ app.use(
 app.use((req, res, next) => {
   res.locals.docente = req.session.docente || null;
   res.locals.query = req.query;
+  res.locals.DOMINIO = DOMINIO;
+  res.locals.PATRON_CORREO = PATRON_HTML;
   res.locals.CRITERIOS = CRITERIOS;
   res.locals.CRITERIOS_IND = CRITERIOS_IND;
   res.locals.ESCALA_MAX = ESCALA_MAX;
@@ -60,18 +69,47 @@ app.get("/", (req, res) => {
   res.render("landing", { ...contenidoExpo() });
 });
 
+// Guía de montaje para los expositores (pública)
+app.get("/expositores", (req, res) => {
+  const contenido = contenidoExpo();
+  if (!contenido.requisitos) return res.redirect("/");
+  res.render("expositores", { ...contenido });
+});
+
+// Registro de expositores (público: lo llenan los estudiantes)
+app.use("/registro", registroRouter);
+
 // Panel de docentes: listado de materias
 app.get("/panel", requireAuth, (req, res) => {
+  const docenteId = req.session.docente.id;
+
+  // El filtro se recuerda en la sesión: al volver de calificar una materia,
+  // el panel sigue como lo dejaste.
+  if (req.query.mias !== undefined) {
+    req.session.soloMias = req.query.mias === "1";
+  }
+  const soloMias = Boolean(req.session.soloMias);
+
   const materias = db
     .prepare(
       `SELECT m.*, d.name AS creador,
-              (SELECT COUNT(*) FROM proyectos p WHERE p.materia_id = m.id) AS n_proyectos
+              (SELECT COUNT(*) FROM proyectos p WHERE p.materia_id = m.id) AS n_proyectos,
+              (SELECT COUNT(*) FROM solicitudes s
+                WHERE s.materia_id = m.id AND s.estado = 'pendiente') AS n_pendientes
        FROM materias m
        JOIN docentes d ON d.id = m.created_by
+       WHERE (? = 0 OR m.created_by = ?)
        ORDER BY m.created_at DESC`
     )
-    .all();
-  res.render("home", { materias });
+    .all(soloMias ? 1 : 0, docenteId);
+
+  const totales = db
+    .prepare(
+      "SELECT COUNT(*) AS todas, COALESCE(SUM(created_by = ?), 0) AS mias FROM materias"
+    )
+    .get(docenteId);
+
+  res.render("home", { materias, soloMias, totales, docenteId });
 });
 
 // Tablero público con ranking general (visible para docentes logueados)

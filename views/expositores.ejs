@@ -1,0 +1,119 @@
+<%- include('partials/head', { title: requisitos.titulo + ' — Expo Multimedia', descripcion: requisitos.intro }) %>
+
+<% const porSala = Object.fromEntries(salas.map(s => [s.id, s])); %>
+
+<header class="pub-top">
+  <a href="/" class="pub-brand">Expo <em>Multimedia</em></a>
+  <nav class="pub-nav">
+    <a href="/">Volver a la Expo</a>
+    <% if (registro && registro.abierto) { %><a href="/registro" class="pub-destacado">Registrar proyecto</a><% } %>
+  </nav>
+</header>
+
+<main class="pub pub-medio">
+  <section class="pub-hero pub-hero-corto">
+    <p class="eyebrow">Para expositores</p>
+    <h1><%= requisitos.titulo %></h1>
+    <p class="lead"><%= requisitos.intro %></p>
+  </section>
+
+  <div class="alert-guia">
+    <strong>Ojo:</strong> <%= requisitos.aviso %>
+  </div>
+
+  <nav class="indice">
+    <% requisitos.bloques.forEach(b => { %>
+      <a href="#<%= b.id %>"><%= b.titulo %></a>
+    <% }) %>
+    <% if (requisitos.extras) { %><a href="#extras"><%= requisitos.extras.titulo %></a><% } %>
+  </nav>
+
+  <% requisitos.bloques.forEach(bloque => {
+       const sala = bloque.sala ? porSala[bloque.sala] : null; %>
+    <section id="<%= bloque.id %>" class="pub-sec <%= sala ? 'cat-' + sala.accent : '' %>">
+      <div class="bloque-head">
+        <h2><%= bloque.titulo %></h2>
+        <% if (sala) { %>
+          <a href="/#<%= sala.id %>" class="bloque-sala"><span class="dot"></span><%= sala.name %></a>
+        <% } %>
+      </div>
+      <% if (bloque.subtitulo) { %><p class="sec-lead"><%= bloque.subtitulo %></p><% } %>
+
+      <ol class="requisitos">
+        <% bloque.items.forEach(item => {
+             const et = (item.etiqueta || '').toLowerCase();
+             const clsEt = et.startsWith('oblig') ? 'obl'
+                         : (et.startsWith('penal') || et.startsWith('prohib')) ? 'alerta' : 'opt'; %>
+          <li class="requisito <%= item.alerta ? 'grave' : '' %>">
+            <div class="req-head">
+              <h3><%= item.titulo %></h3>
+              <% if (item.etiqueta) { %>
+                <span class="req-etiqueta <%= clsEt %>"><%= item.etiqueta %></span>
+              <% } %>
+            </div>
+
+            <% if (item.desc) { %><p class="req-desc"><%= item.desc %></p><% } %>
+
+            <% if (item.lista && item.lista.length) { %>
+              <ul class="req-lista">
+                <% item.lista.forEach(x => { %><li><%= x %></li><% }) %>
+              </ul>
+            <% } %>
+
+            <% if (item.ejemplo && item.ejemplo.length) { %>
+              <div class="req-ejemplo">
+                <% item.ejemplo.forEach(linea => { %><span><%= linea %></span><% }) %>
+              </div>
+            <% } %>
+
+            <% if (item.nota) { %><p class="req-nota"><%= item.nota %></p><% } %>
+            <% if (item.no) { %><p class="req-no"><%= item.no %></p><% } %>
+          </li>
+        <% }) %>
+      </ol>
+    </section>
+  <% }) %>
+
+  <% if (requisitos.extras) { %>
+    <section id="extras" class="pub-sec">
+      <h2><%= requisitos.extras.titulo %></h2>
+      <p class="sec-lead"><%= requisitos.extras.desc %></p>
+      <ul class="montaje extras">
+        <% requisitos.extras.lista.forEach(x => { %><li><%= x %></li><% }) %>
+      </ul>
+    </section>
+  <% } %>
+
+  <% if (requisitos.filosofia) { %>
+    <section class="pub-sec">
+      <div class="filosofia">
+        <p class="eyebrow"><%= requisitos.filosofia.titulo %></p>
+        <p><%= requisitos.filosofia.texto %></p>
+      </div>
+    </section>
+  <% } %>
+
+  <% if (registro && registro.abierto) { %>
+    <div class="cta-registro" style="margin-top:8px">
+      <div>
+        <h2>¿Ya tienes claro el montaje?</h2>
+        <p class="sec-lead" style="margin-bottom:0">Registra tu proyecto para que quede en el recorrido.</p>
+      </div>
+      <div class="cta-botones">
+        <a href="/registro" class="btn">Registrar mi proyecto</a>
+      </div>
+    </div>
+  <% } %>
+</main>
+
+<footer class="pub-foot">
+  <div>
+    <strong>Expo Multimedia</strong>
+    <span><%= programa %></span>
+  </div>
+  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
+    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
+  </a>
+</footer>
+
+<%- include('partials/footer') %>

@@ -10,13 +10,12 @@
 
       <form method="POST" action="/acceso">
         <div class="form-row">
-          <label for="docente_id">Soy…</label>
-          <select id="docente_id" name="docente_id" required>
-            <option value="">— elige tu nombre —</option>
-            <% docentes.forEach(d => { %>
-              <option value="<%= d.id %>"><%= d.name %></option>
-            <% }) %>
-          </select>
+          <label for="email">Correo institucional</label>
+          <input type="email" id="email" name="email" required autocomplete="username"
+                 placeholder="tucorreo@<%= DOMINIO %>"
+                 pattern="<%= PATRON_CORREO %>"
+                 title="Usa tu correo @<%= DOMINIO %>"
+                 value="<%= email || '' %>" />
         </div>
 
         <div class="form-row">

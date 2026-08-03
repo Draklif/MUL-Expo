@@ -3,15 +3,25 @@
 //  Al reiniciar, los docentes se sincronizan automáticamente con esta lista.
 // =====================================================================
 
+// Dominio institucional. Todo correo (docentes y estudiantes) tiene que
+// terminar en @DOMINIO; cualquier otro se rechaza.
+const DOMINIO = "uniboyaca.edu.co";
+
 // Contraseña compartida para todos los docentes.
+// El correo identifica a cada quien; esta clave es la segunda barrera.
 const PASSWORD = "expo2026";
 
-// Lista de docentes habilitados.
+// Lista de docentes habilitados. Entran con su correo + la contraseña de arriba.
+//
+// Para cambiar un correo mal escrito: se corrige aquí y se reinicia. La
+// identidad es el NOMBRE, así que la persona conserva sus materias, sus
+// calificaciones y los registros que haya revisado. Cambiar el nombre de
+// alguien que ya tiene datos, en cambio, crea un docente nuevo.
 const DOCENTES = [
-  { name: "Jose Rentería" },
-  { name: "Juan Niño" },
-  { name: "Manuel Corredor" },
-  { name: "Oscar Pérez" },
+  { name: "Jose Rentería",   email: "jmrenteria@uniboyaca.edu.co" },
+  { name: "Juan Niño",       email: "juaestnino@uniboyaca.edu.co" },
+  { name: "Manuel Corredor", email: "mancorredor@uniboyaca.edu.co" },
+  { name: "Oscar Pérez",     email: "lperez54@uniboyaca.edu.co" },
 ];
 
 // Criterios de la rúbrica (los mismos para TODOS los proyectos).
@@ -35,4 +45,4 @@ const CRITERIOS_IND = [
 // Escala máxima por criterio (0 a ESCALA_MAX).
 const ESCALA_MAX = 5;
 
-module.exports = { PASSWORD, DOCENTES, CRITERIOS, CRITERIOS_IND, ESCALA_MAX };
+module.exports = { DOMINIO, PASSWORD, DOCENTES, CRITERIOS, CRITERIOS_IND, ESCALA_MAX };

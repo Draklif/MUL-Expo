@@ -8,7 +8,7 @@
     <a href="#recorrido">Recorrido</a>
     <a href="#lugar">El lugar</a>
     <a href="#horarios">Horarios</a>
-    <a href="#evaluacion">Evaluación</a>
+    <% if (registro && registro.abierto) { %><a href="/registro" class="pub-destacado">Soy expositor</a><% } %>
     <% if (docente) { %><a href="/panel" class="pub-panel">Mi panel</a><% } %>
   </nav>
 </header>
@@ -34,6 +34,9 @@
       <a href="#recorrido" class="btn hero-cta">Ver el recorrido</a>
       <% if (jornada && itinerario.length) { %>
         <a href="#horarios" class="btn ghost hero-cta">Horarios</a>
+      <% } %>
+      <% if (registro && registro.abierto) { %>
+        <a href="/registro" class="btn ghost hero-cta">Soy expositor</a>
       <% } %>
     </div>
   </section>
@@ -242,6 +245,30 @@
           </li>
         <% }) %>
       </ol>
+    </section>
+  <% } %>
+
+  <%/* ───── REGISTRO DE EXPOSITORES ───── */%>
+  <% if (registro) { %>
+    <section id="expositores" class="pub-sec">
+      <div class="cta-registro">
+        <div>
+          <p class="eyebrow">Para estudiantes</p>
+          <h2><%= registro.titulo || '¿Vas a exponer?' %></h2>
+          <p class="sec-lead" style="margin-bottom:0"><%= registro.abierto ? (registro.nota || '') : (registro.aviso_cerrado || '') %></p>
+        </div>
+        <div class="cta-botones">
+          <% if (registro.abierto) { %>
+            <a href="/registro" class="btn">Registrar mi proyecto</a>
+          <% } %>
+          <% if (requisitos) { %>
+            <a href="/expositores" class="btn ghost">Requisitos del stand</a>
+          <% } %>
+          <% if (registro.abierto) { %>
+            <a href="/registro/estado" class="link-consulta">Ya me registré, consultar estado</a>
+          <% } %>
+        </div>
+      </div>
     </section>
   <% } %>
 

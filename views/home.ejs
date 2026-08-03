@@ -36,20 +36,42 @@
 
   <div class="section-head">
     <h2>Materias</h2>
-    <span class="count"><%= materias.length %> total</span>
+    <span class="count"><%= materias.length %> <%= soloMias ? 'mías' : 'total' %></span>
+  </div>
+
+  <div class="filtros" style="margin-bottom:14px">
+    <a href="/panel?mias=0" class="filtro <%= soloMias ? '' : 'activo' %>">
+      Todas (<%= totales.todas %>)
+    </a>
+    <a href="/panel?mias=1" class="filtro <%= soloMias ? 'activo' : '' %>">
+      Solo las mías (<%= totales.mias %>)
+    </a>
   </div>
 
   <% if (materias.length === 0) { %>
-    <div class="empty">Aún no hay materias. Crea la primera arriba.</div>
+    <div class="empty">
+      <% if (soloMias && totales.todas) { %>
+        No has creado ninguna materia. <a href="/panel?mias=0">Ver todas</a>.
+      <% } else { %>
+        Aún no hay materias. Crea la primera arriba.
+      <% } %>
+    </div>
   <% } else { %>
     <% materias.forEach(m => { %>
       <a href="/materias/<%= m.id %>" class="list-item">
         <div class="row">
           <div>
             <div class="title"><%= m.nombre %></div>
-            <div class="submeta">Creada por <%= m.creador %></div>
+            <div class="submeta">
+              <%= m.created_by === docenteId ? 'Tuya' : 'Creada por ' + m.creador %>
+            </div>
           </div>
-          <div class="pill"><%= m.n_proyectos %> proyecto<%= m.n_proyectos === 1 ? '' : 's' %></div>
+          <div class="pills">
+            <% if (m.n_pendientes) { %>
+              <div class="pill alerta"><%= m.n_pendientes %> por revisar</div>
+            <% } %>
+            <div class="pill"><%= m.n_proyectos %> proyecto<%= m.n_proyectos === 1 ? '' : 's' %></div>
+          </div>
         </div>
       </a>
     <% }) %>

@@ -19,14 +19,31 @@ Solo descarga Express, EJS y session. **No compila nada nativo.**
 
 Abre `config.js` y:
 
-1. Reemplaza el array `DOCENTES` con los docentes reales. Cada uno con un
-   `code` único (lo que tecleará para entrar) y su `name`.
-2. Ajusta `CRITERIOS` si quieres otros nombres de rúbrica.
-3. Cambia `ESCALA_MAX` si prefieres 0-10 en vez de 0-5.
+1. Ajusta el array `DOCENTES`: cada uno con su `name` y su `email`
+   institucional, que es con lo que entra.
+2. Cambia `PASSWORD`: es la misma para todos los docentes.
+3. Ajusta `CRITERIOS` si quieres otros nombres de rúbrica.
+4. Cambia `ESCALA_MAX` si prefieres 0-10 en vez de 0-5.
 
-> Si después agregas docentes a `config.js` y reinicias, se suman sin borrar
-> los datos existentes. Si renombras a un docente (mismo `code`, distinto
-> `name`), se actualiza.
+`DOMINIO` es el dominio institucional (`uniboyaca.edu.co`). Todo correo de la
+app —el de los docentes al entrar y el de los estudiantes al registrarse— tiene
+que terminar en él; cualquier otro se rechaza.
+
+> Agregar docentes a `config.js` y reiniciar los suma sin tocar lo existente.
+> **La identidad es el `name`**: corregir un correo mal escrito actualiza a la
+> misma persona y conserva sus materias, calificaciones y revisiones. Quitar a
+> alguien de la lista lo borra solo si no dejó datos; si dejó, se conserva (con
+> un aviso en consola) y simplemente deja de poder entrar.
+
+## Cómo entran los docentes
+
+En `/acceso`, con **correo institucional + la contraseña compartida**. El correo
+dice quién es cada quien; la contraseña es la segunda barrera. Ya no hay lista
+de nombres desplegable: quien no sepa un correo válido no ve a nadie.
+
+Si el correo o la clave están mal, el mensaje es el mismo ("Correo o contraseña
+incorrectos") para que la página no sirva para averiguar quiénes son docentes.
+El login aguanta 10 intentos cada 10 minutos por dispositivo.
 
 ## Arrancar
 
@@ -48,10 +65,68 @@ Abre `http://localhost:3000` en el navegador del PC.
 
 | Ruta | Quién entra | Qué es |
 |---|---|---|
-| `/` | Cualquiera, sin login | Landing pública de la Expo: el recorrido, el plano y cómo se evalúa |
+| `/` | Cualquiera, sin login | Landing pública de la Expo: el recorrido, el plano, los horarios |
+| `/expositores` | Estudiantes, sin login | Guía de montaje: qué debe tener el stand |
+| `/registro` | Estudiantes, sin login | Registro de expositores |
+| `/registro/estado` | Estudiantes, sin login | Consulta del estado con el código |
 | `/acceso` | Docentes | Login (enlace discreto al pie de la landing) |
-| `/panel` | Docentes | Materias, estudiantes y proyectos |
+| `/panel` | Docentes | Materias, registros por revisar, estudiantes y proyectos |
 | `/tablero` | Docentes | Ranking en vivo |
+
+## Registro de expositores
+
+El docente **solo crea la materia y aprueba**. No da de alta estudiantes ni
+proyectos a mano: todo entra por el registro que llenan los propios
+estudiantes.
+
+> **Quien no se registre, no existe para la app.** Si un estudiante no aparece
+> en un proyecto aprobado, no hay a quién calificar y su nota queda en 0.0. Eso
+> está dicho tal cual en el formulario y en la vista del docente.
+
+**El estudiante** entra a `/registro` sin contraseña y en un solo formulario:
+elige la materia, pone el título del proyecto, elige en qué sala va a estar,
+escribe su nombre y correo, y agrega a sus compañeros —**cada uno con su nombre
+y su correo institucional**—. Al enviar recibe un **código de seis caracteres**
+(por ejemplo `K7M2QP`) con el que puede consultar el estado en
+`/registro/estado`. Un mismo equipo puede registrar varios proyectos: es un
+registro por proyecto.
+
+En `/panel` el toggle **Todas / Solo las mías** deja ver únicamente las materias
+que uno creó, que es lo cómodo para calificar. La elección se guarda en la
+sesión: al volver de una materia, el panel sigue como se dejó.
+
+**El docente** ve los registros de su materia al abrirla, arriba del todo, y en
+`/panel` cada materia muestra cuántos tiene por revisar:
+
+- **Aprobar** crea el proyecto (ya calificable, con su sala), suma a los
+  integrantes a la lista de estudiantes registrados, y marca el registro como
+  aprobado.
+- **Rechazar** guarda un motivo opcional que el estudiante ve con su código. No
+  crea nada.
+
+Debajo, **Estudiantes registrados** es la lista de todos los que ya tienen
+proyecto aprobado, con su correo y el proyecto al que pertenecen. Ahí el docente
+compara contra su lista de clase y ve quién falta por registrarse.
+
+### La identidad es el correo
+
+Dos estudiantes pueden llamarse igual; el correo no se repite. `estudiantes`
+tiene `UNIQUE (materia_id, email)`, así que la misma persona que expone en dos
+proyectos de la misma materia es **una** fila (y en la lista aparecen sus dos
+proyectos). Si ya estaba registrada, se conserva el nombre del primer registro
+aprobado para que no cambie a espaldas del docente.
+
+Lo que el formulario cuida solo: quien registra queda siempre en el equipo,
+un correo repetido dentro del mismo formulario no agrega a nadie dos veces,
+**todos los correos tienen que ser @uniboyaca.edu.co** (se guardan en
+minúscula) y ningún compañero pasa sin correo. Si alguien manda dos veces el
+mismo título en la misma materia se le muestra el código del registro que ya
+existe en vez de duplicarlo. El endpoint es público, así que tiene un tope de 6
+envíos cada 10 minutos por dispositivo.
+
+**Cerrar el registro:** en `data/expo.json`, `registro.abierto: false`. El
+formulario deja de recibir y la landing muestra `aviso_cerrado` en lugar del
+botón.
 
 ### Editar el contenido público
 
@@ -64,6 +139,8 @@ recarga el navegador: el servidor lo relee cuando cambia, **sin reiniciar**.
   (`code`, `story`, `realtime` o `design`).
 - `jornada` e `itinerario` — los horarios.
 - `mapa` — el plano interactivo.
+- `registro` — el estado del registro de expositores y sus textos.
+- `requisitos` — la guía de montaje de `/expositores`.
 
 El contenido salió del tablero del plan integrador (`Plan/data/*.json`), pero a
 partir de aquí las dos cosas son independientes: editar uno no toca al otro.
@@ -100,6 +177,40 @@ vez de inventarse una hora:
 Los botones de filtro salen solos de la lista de salas: el visitante toca
 «Tras Bambalinas» y ve solo sus funciones para calcular a qué hora venir.
 
+### La guía de montaje
+
+`/expositores` sale entero de `requisitos` en el JSON, así que las exigencias se
+cambian sin tocar código. Arriba de todo va `aviso`, que deja claro que **cada
+docente puede pedir cosas distintas** y que esto es solo el mínimo común.
+
+`bloques` son las secciones (hoy: el stand, los videos de Tras Bambalinas, y
+montaje y desmontaje) y cada `item` es una tarjeta numerada. La numeración la
+pone el CSS y se reinicia en cada bloque: se pueden insertar, mover o borrar
+requisitos sin renumerar nada a mano.
+
+```json
+{
+  "titulo": "Banner vertical",
+  "etiqueta": "Obligatorio",
+  "desc": "Cada equipo deberá contar con un banner tipo roll-up…",
+  "lista": ["Nombre del proyecto.", "Logotipo."],
+  "no": "No se aceptarán hojas impresas pegadas simulando un banner.",
+  "ejemplo": ["Animacion_EcosDelBosque_G03.mp4"],
+  "nota": "Texto secundario, en gris.",
+  "alerta": true
+}
+```
+
+- `etiqueta` — «Obligatorio» se pinta neutro; «Prohibido» y «Penalización», en
+  rojo; cualquier otra cosa (por ejemplo «Recomendado»), en verde.
+- `no` — lo que **no** se acepta, con una ✕ roja.
+- `ejemplo` — cada línea en un recuadro punteado, para nombres de archivo o
+  textos de pantalla.
+- `alerta: true` — pinta toda la tarjeta en rojo. Hoy solo lo usa la
+  penalización por desmontaje anticipado.
+- Un bloque con `"sala": "tras-bambalinas"` toma el color de esa sala y enlaza
+  a su parte del recorrido.
+
 ### El plano del lugar
 
 `mapa` es una cuadrícula de `cols` × `filas` unidades. Cada espacio se ubica con
@@ -119,26 +230,15 @@ decimales, y quien mande los planos reales solo tiene que pasarlos a esa escala:
 El plano actual es **tentativo** y así está rotulado en la página. Al cambiar las
 medidas en el JSON, la landing se redibuja sola.
 
-## Cargar materias y estudiantes de una vez
+## Crear varias materias de una vez
 
-Todo se puede pegar desde Excel, Word o WhatsApp: la app limpia espacios,
-numeración (`1.`, `-`, `•`) y repetidos.
+En la pantalla principal, abre *"Crear varias materias de una vez"* y pega una
+por línea: se puede pegar desde Excel, Word o WhatsApp, porque la app limpia
+espacios, numeración (`1.`, `-`, `•`) y repetidos. Las materias que ya existen
+se omiten.
 
-**Materias en lote** — en la pantalla principal, abre *"Crear varias materias
-de una vez"* y pega una por línea. Las que ya existen se omiten.
-
-**Estudiantes por materia** — dentro de la materia, en *"Estudiantes"*, pega la
-lista (uno por línea, o separados por comas si va todo en un renglón). Si pegas
-dos columnas desde Excel (nombre + código), se toma solo la primera.
-
-**Crear proyectos** — al agregar un proyecto, los integrantes se eligen tocando
-los nombres de la lista de la materia; ya no hay que escribirlos. Si alguien no
-está en la lista, se puede agregar a mano y queda guardado en la materia para la
-próxima vez.
-
-En la lista de estudiantes, un ✓ marca a quien ya está en algún proyecto, para
-ver de un vistazo quién falta. Quitar a un estudiante de la lista **no** borra
-proyectos ni calificaciones.
+Es lo único que se carga en lote. Los estudiantes y los proyectos entran por el
+registro, nunca a mano.
 
 ## Exponer con ngrok
 

@@ -1,39 +1,55 @@
 const express = require("express");
 const db = require("../db/database");
 const { PASSWORD } = require("../config");
+const { normalizar, esInstitucional, DOMINIO } = require("../lib/correos");
+const { crearLimite } = require("../lib/limite");
 
 const router = express.Router();
 
-const listaDocentes = () =>
-  db.prepare("SELECT id, name FROM docentes ORDER BY name").all();
+// La contraseña es la misma para todos, así que el login público necesita
+// un freno contra intentos a ciegas. Solo cuentan los intentos FALLIDOS:
+// entrar bien no gasta cupo, y así varios docentes tras la misma IP no se
+// estorban entre ellos.
+const limiteAcceso = crearLimite({ ventanaMs: 10 * 60 * 1000, maximo: 15 });
 
 // El acceso de docentes vive en /acceso (no se enlaza desde el contenido
 // público, solo con un enlace discreto al pie de la landing).
 router.get("/acceso", (req, res) => {
   if (req.session.docente) return res.redirect("/panel");
-  res.render("login", { docentes: listaDocentes(), error: null });
+  res.render("login", { error: null, email: "" });
 });
 
 function procesarAcceso(req, res) {
-  const { docente_id, password } = req.body;
+  const email = normalizar(req.body.email);
+  const password = String(req.body.password || "");
 
-  const fallar = (error) =>
-    res.render("login", { docentes: listaDocentes(), error });
+  const fallar = (error, status = 400) =>
+    res.status(status).render("login", { error, email });
 
-  if (!docente_id || !password) {
-    return fallar("Selecciona tu nombre e ingresa la contraseña.");
+  if (!email || !password) {
+    return fallar("Escribe tu correo institucional y la contraseña.");
   }
-  if (password.trim() !== PASSWORD) {
-    return fallar("Contraseña incorrecta.");
+
+  if (!esInstitucional(email)) {
+    return fallar(`Usa tu correo @${DOMINIO}.`);
+  }
+
+  if (limiteAcceso.alcanzado(req.ip)) {
+    return fallar("Demasiados intentos fallidos. Espera unos minutos y vuelve a probar.", 429);
   }
 
   const docente = db
-    .prepare("SELECT id, name FROM docentes WHERE id = ?")
-    .get(Number(docente_id));
+    .prepare("SELECT id, name, code FROM docentes WHERE code = ? COLLATE NOCASE")
+    .get(email);
 
-  if (!docente) return fallar("Docente no encontrado.");
+  // Mismo mensaje para correo desconocido y clave equivocada: así la página
+  // no sirve para averiguar quiénes son docentes.
+  if (!docente || password.trim() !== PASSWORD) {
+    limiteAcceso.registrar(req.ip);
+    return fallar("Correo o contraseña incorrectos.", 401);
+  }
 
-  req.session.docente = docente;
+  req.session.docente = { id: docente.id, name: docente.name, email: docente.code };
   res.redirect("/panel");
 }
 

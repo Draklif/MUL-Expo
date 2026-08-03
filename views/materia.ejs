@@ -5,93 +5,131 @@
   <a href="/panel" class="back-link">Materias</a>
   <h1><%= materia.nombre %></h1>
 
-  <% if (query.nuevos !== undefined) {
-       const n = Number(query.nuevos) || 0, rep = Number(query.repetidos) || 0; %>
-    <div class="alert <%= n ? 'ok' : 'err' %>" style="margin-top:16px">
-      <% if (n) { %>✓ <%= n %> estudiante<%= n === 1 ? '' : 's' %> agregado<%= n === 1 ? '' : 's' %><% } else { %>No se agregó ningún estudiante<% } %><% if (rep) { %> · <%= rep %> ya estaba<%= rep === 1 ? '' : 'n' %> en la lista<% } %>.
-    </div>
+  <% if (query.revisado === 'aprobada') { %>
+    <div class="alert ok" style="margin-top:16px">✓ Registro aprobado: el proyecto ya está en la lista y sus integrantes quedaron registrados.</div>
+  <% } else if (query.revisado === 'rechazada') { %>
+    <div class="alert err" style="margin-top:16px">Registro rechazado. El estudiante puede ver el motivo con su código.</div>
   <% } %>
 
-  <%/* ───── ESTUDIANTES DE LA MATERIA ───── */%>
+  <%/* ───── REGISTROS DE EXPOSITORES ───── */%>
   <div class="section-head" style="margin-top:22px">
-    <h2>Estudiantes</h2>
-    <span class="count"><%= estudiantes.length %> total</span>
+    <h2>Registros de expositores</h2>
+    <span class="count"><%= pendientes.length %> por revisar</span>
   </div>
 
-  <% if (estudiantes.length > 0) { %>
-    <div class="chips">
-      <% estudiantes.forEach(e => { const enProyecto = asignados.has(e.nombre.toLowerCase()); %>
-        <div class="chip <%= enProyecto ? 'assigned' : '' %>"
-             title="<%= enProyecto ? 'Ya está en un proyecto' : 'Todavía sin proyecto' %>">
-          <%= enProyecto ? '✓ ' : '' %><%= e.nombre %>
-          <form method="POST" action="/materias/<%= materia.id %>/estudiantes/<%= e.id %>/delete"
-                onsubmit="return confirm('¿Quitar a este estudiante de la lista de la materia? Los proyectos y sus calificaciones no se tocan.');"
-                style="display:inline">
-            <button type="submit" class="x" aria-label="Quitar">×</button>
-          </form>
-        </div>
-      <% }) %>
+  <% if (pendientes.length === 0) { %>
+    <div class="empty">
+      <% if (revisadas.length) { %>Todo revisado por ahora.<% } else { %>Aún no llegan registros de estudiantes.<% } %>
     </div>
+  <% } else { %>
+    <% pendientes.forEach(s => { %>
+      <article class="solicitud">
+        <div class="sol-head">
+          <div>
+            <h3><%= s.titulo %></h3>
+            <p class="sol-meta">
+              <%= s.sala_nombre || 'Sala sin definir' %> ·
+              <%= s.integrantes.length %> integrante<%= s.integrantes.length === 1 ? '' : 's' %> ·
+              código <strong><%= s.codigo %></strong>
+            </p>
+          </div>
+          <span class="estado pend">Pendiente</span>
+        </div>
+
+        <% if (s.descripcion) { %>
+          <p class="sol-desc"><%= s.descripcion %></p>
+        <% } %>
+
+        <ul class="sol-equipo">
+          <% s.integrantes.forEach(i => { %>
+            <li>
+              <span><%= i.nombre %></span>
+              <% if (i.email) { %><em><%= i.email %></em><% } %>
+            </li>
+          <% }) %>
+        </ul>
+
+        <p class="sol-contacto">Registró <%= s.contacto_nombre %> · <%= s.contacto_email %></p>
+
+        <div class="sol-acciones">
+          <form method="POST" action="/materias/<%= materia.id %>/solicitudes/<%= s.id %>/aprobar">
+            <button type="submit" class="btn">Aprobar y crear proyecto</button>
+          </form>
+
+          <details class="sub">
+            <summary>Rechazar</summary>
+            <form method="POST" action="/materias/<%= materia.id %>/solicitudes/<%= s.id %>/rechazar" style="margin-top:10px">
+              <div class="form-row" style="margin-bottom:10px">
+                <textarea name="nota" rows="2" maxlength="300"
+                          placeholder="Motivo (lo verá el estudiante al consultar su código)"></textarea>
+              </div>
+              <button type="submit" class="btn danger">Rechazar registro</button>
+            </form>
+          </details>
+        </div>
+      </article>
+    <% }) %>
   <% } %>
 
-  <details class="panel" <%= estudiantes.length ? '' : 'open' %>>
-    <summary><%= estudiantes.length ? 'Agregar más estudiantes' : 'Agregar estudiantes' %></summary>
-    <div class="panel-body">
-      <form method="POST" action="/materias/<%= materia.id %>/estudiantes">
-        <div class="form-row">
-          <label for="nombres">Pega la lista — un estudiante por línea</label>
-          <textarea id="nombres" name="nombres" rows="5" placeholder="Juan Pérez&#10;María López&#10;Carlos Ruiz"></textarea>
-          <p class="hint">Se ignoran los repetidos y la numeración (“1.”, “-”).</p>
-        </div>
-        <button type="submit" class="btn block ghost">+ Agregar estudiantes</button>
-      </form>
-    </div>
-  </details>
-
-  <%/* ───── NUEVO PROYECTO ───── */%>
-  <p class="eyebrow" style="margin-top:26px">Agregar proyecto</p>
-  <form method="POST" action="/materias/<%= materia.id %>/proyectos" class="card" style="margin-top:0" id="proyectoForm">
-    <div class="form-row">
-      <label for="titulo">Título del proyecto</label>
-      <input type="text" id="titulo" name="titulo" placeholder="Ej. Cortometraje: La luz que queda" required maxlength="120" autocomplete="off" />
-    </div>
-
-    <% if (estudiantes.length > 0) { %>
-      <div class="form-row">
-        <div class="picker-actions">
-          <label style="margin:0">Integrantes — toca para seleccionar</label>
-          <button type="button" class="link-btn" id="toggleTodos">Todos</button>
-        </div>
-        <div class="picker" id="picker">
-          <% estudiantes.forEach(e => { %>
-            <label class="pick">
-              <input type="checkbox" name="estudiantes" value="<%= e.nombre %>" />
-              <span><%= e.nombre %></span>
-            </label>
-          <% }) %>
-        </div>
-        <p class="hint" id="selCount">0 seleccionados</p>
+  <% if (revisadas.length) { %>
+    <details class="panel" style="margin-top:12px">
+      <summary>Ya revisados (<%= revisadas.length %>)</summary>
+      <div class="panel-body">
+        <% revisadas.forEach(s => { %>
+          <div class="sol-revisada">
+            <div class="sol-head">
+              <div>
+                <strong><%= s.titulo %></strong>
+                <p class="sol-meta">
+                  <%= s.sala_nombre || 'Sin sala' %> · <%= s.contacto_nombre %>
+                  <% if (s.revisor) { %> · revisó <%= s.revisor %><% } %>
+                </p>
+              </div>
+              <span class="estado <%= s.estado === 'aprobada' ? 'ok' : 'no' %>">
+                <%= s.estado === 'aprobada' ? 'Aprobada' : 'Rechazada' %>
+              </span>
+            </div>
+            <% if (s.nota_docente) { %><p class="sol-desc"><%= s.nota_docente %></p><% } %>
+          </div>
+        <% }) %>
       </div>
+    </details>
+  <% } %>
 
-      <details class="sub">
-        <summary>Agregar alguien que no está en la lista</summary>
-        <div class="form-row" style="margin-top:10px; margin-bottom:0">
-          <textarea name="integrantes_extra" rows="3" placeholder="Un nombre por línea"></textarea>
-          <p class="hint">Se sumarán también a la lista de estudiantes de la materia.</p>
-        </div>
-      </details>
-    <% } else { %>
-      <div class="form-row">
-        <label for="integrantes_extra">Integrantes (uno por línea)</label>
-        <textarea id="integrantes_extra" name="integrantes_extra" rows="4" placeholder="Juan Pérez&#10;María López&#10;Carlos Ruiz"></textarea>
-        <p class="hint">Agrega estudiantes a la materia y podrás elegirlos con un toque.</p>
-      </div>
-    <% } %>
+  <%/* ───── ESTUDIANTES REGISTRADOS ───── */%>
+  <div class="section-head" style="margin-top:26px">
+    <h2>Estudiantes registrados</h2>
+    <span class="count"><%= estudiantes.length %> confirmado<%= estudiantes.length === 1 ? '' : 's' %></span>
+  </div>
 
-    <button type="submit" class="btn block" style="margin-top:4px">+ Agregar proyecto</button>
-  </form>
+  <% if (estudiantes.length === 0) { %>
+    <div class="empty">
+      Nadie con registro aprobado todavía. Los estudiantes se registran en
+      <strong>/registro</strong> y aparecen aquí cuando apruebas su proyecto.
+    </div>
+  <% } else { %>
+    <ul class="registrados">
+      <% estudiantes.forEach(e => { %>
+        <li>
+          <div class="reg-quien">
+            <span class="reg-nombre"><%= e.nombre %></span>
+            <span class="reg-correo"><%= e.email %></span>
+          </div>
+          <span class="reg-proyecto">
+            <%= e.proyectos.length ? e.proyectos.join(' · ') : 'sin proyecto' %>
+          </span>
+        </li>
+      <% }) %>
+    </ul>
+  <% } %>
 
-  <div class="section-head">
+  <p class="hint" style="margin-top:10px">
+    Esta es la lista completa de quienes pueden ser calificados. Quien no
+    aparezca aquí no se registró o su registro no está aprobado, y por lo tanto
+    su nota queda en 0.0.
+  </p>
+
+  <div class="section-head" style="margin-top:30px">
     <h2>Proyectos</h2>
     <span class="count"><%= proyectos.length %> total</span>
   </div>
@@ -122,29 +160,5 @@
     </form>
   </div>
 </main>
-
-<script>
-  // Contador de integrantes seleccionados + botón Todos / Ninguno
-  const picker = document.getElementById('picker');
-  if (picker) {
-    const casillas = () => [...picker.querySelectorAll('input[type=checkbox]')];
-    const salida = document.getElementById('selCount');
-    const toggle = document.getElementById('toggleTodos');
-
-    const refrescar = () => {
-      const n = casillas().filter(c => c.checked).length;
-      salida.textContent = n === 1 ? '1 seleccionado' : n + ' seleccionados';
-      toggle.textContent = n === casillas().length ? 'Ninguno' : 'Todos';
-    };
-
-    picker.addEventListener('change', refrescar);
-    toggle.addEventListener('click', () => {
-      const marcar = casillas().some(c => !c.checked);
-      casillas().forEach(c => { c.checked = marcar; });
-      refrescar();
-    });
-    refrescar();
-  }
-</script>
 
 <%- include('partials/footer') %>

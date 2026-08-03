@@ -1,0 +1,108 @@
+<%- include('partials/head', { title: 'Estado del registro — Expo Multimedia', descripcion: null }) %>
+
+<header class="pub-top">
+  <a href="/" class="pub-brand">Expo <em>Multimedia</em></a>
+  <nav class="pub-nav">
+    <a href="/">Volver a la Expo</a>
+    <a href="/registro">Registrar un proyecto</a>
+  </nav>
+</header>
+
+<main class="pub pub-angosto">
+  <% if (recienEnviada) { %>
+    <section class="pub-hero pub-hero-corto">
+      <p class="eyebrow">Registro enviado</p>
+      <h1>Listo, quedó <em>pendiente</em></h1>
+      <p class="lead">
+        Tu registro le llegó al docente de <%= solicitud.materia_nombre %>. Guarda
+        este código para consultar el estado más adelante.
+      </p>
+      <p class="codigo-grande"><%= solicitud.codigo %></p>
+      <p style="margin-top:18px">
+        Mientras tanto, mira <a href="/expositores">cómo se monta un stand</a>:
+        eso también se evalúa.
+      </p>
+    </section>
+  <% } else { %>
+    <section class="pub-hero pub-hero-corto">
+      <p class="eyebrow">Consulta</p>
+      <h1>Estado de tu <em>registro</em></h1>
+      <p class="lead">Escribe el código que te dimos al registrar el proyecto.</p>
+    </section>
+
+    <form method="GET" action="/registro/estado" class="card" style="margin-top:20px">
+      <div class="form-row">
+        <label for="codigo">Código</label>
+        <input type="text" id="codigo" name="codigo" maxlength="10" required autocomplete="off"
+               placeholder="Ej. K7M2QP" style="text-transform:uppercase; letter-spacing:.18em"
+               value="<%= codigo || '' %>" />
+      </div>
+      <button type="submit" class="btn block">Consultar</button>
+    </form>
+
+    <% if (error) { %>
+      <div class="alert err" style="margin-top:16px"><%= error %></div>
+    <% } %>
+  <% } %>
+
+  <% if (solicitud) {
+       const cls = solicitud.estado === 'aprobada' ? 'ok' : (solicitud.estado === 'rechazada' ? 'no' : 'pend');
+       const label = solicitud.estado === 'aprobada' ? 'Aprobado' : (solicitud.estado === 'rechazada' ? 'No aprobado' : 'Pendiente de revisión');
+  %>
+    <div class="card" style="margin-top:20px">
+      <div class="sol-head">
+        <div>
+          <p class="eyebrow" style="margin-bottom:4px"><%= solicitud.materia_nombre %></p>
+          <h2 style="margin:0"><%= solicitud.titulo %></h2>
+        </div>
+        <span class="estado <%= cls %>"><%= label %></span>
+      </div>
+
+      <p class="sol-meta">
+        <%= solicitud.sala_nombre || 'Sala por definir' %> ·
+        código <strong><%= solicitud.codigo %></strong>
+      </p>
+
+      <% if (solicitud.descripcion) { %>
+        <p class="sol-desc"><%= solicitud.descripcion %></p>
+      <% } %>
+
+      <p class="eyebrow" style="margin-top:18px">Equipo</p>
+      <ul class="sol-equipo">
+        <% solicitud.integrantes.forEach(i => { %>
+          <li><span><%= i.nombre %></span><% if (i.email) { %><em><%= i.email %></em><% } %></li>
+        <% }) %>
+      </ul>
+
+      <% if (solicitud.estado === 'aprobada') { %>
+        <p class="sol-nota ok">
+          Aprobado<% if (solicitud.revisor) { %> por <%= solicitud.revisor %><% } %>. Nos vemos en la Expo.
+        </p>
+      <% } else if (solicitud.estado === 'rechazada') { %>
+        <p class="sol-nota no">
+          <% if (solicitud.nota_docente) { %>
+            <%= solicitud.nota_docente %>
+          <% } else { %>
+            El docente no aprobó este registro. Habla con él para saber qué ajustar.
+          <% } %>
+        </p>
+      <% } else { %>
+        <p class="sol-nota pend">
+          Todavía sin revisar. El docente de la materia lo aprueba antes del evento.
+        </p>
+      <% } %>
+    </div>
+  <% } %>
+</main>
+
+<footer class="pub-foot">
+  <div>
+    <strong>Expo Multimedia</strong>
+    <span>Registro de expositores</span>
+  </div>
+  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
+    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
+  </a>
+</footer>
+
+<%- include('partials/footer') %>

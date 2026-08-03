@@ -303,6 +303,14 @@
       "semestres": "2.° a 6.° semestre"
     }
   ],
+  "registro": {
+    "_comentario": "Registro de expositores. Con \"abierto\": false el formulario deja de recibir registros y la landing muestra el aviso de cierre en vez del botón.",
+    "abierto": true,
+    "titulo": "¿Vas a exponer?",
+    "nota": "Registra tu proyecto antes del evento: eliges la materia, dices quiénes lo presentan y en qué sala quieren estar. El docente de la materia revisa el registro y lo aprueba.",
+    "cierra": "Fecha de cierre por definir",
+    "aviso_cerrado": "El registro de expositores ya se cerró. Si necesitas inscribir un proyecto, habla directamente con el docente de tu materia."
+  },
   "jornada": {
     "_comentario": "Horarios de la Expo. Mientras no esté cerrada la franja, 'cierre_extendido' y el aviso de abajo dejan claro que la tarde está por confirmar. Cada sala tiene además su propio 'horario' dentro de 'salas'.",
     "titulo": "Itinerario tentativo",
@@ -439,6 +447,306 @@
       "tentativo": true
     }
   ],
+  "requisitos": {
+    "_comentario": "Guía de montaje que ven los expositores en /expositores. Cada bloque es una sección de la página y cada item una tarjeta. Campos de un item: titulo, etiqueta (Obligatorio/Opcional/...), desc, lista[], no (lo que NO se acepta) y ejemplo[] (se muestra en monoespaciada). Todos son opcionales menos el titulo.",
+    "titulo": "Cómo se monta un stand",
+    "intro": "Esta es la guía general de la organización. El stand hace parte del proyecto y se evalúa: no basta con que el software funcione.",
+    "aviso": "Cada docente puede pedir cosas distintas o adicionales para su materia. Si lo que te dijeron en clase no coincide con esto, manda lo que pida tu docente: esta guía es el mínimo común de la Expo.",
+    "bloques": [
+      {
+        "id": "stand",
+        "titulo": "El stand",
+        "subtitulo": "Aplica a todos los proyectos con montaje físico",
+        "items": [
+          {
+            "titulo": "Mantel de mesa",
+            "etiqueta": "Obligatorio",
+            "desc": "La mesa deberá estar completamente cubierta con un mantel.",
+            "lista": [
+              "Color sólido: preferiblemente negro, blanco, azul oscuro o acorde a la identidad visual del proyecto.",
+              "Sin arrugas visibles.",
+              "Debe cubrir la parte frontal de la mesa.",
+              "Se recomienda incluir el logo del proyecto en la parte frontal."
+            ]
+          },
+          {
+            "titulo": "Banner vertical",
+            "etiqueta": "Obligatorio",
+            "desc": "Cada equipo deberá contar con un banner vertical tipo roll-up o equivalente. Debe incluir como mínimo:",
+            "lista": [
+              "Nombre del proyecto.",
+              "Logotipo.",
+              "Eslogan.",
+              "Imagen representativa.",
+              "Identidad visual consistente."
+            ],
+            "no": "No se aceptarán hojas impresas pegadas simulando un banner."
+          },
+          {
+            "titulo": "Panel posterior / Backboard",
+            "etiqueta": "Obligatorio",
+            "desc": "Detrás de la mesa deberá existir un panel informativo. Puede elaborarse en cartón pluma, foam board, MDF, PVC u otro material rígido. Debe contener al menos:",
+            "lista": [
+              "Nombre del proyecto.",
+              "Capturas de pantalla.",
+              "Diagramas.",
+              "Funcionalidades principales.",
+              "Información relevante del sistema."
+            ],
+            "no": "No se aceptarán carteles pequeños pegados directamente sobre la pared."
+          },
+          {
+            "titulo": "Decoración mínima",
+            "etiqueta": "Obligatorio",
+            "desc": "El stand deberá transmitir la temática del proyecto. Como mínimo deberá incluir algunos elementos decorativos:",
+            "lista": [
+              "Plantas.",
+              "Iluminación LED.",
+              "Maquetas.",
+              "Señalización.",
+              "Objetos impresos en 3D.",
+              "Elementos relacionados con el proyecto."
+            ],
+            "no": "No se aceptará una mesa vacía con únicamente un computador."
+          },
+          {
+            "titulo": "Identidad visual consistente",
+            "etiqueta": "Obligatorio",
+            "desc": "Todos los elementos del stand deberán compartir una misma línea gráfica. Se evaluará:",
+            "lista": [
+              "Colores.",
+              "Tipografía.",
+              "Logotipo.",
+              "Iconografía.",
+              "Uniformidad visual."
+            ]
+          },
+          {
+            "titulo": "Material gráfico",
+            "etiqueta": "Obligatorio",
+            "desc": "El stand deberá incluir material visual impreso. Por ejemplo:",
+            "lista": [
+              "Infografías.",
+              "Mapas.",
+              "Diagramas.",
+              "Mockups.",
+              "Flujos del sistema.",
+              "Estadísticas."
+            ]
+          },
+          {
+            "titulo": "Orden y presentación",
+            "etiqueta": "Obligatorio",
+            "desc": "Durante toda la feria el stand deberá mantenerse:",
+            "lista": [
+              "Limpio.",
+              "Ordenado.",
+              "Sin cajas visibles.",
+              "Sin cables desorganizados.",
+              "Sin basura."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "video",
+        "titulo": "Cortometrajes y animaciones",
+        "sala": "tras-bambalinas",
+        "subtitulo": "Requisitos de entrega de las piezas que se proyectan",
+        "items": [
+          {
+            "titulo": "Title card inicial",
+            "etiqueta": "Obligatorio",
+            "desc": "Los primeros 5 segundos del video deberán contener una pantalla de presentación con el nombre del proyecto, el logo (si aplica), la asignatura, «Expo Multimedia» y el año.",
+            "ejemplo": [
+              "El Último Tren",
+              "Ingeniería en Multimedia",
+              "Expo Multimedia 2027"
+            ]
+          },
+          {
+            "titulo": "Créditos finales",
+            "etiqueta": "Obligatorio",
+            "desc": "Todo proyecto deberá incluir créditos completos. Como mínimo:",
+            "lista": [
+              "Dirección.",
+              "Producción.",
+              "Animación.",
+              "Modelado.",
+              "Programación (si aplica).",
+              "Música.",
+              "Sonido.",
+              "Actores de voz (si aplica).",
+              "Docente.",
+              "Universidad."
+            ],
+            "no": "No se aceptarán videos que finalicen abruptamente."
+          },
+          {
+            "titulo": "Formato de entrega",
+            "etiqueta": "Obligatorio",
+            "desc": "Únicamente:",
+            "lista": [
+              "MP4.",
+              "Códec H.264.",
+              "Resolución 1920 × 1080.",
+              "30 o 60 FPS."
+            ],
+            "no": "Nada de MOV, AVI, MKV ni proyectos de Premiere."
+          },
+          {
+            "titulo": "Audio",
+            "etiqueta": "Obligatorio",
+            "desc": "El audio debe entregarse:",
+            "lista": [
+              "Estéreo.",
+              "Sin saturación.",
+              "Volumen uniforme.",
+              "Sin cortes."
+            ],
+            "nota": "Es responsabilidad del equipo verificar la reproducción."
+          },
+          {
+            "titulo": "Nombre del archivo",
+            "etiqueta": "Obligatorio",
+            "desc": "Se nombra con la categoría, el proyecto y el grupo:",
+            "ejemplo": [
+              "Categoria_Proyecto_Grupo.mp4",
+              "Animacion_EcosDelBosque_G03.mp4"
+            ],
+            "no": "Nada de video_final_final2.mp4"
+          },
+          {
+            "titulo": "Pantalla final",
+            "etiqueta": "Recomendado",
+            "desc": "Después de los créditos, unos 5 segundos con un cierre para el público.",
+            "ejemplo": [
+              "Gracias por asistir a la Expo Multimedia.",
+              "Escanea el código QR para conocer más del proyecto."
+            ]
+          },
+          {
+            "titulo": "Verificación previa",
+            "etiqueta": "Obligatorio",
+            "desc": "Antes de la Expo, el equipo deberá revisar que:",
+            "lista": [
+              "El video abre correctamente.",
+              "El audio funciona.",
+              "Los subtítulos, si existen, son legibles.",
+              "No hay cuadros negros inesperados.",
+              "Los créditos aparecen completos."
+            ]
+          }
+        ]
+      },
+      {
+        "id": "montaje",
+        "titulo": "Montaje y desmontaje",
+        "subtitulo": "Normas generales para todos los equipos",
+        "items": [
+          {
+            "titulo": "Horario de montaje",
+            "desc": "El montaje de los stands podrá realizarse a partir de las 6:00 p. m. del día anterior a la Expo Multimedia, siempre que la organización del evento y la disponibilidad de los espacios lo permitan.",
+            "nota": "Cada equipo deberá coordinar previamente con el docente de la asignatura cualquier necesidad especial relacionada con el montaje."
+          },
+          {
+            "titulo": "Responsabilidad del montaje",
+            "desc": "Cada equipo será responsable de:",
+            "lista": [
+              "Transportar sus materiales.",
+              "Montar completamente su stand.",
+              "Verificar el funcionamiento del software y del hardware.",
+              "Dejar el espacio listo para el inicio de la Expo."
+            ],
+            "nota": "La organización del evento no suministrará personal para el montaje de los stands."
+          },
+          {
+            "titulo": "Cuidado de las instalaciones",
+            "etiqueta": "Prohibido",
+            "desc": "Está prohibido:",
+            "lista": [
+              "Perforar paredes.",
+              "Pintar superficies.",
+              "Utilizar adhesivos que deterioren la infraestructura.",
+              "Alterar el mobiliario asignado.",
+              "Bloquear pasillos o rutas de evacuación."
+            ],
+            "nota": "Todo elemento utilizado deberá retirarse sin causar daños a las instalaciones."
+          },
+          {
+            "titulo": "Durante la Expo",
+            "etiqueta": "Obligatorio",
+            "desc": "Una vez inaugurada la Expo:",
+            "lista": [
+              "El stand deberá permanecer completamente montado.",
+              "Todos los equipos deberán permanecer operativos.",
+              "El espacio deberá mantenerse limpio y organizado.",
+              "Al menos un integrante del equipo deberá permanecer atendiendo el stand en todo momento."
+            ]
+          },
+          {
+            "titulo": "Desmontaje",
+            "etiqueta": "Obligatorio",
+            "desc": "El desmontaje únicamente podrá iniciarse una vez finalice oficialmente la Expo Multimedia y después de recibir la autorización expresa del docente responsable de la asignatura. Antes de esa autorización, ningún equipo podrá retirar:",
+            "lista": [
+              "Equipos.",
+              "Decoración.",
+              "Banners.",
+              "Manteles.",
+              "Maquetas.",
+              "Material publicitario."
+            ]
+          },
+          {
+            "titulo": "Penalización por desmontaje anticipado",
+            "etiqueta": "Penalización",
+            "alerta": true,
+            "desc": "Para garantizar una experiencia adecuada para todos los asistentes durante toda la jornada, está estrictamente prohibido iniciar el desmontaje antes de la autorización del docente. Si cualquier integrante empieza a desmontar, la penalización se aplica a todo el grupo, sin excepción. Incluye, entre otras acciones:",
+            "lista": [
+              "Retirar computadores o dispositivos.",
+              "Desconectar equipos.",
+              "Guardar materiales.",
+              "Desarmar la decoración.",
+              "Retirar el mantel, el banner o el panel informativo.",
+              "Empacar elementos del stand."
+            ]
+          },
+          {
+            "titulo": "Entrega del espacio",
+            "etiqueta": "Obligatorio",
+            "desc": "Antes de abandonar el lugar, cada equipo deberá:",
+            "lista": [
+              "Retirar todos sus materiales.",
+              "Dejar el mobiliario en las condiciones en que fue recibido.",
+              "Disponer adecuadamente de los residuos generados.",
+              "Verificar que no queden objetos personales o equipos en el espacio asignado."
+            ],
+            "nota": "El espacio deberá entregarse completamente limpio y libre de materiales al finalizar el evento."
+          }
+        ]
+      }
+    ],
+    "extras": {
+      "titulo": "Suma puntos",
+      "desc": "No son obligatorios, pero son los que diferencian a los mejores stands:",
+      "lista": [
+        "Uniformes o camisetas del proyecto.",
+        "Credenciales para los integrantes.",
+        "Maquetas físicas.",
+        "Impresiones 3D.",
+        "Pantalla secundaria o monitor adicional.",
+        "Video promocional en reproducción continua.",
+        "Folletos o tarjetas con código QR para descargar la aplicación.",
+        "Señalización temática: estaciones, señales de tránsito, tótems.",
+        "Iluminación ambiental.",
+        "Experiencias interactivas para el visitante."
+      ]
+    },
+    "filosofia": {
+      "titulo": "Por qué se pide todo esto",
+      "texto": "La Expo Multimedia busca simular una feria profesional de tecnología e innovación. El objetivo no es únicamente presentar un software funcional, sino demostrar la capacidad del equipo para comunicar, vender y defender una solución tecnológica mediante una experiencia completa para el visitante. El stand forma parte integral del proyecto y será evaluado con el mismo nivel de importancia que el software desarrollado."
+    }
+  },
   "mapa": {
     "_comentario": "Plano provisional. La cuadrícula es de 'cols' x 'filas' unidades y cada espacio se ubica con x, y (esquina superior izquierda), w (ancho) y h (alto) en esas unidades. Se admiten decimales. tipo: sala | pasillo | acceso | servicio. Un espacio con tipo 'sala' toma nombre y color de la experiencia indicada en 'sala'. Cuando lleguen los planos reales, se reemplazan las medidas aquí y la landing se actualiza sola.",
     "titulo": "Distribución tentativa",
@@ -450,74 +758,107 @@
         "id": "e-trazo-cero",
         "tipo": "sala",
         "sala": "trazo-cero",
-        "x": 0, "y": 0, "w": 5.5, "h": 3.5
+        "x": 0,
+        "y": 0,
+        "w": 5.5,
+        "h": 3.5
       },
       {
         "id": "e-tras-bambalinas",
         "tipo": "sala",
         "sala": "tras-bambalinas",
-        "x": 6.5, "y": 0, "w": 5.5, "h": 3.5
+        "x": 6.5,
+        "y": 0,
+        "w": 5.5,
+        "h": 3.5
       },
       {
         "id": "e-pasillo-central",
         "tipo": "pasillo",
         "name": "Pasillo central",
         "desc": "Eje del recorrido: conecta las cuatro salas y baja hasta el ingreso.",
-        "x": 5.5, "y": 0, "w": 1, "h": 10
+        "x": 5.5,
+        "y": 0,
+        "w": 1,
+        "h": 10
       },
       {
         "id": "e-pasillo-oeste",
         "tipo": "pasillo",
         "name": "Pasillo oeste",
         "desc": "Une Trazo Cero con Indie Alley.",
-        "x": 0, "y": 3.5, "w": 5.5, "h": 1
+        "x": 0,
+        "y": 3.5,
+        "w": 5.5,
+        "h": 1
       },
       {
         "id": "e-pasillo-este",
         "tipo": "pasillo",
         "name": "Pasillo este",
         "desc": "Une Tras Bambalinas con Tunja 2040.",
-        "x": 6.5, "y": 3.5, "w": 5.5, "h": 1
+        "x": 6.5,
+        "y": 3.5,
+        "w": 5.5,
+        "h": 1
       },
       {
         "id": "e-indie-alley",
         "tipo": "sala",
         "sala": "indie-alley",
-        "x": 0, "y": 4.5, "w": 5.5, "h": 3.5
+        "x": 0,
+        "y": 4.5,
+        "w": 5.5,
+        "h": 3.5
       },
       {
         "id": "e-tunja-2040",
         "tipo": "sala",
         "sala": "tunja-2040",
-        "x": 6.5, "y": 4.5, "w": 5.5, "h": 3.5
+        "x": 6.5,
+        "y": 4.5,
+        "w": 5.5,
+        "h": 3.5
       },
       {
         "id": "e-ingreso",
         "tipo": "acceso",
         "name": "Ingreso",
         "desc": "Entrada principal y punto de partida del recorrido.",
-        "x": 0, "y": 8, "w": 3, "h": 2
+        "x": 0,
+        "y": 8,
+        "w": 3,
+        "h": 2
       },
       {
         "id": "e-registro",
         "tipo": "servicio",
         "name": "Registro",
         "desc": "Registro de visitantes y entrega del mapa del recorrido.",
-        "x": 3, "y": 8, "w": 2.5, "h": 2
+        "x": 3,
+        "y": 8,
+        "w": 2.5,
+        "h": 2
       },
       {
         "id": "e-informacion",
         "tipo": "servicio",
         "name": "Información",
         "desc": "Horarios de las funciones y ayuda para ubicarse.",
-        "x": 6.5, "y": 8, "w": 2.5, "h": 2
+        "x": 6.5,
+        "y": 8,
+        "w": 2.5,
+        "h": 2
       },
       {
         "id": "e-descanso",
         "tipo": "servicio",
         "name": "Zona de descanso",
         "desc": "Espacio para tomar aire entre salas.",
-        "x": 9, "y": 8, "w": 3, "h": 2
+        "x": 9,
+        "y": 8,
+        "w": 3,
+        "h": 2
       }
     ]
   }

@@ -1,0 +1,161 @@
+<%- include('partials/head', { title: 'Registro de expositores — Expo Multimedia', descripcion: registro.nota || null }) %>
+
+<header class="pub-top">
+  <a href="/" class="pub-brand">Expo <em>Multimedia</em></a>
+  <nav class="pub-nav">
+    <a href="/">Volver a la Expo</a>
+    <a href="/expositores">Requisitos del stand</a>
+    <a href="/registro/estado">Consultar mi registro</a>
+  </nav>
+</header>
+
+<main class="pub pub-angosto">
+  <section class="pub-hero pub-hero-corto">
+    <p class="eyebrow">Registro de expositores</p>
+    <h1><%= registro.titulo || '¿Vas a exponer?' %></h1>
+    <p class="lead"><%= registro.nota || '' %></p>
+    <% if (registro.cierra) { %>
+      <p class="hint" style="margin-top:12px"><%= registro.cierra %></p>
+    <% } %>
+  </section>
+
+  <% if (!registro.abierto) { %>
+    <div class="alert err" style="margin-top:24px">
+      <%= registro.aviso_cerrado || 'El registro de expositores está cerrado.' %>
+    </div>
+  <% } else { %>
+
+    <% if (errores.length) { %>
+      <div class="alert err" style="margin-top:24px">
+        <strong>Revisa esto antes de enviar:</strong>
+        <ul style="margin:6px 0 0; padding-left:18px">
+          <% errores.forEach(e => { %><li><%= e %></li><% }) %>
+        </ul>
+      </div>
+    <% } %>
+
+    <% if (!materias.length) { %>
+      <div class="empty" style="margin-top:24px">
+        Todavía no hay materias abiertas. Espera a que tu docente cree la suya.
+      </div>
+    <% } else { %>
+
+    <form method="POST" action="/registro" class="card" style="margin-top:22px" id="formRegistro">
+      <p class="eyebrow">1 · El proyecto</p>
+
+      <div class="form-row">
+        <label for="materia_id">Materia</label>
+        <select id="materia_id" name="materia_id" required>
+          <option value="">— elige la materia —</option>
+          <% materias.forEach(m => { %>
+            <option value="<%= m.id %>" <%= String(valores.materia_id) === String(m.id) ? 'selected' : '' %>><%= m.nombre %></option>
+          <% }) %>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="titulo">Título del proyecto</label>
+        <input type="text" id="titulo" name="titulo" maxlength="120" required autocomplete="off"
+               placeholder="Ej. Cortometraje: La luz que queda"
+               value="<%= valores.titulo || '' %>" />
+      </div>
+
+      <div class="form-row">
+        <label for="sala">¿En qué sala van a estar?</label>
+        <select id="sala" name="sala" required>
+          <option value="">— elige la experiencia —</option>
+          <% salas.forEach(s => { %>
+            <option value="<%= s.id %>" <%= valores.sala === s.id ? 'selected' : '' %>><%= s.name %> · <%= s.lema %></option>
+          <% }) %>
+        </select>
+        <p class="hint">Si no estás seguro, elige la que más se parezca: el docente puede corregirlo.</p>
+      </div>
+
+      <div class="form-row">
+        <label for="descripcion">De qué trata <span class="opcional">(opcional)</span></label>
+        <textarea id="descripcion" name="descripcion" rows="3" maxlength="400"
+                  placeholder="Dos líneas para que el docente sepa qué van a montar."><%= valores.descripcion || '' %></textarea>
+      </div>
+
+      <p class="eyebrow" style="margin-top:26px">2 · Quién registra</p>
+
+      <div class="form-row">
+        <label for="contacto_nombre">Tu nombre completo</label>
+        <input type="text" id="contacto_nombre" name="contacto_nombre" maxlength="120" required autocomplete="name"
+               value="<%= valores.contacto_nombre || '' %>" />
+      </div>
+
+      <div class="form-row">
+        <label for="contacto_email">Tu correo institucional</label>
+        <input type="email" id="contacto_email" name="contacto_email" maxlength="160" required autocomplete="email"
+               placeholder="tunombre@<%= DOMINIO %>"
+               pattern="<%= PATRON_CORREO %>"
+               title="Usa tu correo @<%= DOMINIO %>"
+               value="<%= valores.contacto_email || '' %>" />
+        <p class="hint">Solo correos @<%= DOMINIO %>. Quedas incluido en el equipo automáticamente.</p>
+      </div>
+
+      <p class="eyebrow" style="margin-top:26px">3 · Compañeros que exponen</p>
+      <p class="hint" style="margin:-4px 0 12px">
+        Nombre <strong>y</strong> correo @<%= DOMINIO %> de cada uno: sin correo
+        no queda registrado y no lo pueden calificar. Si el proyecto es
+        individual, deja esto vacío.
+      </p>
+
+      <div id="integrantes">
+        <% const filas = (valores.integrantes && valores.integrantes.length) ? valores.integrantes : [{}, {}, {}]; %>
+        <% filas.forEach(i => { %>
+          <div class="fila-integrante">
+            <input type="text" name="integrante_nombre" maxlength="120" placeholder="Nombre completo"
+                   autocomplete="off" value="<%= i.nombre || '' %>" />
+            <input type="email" name="integrante_email" maxlength="160" placeholder="correo@<%= DOMINIO %>"
+                   pattern="<%= PATRON_CORREO %>" title="Usa el correo @<%= DOMINIO %>"
+                   autocomplete="off" value="<%= i.email || '' %>" />
+          </div>
+        <% }) %>
+      </div>
+
+      <button type="button" class="link-btn" id="masIntegrantes" style="margin-top:4px">+ Agregar otro compañero</button>
+
+      <button type="submit" class="btn block" style="margin-top:24px">Enviar registro</button>
+      <p class="hint" style="text-align:center; margin-top:10px">
+        Queda pendiente hasta que el docente de la materia lo apruebe.
+      </p>
+
+      <p class="aviso-nota">
+        Quien no quede registrado en un proyecto aprobado no se puede calificar
+        el día de la Expo, y su nota es <strong>0.0</strong>. Revisa que estén
+        todos los del equipo antes de enviar.
+      </p>
+    </form>
+    <% } %>
+  <% } %>
+</main>
+
+<footer class="pub-foot">
+  <div>
+    <strong>Expo Multimedia</strong>
+    <span>¿Ya te registraste? <a href="/registro/estado">Consulta tu código</a></span>
+  </div>
+  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
+    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
+  </a>
+</footer>
+
+<script>
+  // Filas extra para equipos grandes
+  (function () {
+    var caja = document.getElementById("integrantes");
+    var boton = document.getElementById("masIntegrantes");
+    if (!caja || !boton) return;
+
+    boton.addEventListener("click", function () {
+      var fila = caja.firstElementChild.cloneNode(true);
+      fila.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+      caja.appendChild(fila);
+      fila.querySelector("input").focus();
+    });
+  })();
+</script>
+
+<%- include('partials/footer') %>
