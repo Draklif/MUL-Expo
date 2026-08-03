@@ -5,6 +5,7 @@ const path = require("path");
 
 const db = require("./db/database");
 const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX } = require("./config");
+const { contenidoExpo } = require("./lib/contenido");
 
 const authRouter = require("./routes/auth");
 const materiasRouter = require("./routes/materias");
@@ -44,7 +45,7 @@ app.use((req, res, next) => {
 
 // Middleware de autenticación
 function requireAuth(req, res, next) {
-  if (!req.session.docente) return res.redirect("/login");
+  if (!req.session.docente) return res.redirect("/acceso");
   next();
 }
 
@@ -54,8 +55,13 @@ app.use("/materias", requireAuth, materiasRouter);
 app.use("/proyectos", requireAuth, proyectosRouter);
 app.use("/api", requireAuth, apiRouter);
 
-// Home: tablero / listado
-app.get("/", requireAuth, (req, res) => {
+// Landing pública de la Expo Multimedia
+app.get("/", (req, res) => {
+  res.render("landing", { ...contenidoExpo() });
+});
+
+// Panel de docentes: listado de materias
+app.get("/panel", requireAuth, (req, res) => {
   const materias = db
     .prepare(
       `SELECT m.*, d.name AS creador,
@@ -76,6 +82,7 @@ app.get("/tablero", requireAuth, (req, res) => {
 // ---------- Arrancar ----------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`\n  ✓ Expo Eval corriendo en http://localhost:${PORT}`);
+  console.log(`\n  ✓ Expo Multimedia corriendo en http://localhost:${PORT}`);
+  console.log(`  ✓ Acceso docentes:         http://localhost:${PORT}/acceso`);
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}\n`);
 });

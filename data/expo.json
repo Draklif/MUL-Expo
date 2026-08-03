@@ -1,0 +1,364 @@
+{
+  "_comentario": "Contenido público de la landing. Se edita aquí y se recarga el navegador: el servidor relee el archivo cuando cambia, sin reiniciar. Las notas internas de planeación (pendientes) NO viven en este archivo.",
+  "programa": "Ingeniería en Multimedia",
+  "evento": {
+    "name": "Expo Multimedia",
+    "tipo": "Muestra académica",
+    "estado": "confirmado",
+    "cuando": "Cerca del cierre de semestre",
+    "sede": "Campus",
+    "desc": "Todos los estudiantes exponen el proyecto final de cada asignatura. No es una sola sala, sino un recorrido por experiencias temáticas que agrupan materias afines."
+  },
+  "categorias": {
+    "code": {
+      "label": "Programación / ingeniería",
+      "short": "Programación"
+    },
+    "story": {
+      "label": "Producción / narrativa",
+      "short": "Producción"
+    },
+    "realtime": {
+      "label": "Tiempo real / Unity",
+      "short": "Tiempo real"
+    },
+    "design": {
+      "label": "Diseño / portafolio",
+      "short": "Diseño"
+    }
+  },
+  "salas": [
+    {
+      "id": "indie-alley",
+      "name": "Indie Alley",
+      "accent": "code",
+      "lema": "El pasillo de los estudios",
+      "desc": "Cada equipo de séptimo y octavo monta su stand como si fuera un estudio independiente: videojuego jugable, entorno de simulación, experiencia RV/RA, tráiler, marca y portafolio. El visitante recorre stands y juega. Es la experiencia que cierra el proyecto integrador.",
+      "montaje": [
+        "Stands por estudio",
+        "Demos jugables",
+        "Proyección de tráilers"
+      ],
+      "asignaturas": [
+        {
+          "id": "arquitectura",
+          "name": "Arquitectura de videojuegos",
+          "sem": 7,
+          "cat": "code",
+          "nota": "Diseño de juego probado primero en mesa, luego prototipo digital.",
+          "entregas": [
+            "Juego de mesa (semana 8)",
+            "Prototipo digital del videojuego"
+          ]
+        },
+        {
+          "id": "produccion-mm",
+          "name": "Producción multimedia",
+          "sem": 7,
+          "cat": "story",
+          "nota": "Crea la identidad del estudio y la pieza audiovisual del videojuego.",
+          "entregas": [
+            "Estudio + concepto del IP",
+            "Teaser / trailer / cinemática"
+          ]
+        },
+        {
+          "id": "simulacion",
+          "name": "Simulación y entornos",
+          "sem": 7,
+          "cat": "realtime",
+          "nota": "Escenario interactivo del universo construido en Unity.",
+          "entregas": [
+            "Entorno interactivo en Unity"
+          ]
+        },
+        {
+          "id": "realidad-mixta",
+          "name": "Realidad mixta (RV/RA)",
+          "sem": 7,
+          "cat": "realtime",
+          "nota": "Proyecto unificado con Simulación y entornos, también en Unity.",
+          "entregas": [
+            "Experiencia RV/RA del universo"
+          ]
+        },
+        {
+          "id": "prod-videojuegos",
+          "name": "Producción de videojuegos",
+          "sem": 8,
+          "cat": "code",
+          "nota": "Termina la demo del videojuego y la publica bajo el estudio.",
+          "entregas": [
+            "Demo final publicada en el estudio"
+          ]
+        },
+        {
+          "id": "integracion",
+          "name": "Integración multimedia",
+          "sem": 8,
+          "cat": "story",
+          "nota": "Reúne todos los productos en un universo transmedia: web y redes.",
+          "entregas": [
+            "Universo transmedia: sitio web + redes"
+          ]
+        },
+        {
+          "id": "marketing-digital",
+          "name": "Marketing digital",
+          "sem": 8,
+          "cat": "story",
+          "nota": "Estrategias de marketing aplicadas al estudio, sus redes y sus productos.",
+          "entregas": [
+            "Estrategia de marketing del estudio y el universo"
+          ]
+        },
+        {
+          "id": "portafolio",
+          "name": "Portafolio profesional",
+          "sem": 8,
+          "cat": "design",
+          "nota": "Documenta y empaqueta todo el proceso del estudio.",
+          "entregas": [
+            "Portafolio profesional del equipo"
+          ]
+        }
+      ],
+      "semestres": "7.° a 8.° semestre"
+    },
+    {
+      "id": "tunja-2040",
+      "name": "Tunja 2040",
+      "accent": "realtime",
+      "lema": "La ciudad que viene",
+      "desc": "Proyectos que imaginan a Tunja en 2040: metro, sistema integrado de buses, biciparking y servicios urbanos. Taller de diseño multimedia construye la PWA del ciudadano —escritorio y móvil, con tarjetas NFC para entrar al metro, tomar una bici o pagar el bus—, Usabilidad y accesibilidad la audita, y Taller de aplicaciones móviles suma su pieza al mismo ecosistema.",
+      "montaje": [
+        "Maqueta de ciudad",
+        "PWA en escritorio y móvil",
+        "Tarjetas NFC para el recorrido"
+      ],
+      "asignaturas": [
+        {
+          "id": "taller-dm",
+          "name": "Taller diseño multimedia",
+          "sem": 5,
+          "cat": "realtime",
+          "nota": "Construyen la PWA de Tunja 2040: instalable en escritorio y móvil, con lectura de tarjetas NFC.",
+          "entregas": [
+            "PWA de Tunja 2040 (escritorio y móvil)",
+            "Integración con tarjetas NFC"
+          ]
+        },
+        {
+          "id": "usabilidad",
+          "name": "Usabilidad y accesibilidad",
+          "sem": 5,
+          "cat": "design",
+          "nota": "Validan usabilidad y accesibilidad sobre la misma PWA de Tunja 2040.",
+          "entregas": [
+            "Auditoría de usabilidad y accesibilidad de la PWA"
+          ]
+        },
+        {
+          "id": "apps-moviles",
+          "name": "Taller aplicaciones móviles",
+          "sem": 6,
+          "cat": "code"
+        }
+      ],
+      "semestres": "5.° a 6.° semestre"
+    },
+    {
+      "id": "trazo-cero",
+      "name": "Trazo Cero",
+      "accent": "design",
+      "lema": "Donde empieza todo",
+      "desc": "Del lápiz al 3D: juegos de mesa ilustrados, perspectivas, dioramas digitales, artbooks de personajes, animación 2D y modelado. Una galería de piezas impresas y láminas de primero a sexto semestre.",
+      "montaje": [
+        "Galería de láminas",
+        "Piezas impresas",
+        "Mesas de juego"
+      ],
+      "asignaturas": [
+        {
+          "id": "dibujo-artistico",
+          "name": "Dibujo artístico",
+          "sem": 1,
+          "cat": "design",
+          "nota": "Primer juego de mesa ilustrado: anatomía, comprensión artística y creatividad.",
+          "entregas": [
+            "Juego de mesa ilustrado (individual o grupal)"
+          ]
+        },
+        {
+          "id": "expresion-grafica",
+          "name": "Expresión gráfica",
+          "sem": 2,
+          "cat": "design",
+          "nota": "Idean un videojuego abstracto y lo dibujan en perspectiva técnica.",
+          "entregas": [
+            "Vista isométrica de un nivel del videojuego",
+            "Vistas con 1, 2 y 3 puntos de fuga del nivel"
+          ]
+        },
+        {
+          "id": "taller-dgd",
+          "name": "Taller diseño gráfico digital",
+          "sem": 3,
+          "cat": "design",
+          "nota": "Composición y diagramación digital a partir de una película elegida.",
+          "entregas": [
+            "Diorama digital de una película"
+          ]
+        },
+        {
+          "id": "diseno-personajes",
+          "name": "Diseño de personajes",
+          "sem": 4,
+          "cat": "design",
+          "nota": "Personajes con historia y comunicación visual, dentro de una narrativa propuesta.",
+          "entregas": [
+            "Artbook impreso de personajes con diagramación"
+          ]
+        },
+        {
+          "id": "ilustracion-2d",
+          "name": "Ilustración y animación 2D",
+          "sem": 5,
+          "cat": "design"
+        },
+        {
+          "id": "modelado-3d",
+          "name": "Modelado y animación 3D",
+          "sem": 6,
+          "cat": "design"
+        }
+      ],
+      "semestres": "1.° a 6.° semestre"
+    },
+    {
+      "id": "tras-bambalinas",
+      "name": "Tras Bambalinas",
+      "accent": "story",
+      "lema": "El proceso antes de la función",
+      "desc": "Guiones, storyboards, fotografía, montaje y lectura crítica de la imagen. Sala de proyección con horarios: se ve la pieza terminada y también lo que hubo detrás de ella.",
+      "montaje": [
+        "Sala de proyección",
+        "Funciones con horario",
+        "Muro de storyboards"
+      ],
+      "asignaturas": [
+        {
+          "id": "narrativa-visual",
+          "name": "Narrativa visual",
+          "sem": 2,
+          "cat": "story",
+          "nota": "Estructuran una historia con herramientas narrativas profesionales.",
+          "entregas": [
+            "Guion técnico, guion literario y storyboard de una historia"
+          ]
+        },
+        {
+          "id": "video-foto",
+          "name": "Video y fotografía digital",
+          "sem": 5,
+          "cat": "design"
+        },
+        {
+          "id": "edicion-av",
+          "name": "Edición de audio y video",
+          "sem": 6,
+          "cat": "story"
+        },
+        {
+          "id": "cultura-cv",
+          "name": "Cultura y comunicación visual",
+          "sem": 6,
+          "cat": "story"
+        }
+      ],
+      "semestres": "2.° a 6.° semestre"
+    }
+  ],
+  "mapa": {
+    "_comentario": "Plano provisional. La cuadrícula es de 'cols' x 'filas' unidades y cada espacio se ubica con x, y (esquina superior izquierda), w (ancho) y h (alto) en esas unidades. Se admiten decimales. tipo: sala | pasillo | acceso | servicio. Un espacio con tipo 'sala' toma nombre y color de la experiencia indicada en 'sala'. Cuando lleguen los planos reales, se reemplazan las medidas aquí y la landing se actualiza sola.",
+    "titulo": "Distribución tentativa",
+    "nota": "Este plano es un borrador para ubicarse: las medidas y los espacios definitivos se publicarán aquí cuando esté listo el montaje.",
+    "cols": 12,
+    "filas": 10,
+    "espacios": [
+      {
+        "id": "e-trazo-cero",
+        "tipo": "sala",
+        "sala": "trazo-cero",
+        "x": 0, "y": 0, "w": 5.5, "h": 3.5
+      },
+      {
+        "id": "e-tras-bambalinas",
+        "tipo": "sala",
+        "sala": "tras-bambalinas",
+        "x": 6.5, "y": 0, "w": 5.5, "h": 3.5
+      },
+      {
+        "id": "e-pasillo-central",
+        "tipo": "pasillo",
+        "name": "Pasillo central",
+        "desc": "Eje del recorrido: conecta las cuatro salas y baja hasta el ingreso.",
+        "x": 5.5, "y": 0, "w": 1, "h": 10
+      },
+      {
+        "id": "e-pasillo-oeste",
+        "tipo": "pasillo",
+        "name": "Pasillo oeste",
+        "desc": "Une Trazo Cero con Indie Alley.",
+        "x": 0, "y": 3.5, "w": 5.5, "h": 1
+      },
+      {
+        "id": "e-pasillo-este",
+        "tipo": "pasillo",
+        "name": "Pasillo este",
+        "desc": "Une Tras Bambalinas con Tunja 2040.",
+        "x": 6.5, "y": 3.5, "w": 5.5, "h": 1
+      },
+      {
+        "id": "e-indie-alley",
+        "tipo": "sala",
+        "sala": "indie-alley",
+        "x": 0, "y": 4.5, "w": 5.5, "h": 3.5
+      },
+      {
+        "id": "e-tunja-2040",
+        "tipo": "sala",
+        "sala": "tunja-2040",
+        "x": 6.5, "y": 4.5, "w": 5.5, "h": 3.5
+      },
+      {
+        "id": "e-ingreso",
+        "tipo": "acceso",
+        "name": "Ingreso",
+        "desc": "Entrada principal y punto de partida del recorrido.",
+        "x": 0, "y": 8, "w": 3, "h": 2
+      },
+      {
+        "id": "e-registro",
+        "tipo": "servicio",
+        "name": "Registro",
+        "desc": "Registro de visitantes y entrega del mapa del recorrido.",
+        "x": 3, "y": 8, "w": 2.5, "h": 2
+      },
+      {
+        "id": "e-informacion",
+        "tipo": "servicio",
+        "name": "Información",
+        "desc": "Horarios de las funciones y ayuda para ubicarse.",
+        "x": 6.5, "y": 8, "w": 2.5, "h": 2
+      },
+      {
+        "id": "e-descanso",
+        "tipo": "servicio",
+        "name": "Zona de descanso",
+        "desc": "Espacio para tomar aire entre salas.",
+        "x": 9, "y": 8, "w": 3, "h": 2
+      }
+    ]
+  }
+}

@@ -37,11 +37,54 @@ npm start
 Verás:
 
 ```
-  ✓ Expo Eval corriendo en http://localhost:3000
+  ✓ Expo Multimedia corriendo en http://localhost:3000
+  ✓ Acceso docentes:         http://localhost:3000/acceso
   ✓ Para exponer con ngrok:  ngrok http 3000
 ```
 
 Abre `http://localhost:3000` en el navegador del PC.
+
+## Las dos caras de la app
+
+| Ruta | Quién entra | Qué es |
+|---|---|---|
+| `/` | Cualquiera, sin login | Landing pública de la Expo: el recorrido, el plano y cómo se evalúa |
+| `/acceso` | Docentes | Login (enlace discreto al pie de la landing) |
+| `/panel` | Docentes | Materias, estudiantes y proyectos |
+| `/tablero` | Docentes | Ranking en vivo |
+
+### Editar el contenido público
+
+Todo lo que se ve en `/` vive en `data/expo.json`. Se edita el archivo y se
+recarga el navegador: el servidor lo relee cuando cambia, **sin reiniciar**.
+
+- `evento` — nombre, tipo, cuándo, dónde y la descripción del hero.
+- `salas` — las experiencias del recorrido, con su lema, montaje y las
+  asignaturas que exponen ahí. El color sale de `accent`
+  (`code`, `story`, `realtime` o `design`).
+- `mapa` — el plano interactivo.
+
+El contenido salió del tablero del plan integrador (`Plan/data/*.json`), pero a
+partir de aquí las dos cosas son independientes: editar uno no toca al otro.
+
+### El plano del lugar
+
+`mapa` es una cuadrícula de `cols` × `filas` unidades. Cada espacio se ubica con
+`x`, `y` (esquina superior izquierda), `w` y `h` en esas unidades — se admiten
+decimales, y quien mande los planos reales solo tiene que pasarlos a esa escala:
+
+```json
+{ "id": "e-ingreso", "tipo": "acceso", "name": "Ingreso",
+  "desc": "Entrada principal.", "x": 0, "y": 8, "w": 3, "h": 2 }
+```
+
+- `tipo` — `sala`, `pasillo`, `acceso` o `servicio`. Define el estilo del rectángulo.
+- Un espacio de tipo `sala` no lleva `name` ni `desc`: toma el nombre, el color y
+  la descripción de la experiencia que se indique en `sala`.
+- Los espacios más altos que anchos rotan su etiqueta solos.
+
+El plano actual es **tentativo** y así está rotulado en la página. Al cambiar las
+medidas en el JSON, la landing se redibuja sola.
 
 ## Cargar materias y estudiantes de una vez
 
@@ -72,7 +115,8 @@ En otra terminal:
 ngrok http 3000
 ```
 
-Comparte la URL `https://xxxxx.ngrok-free.app` con los docentes. Pueden
-abrirla en el celular y entrar con su código.
+Comparte la URL `https://xxxxx.ngrok-free.app`: quien la abra cae en la landing
+de la Expo. Los docentes entran por `…/acceso` con su nombre y la contraseña
+compartida.
 
 > Si usas el túnel de VS Code en su lugar, expón el puerto 3000 y comparte la URL.

@@ -21,15 +21,15 @@ const insertEstudiante = db.prepare(
 // Crear materia (rápido: desde el home)
 router.post("/", (req, res) => {
   const { nombre } = req.body;
-  if (!nombre || !nombre.trim()) return res.redirect("/");
+  if (!nombre || !nombre.trim()) return res.redirect("/panel");
   insertMateria.run(nombre.trim().slice(0, MAX_MATERIA), req.session.docente.id);
-  res.redirect("/");
+  res.redirect("/panel");
 });
 
 // Crear varias materias de un pegón (una por línea)
 router.post("/batch", (req, res) => {
   const nombres = parseLista(req.body.nombres, MAX_MATERIA);
-  if (!nombres.length) return res.redirect("/");
+  if (!nombres.length) return res.redirect("/panel");
 
   let nuevas = 0;
   db.exec("BEGIN");
@@ -45,7 +45,7 @@ router.post("/batch", (req, res) => {
     throw e;
   }
 
-  res.redirect(`/?nuevas=${nuevas}&omitidas=${nombres.length - nuevas}`);
+  res.redirect(`/panel?nuevas=${nuevas}&omitidas=${nombres.length - nuevas}`);
 });
 
 // Ver materia con sus proyectos y su lista de estudiantes
@@ -144,7 +144,7 @@ router.post("/:id/proyectos", (req, res) => {
 // Eliminar materia (cascada elimina proyectos, estudiantes y calificaciones)
 router.post("/:id/delete", (req, res) => {
   db.prepare("DELETE FROM materias WHERE id = ?").run(req.params.id);
-  res.redirect("/");
+  res.redirect("/panel");
 });
 
 module.exports = router;

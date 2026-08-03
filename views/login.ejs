@@ -1,16 +1,4 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#0f0e0c" />
-  <title>Iniciar sesión — Expo Eval</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css" />
-</head>
-<body>
+<%- include('partials/head', { title: 'Acceso docentes — Expo Multimedia', descripcion: null }) %>
   <div class="login-shell">
     <div class="login-card">
       <div class="logo">Expo<em>Eval</em></div>
@@ -20,7 +8,7 @@
         <div class="alert err"><%= error %></div>
       <% } %>
 
-      <form method="POST" action="/login">
+      <form method="POST" action="/acceso">
         <div class="form-row">
           <label for="docente_id">Soy…</label>
           <select id="docente_id" name="docente_id" required>
@@ -38,6 +26,10 @@
 
         <button type="submit" class="btn block">Entrar</button>
       </form>
+
+      <p style="text-align:center; margin: 18px 0 0">
+        <a href="/" class="back-link" style="margin:0">Volver a la Expo</a>
+      </p>
     </div>
   </div>
 </body>

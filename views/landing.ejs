@@ -1,0 +1,226 @@
+<%- include('partials/head', { title: evento.name + ' — ' + programa, descripcion: evento.desc }) %>
+
+<% const partes = evento.name.split(" "); %>
+
+<header class="pub-top">
+  <a href="/" class="pub-brand"><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></a>
+  <nav class="pub-nav">
+    <a href="#recorrido">Recorrido</a>
+    <a href="#lugar">El lugar</a>
+    <a href="#evaluacion">Evaluación</a>
+    <% if (docente) { %><a href="/panel" class="pub-panel">Mi panel</a><% } %>
+  </nav>
+</header>
+
+<main class="pub">
+
+  <%/* ───── HERO ───── */%>
+  <section class="pub-hero">
+    <p class="eyebrow"><%= evento.tipo %> · <%= programa %></p>
+    <h1><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></h1>
+    <p class="lead"><%= evento.desc %></p>
+
+    <div class="hero-meta">
+      <div><span>Cuándo</span><strong><%= evento.cuando %></strong></div>
+      <div><span>Dónde</span><strong><%= evento.sede %></strong></div>
+      <div><span>Recorrido</span><strong><%= salas.length %> experiencias</strong></div>
+    </div>
+
+    <a href="#recorrido" class="btn hero-cta">Ver el recorrido</a>
+  </section>
+
+  <%/* ───── EL RECORRIDO ───── */%>
+  <section id="recorrido" class="pub-sec">
+    <p class="eyebrow">El recorrido</p>
+    <h2><%= salas.length %> experiencias temáticas</h2>
+    <p class="sec-lead">
+      Cada sala agrupa materias afines y tiene su propio montaje. Se recorren en
+      cualquier orden: en todas hay algo que ver, tocar o jugar.
+    </p>
+
+    <div class="salas">
+      <% salas.forEach((s, i) => { %>
+        <article class="sala cat-<%= s.accent %>" id="<%= s.id %>">
+          <div class="sala-top">
+            <span class="sala-num"><%= String(i + 1).padStart(2, '0') %></span>
+            <span class="cat-label"><span class="dot"></span><%= (categorias[s.accent] || {}).short || '' %></span>
+          </div>
+
+          <h3><%= s.name %></h3>
+          <p class="sala-lema"><%= s.lema %></p>
+          <p class="sala-desc"><%= s.desc %></p>
+
+          <ul class="montaje">
+            <% (s.montaje || []).forEach(m => { %><li><%= m %></li><% }) %>
+          </ul>
+
+          <p class="sala-pie">
+            <%= s.semestres %> · <%= s.asignaturas.length %> asignatura<%= s.asignaturas.length === 1 ? '' : 's' %>
+          </p>
+
+          <details class="sub">
+            <summary>Qué se exhibe</summary>
+            <ul class="entregas">
+              <% s.asignaturas.forEach(a => { %>
+                <li>
+                  <span class="asig"><%= a.name %> <em><%= a.sem %>.°</em></span>
+                  <% if (a.entregas && a.entregas.length) { %>
+                    <span class="ent"><%= a.entregas.join(' · ') %></span>
+                  <% } %>
+                </li>
+              <% }) %>
+            </ul>
+          </details>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+
+  <%/* ───── CÓMO SE EVALÚA ───── */%>
+  <section id="evaluacion" class="pub-sec">
+    <p class="eyebrow">Durante la muestra</p>
+    <h2>Cómo se evalúa</h2>
+    <p class="sec-lead">
+      Varios docentes recorren las salas y califican desde el celular con la
+      misma rúbrica. Cada criterio va de 0 a <%= ESCALA_MAX %>, y la nota final
+      del proyecto es el promedio de todos los jurados que lo evaluaron.
+    </p>
+
+    <div class="rubrica">
+      <div class="rubrica-col">
+        <h4>Al proyecto</h4>
+        <ul>
+          <% CRITERIOS.forEach(c => { %><li><%= c.label %></li><% }) %>
+        </ul>
+      </div>
+      <div class="rubrica-col">
+        <h4>A cada integrante</h4>
+        <ul>
+          <% CRITERIOS_IND.forEach(c => { %><li><%= c.label %></li><% }) %>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── PLANO DEL LUGAR ───── */%>
+  <% if (mapa && mapa.espacios && mapa.espacios.length) {
+       // Cada espacio resuelve su nombre, color y detalle (los de tipo "sala"
+       // los heredan de la experiencia correspondiente).
+       const porSala = Object.fromEntries(salas.map(s => [s.id, s]));
+       const espacios = mapa.espacios.map(e => {
+         const s = e.tipo === 'sala' ? porSala[e.sala] : null;
+         return {
+           ...e,
+           nombre: s ? s.name : (e.name || ''),
+           lema: s ? s.lema : '',
+           detalle: s ? s.desc : (e.desc || ''),
+           accent: s ? s.accent : '',
+           montaje: s ? (s.montaje || []) : [],
+           ancla: s ? s.id : null,
+         };
+       });
+  %>
+    <section id="lugar" class="pub-sec">
+      <p class="eyebrow">El lugar</p>
+      <h2><%= mapa.titulo || 'Cómo está distribuido' %></h2>
+      <p class="sec-lead"><%= mapa.nota %></p>
+
+      <div class="plano-wrap">
+        <div class="plano" id="plano"
+             style="aspect-ratio: <%= mapa.cols %> / <%= mapa.filas %>; --cols: <%= mapa.cols %>; --filas: <%= mapa.filas %>">
+          <% espacios.forEach(e => { %>
+            <% const vertical = e.h > e.w * 2; %>
+            <button type="button"
+                    class="espacio tipo-<%= e.tipo %> <%= e.accent ? 'cat-' + e.accent : '' %> <%= vertical ? 'vert' : '' %>"
+                    id="esp-<%= e.id %>"
+                    data-detalle="det-<%= e.id %>"
+                    aria-pressed="false"
+                    aria-controls="det-<%= e.id %>"
+                    style="left:calc(<%= (e.x / mapa.cols) * 100 %>% + 3px);
+                           top:calc(<%= (e.y / mapa.filas) * 100 %>% + 3px);
+                           width:calc(<%= (e.w / mapa.cols) * 100 %>% - 6px);
+                           height:calc(<%= (e.h / mapa.filas) * 100 %>% - 6px)">
+              <span class="espacio-nombre"><%= e.nombre %></span>
+            </button>
+          <% }) %>
+        </div>
+
+        <div class="plano-lado">
+        <div class="plano-detalle" id="plano-detalle">
+          <p class="det-vacio" id="det-vacio">
+            Toca cualquier espacio del plano para ver qué pasa ahí.
+          </p>
+
+          <% espacios.forEach(e => { %>
+            <div class="detalle <%= e.accent ? 'cat-' + e.accent : '' %>" id="det-<%= e.id %>" hidden>
+              <p class="det-tipo"><%= e.tipo === 'sala' ? 'Sala del recorrido' : (e.tipo === 'acceso' ? 'Acceso' : (e.tipo === 'pasillo' ? 'Circulación' : 'Servicio')) %></p>
+              <h3><%= e.nombre %></h3>
+              <% if (e.lema) { %><p class="det-lema"><%= e.lema %></p><% } %>
+              <p class="det-desc"><%= e.detalle %></p>
+              <% if (e.montaje.length) { %>
+                <ul class="montaje">
+                  <% e.montaje.forEach(m => { %><li><%= m %></li><% }) %>
+                </ul>
+              <% } %>
+              <% if (e.ancla) { %>
+                <a href="#<%= e.ancla %>" class="det-link">Ver qué se exhibe →</a>
+              <% } %>
+            </div>
+          <% }) %>
+        </div>
+
+          <ul class="plano-leyenda">
+            <% salas.forEach(s => { %>
+              <li class="cat-<%= s.accent %>"><span class="dot"></span><%= s.name %></li>
+            <% }) %>
+            <li class="leyenda-otros"><span class="dot"></span>Servicios y circulación</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  <% } %>
+</main>
+
+<footer class="pub-foot">
+  <div>
+    <strong><%= evento.name %></strong>
+    <span><%= programa %></span>
+  </div>
+  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
+    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
+  </a>
+</footer>
+
+<script>
+  // Plano interactivo: un espacio a la vez, se puede deseleccionar tocándolo otra vez.
+  (function () {
+    var plano = document.getElementById("plano");
+    if (!plano) return;
+
+    var espacios = Array.prototype.slice.call(plano.querySelectorAll(".espacio"));
+    var vacio = document.getElementById("det-vacio");
+
+    function seleccionar(btn) {
+      var apagar = btn.getAttribute("aria-pressed") === "true";
+
+      espacios.forEach(function (b) {
+        var activo = !apagar && b === btn;
+        b.setAttribute("aria-pressed", activo ? "true" : "false");
+        b.classList.toggle("sel", activo);
+        document.getElementById(b.dataset.detalle).hidden = !activo;
+      });
+
+      vacio.hidden = !apagar;
+      if (!apagar) {
+        document.getElementById(btn.dataset.detalle)
+          .scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }
+
+    espacios.forEach(function (b) {
+      b.addEventListener("click", function () { seleccionar(b); });
+    });
+  })();
+</script>
+
+<%- include('partials/footer') %>
