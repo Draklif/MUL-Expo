@@ -1,10 +1,15 @@
+// El .env se lee antes que nada: de ahí salen las credenciales del correo y
+// los módulos de abajo ya preguntan por esas variables al cargarse.
+require("./lib/entorno").cargarEnv();
+
 const express = require("express");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
+const crypto = require("crypto");
 const path = require("path");
 
 const db = require("./db/database");
-const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX } = require("./config");
+const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD } = require("./config");
 const { contenidoExpo } = require("./lib/contenido");
 const { DOMINIO, PATRON_HTML } = require("./lib/correos");
 
@@ -16,6 +21,23 @@ const registroRouter = require("./routes/registro");
 const certificadosRouter = require("./routes/certificados");
 const periodosRouter = require("./routes/periodos");
 const { conPeriodo } = require("./lib/periodos");
+const envios = require("./lib/envios");
+
+// Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
+// dejar un login que rechaza a todo el mundo sin explicar por qué.
+if (!PASSWORD) {
+  console.error("\n  ✕ Falta PASSWORD_DOCENTES en el .env.");
+  console.error("    Es la contraseña compartida de los docentes: sin ella nadie entra al panel.");
+  console.error("    Copia .env.example como .env y llénalo.\n");
+  process.exit(1);
+}
+
+// Firma las cookies de sesión. Si no está en el .env se inventa una al
+// arrancar: la app funciona igual, pero cada reinicio cierra las sesiones
+// abiertas. Lo que no puede es ser un texto fijo en el código —con la clave a
+// la vista en el repositorio, cualquiera se fabrica la cookie de un docente y
+// entra sin contraseña—.
+const SESION_SECRETO = process.env.SESSION_SECRET || crypto.randomBytes(32).toString("hex");
 
 const app = express();
 
@@ -36,7 +58,7 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use(
   session({
-    secret: "expo-multimedia-secret-change-me",
+    secret: SESION_SECRETO,
     resave: false,
     saveUninitialized: false,
     cookie: { maxAge: 1000 * 60 * 60 * 24 }, // 1 día
@@ -131,5 +153,14 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`\n  ✓ Expo Multimedia corriendo en http://localhost:${PORT}`);
   console.log(`  ✓ Acceso docentes:         http://localhost:${PORT}/acceso`);
-  console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}\n`);
+  console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
+  console.log(
+    envios.activo()
+      ? `  ✓ Correos:                 desde ${process.env.SMTP_USER}`
+      : "  · Correos:                 apagados (falta SMTP_USER/SMTP_PASS en .env)"
+  );
+  if (!process.env.SESSION_SECRET) {
+    console.warn("  ! Sin SESSION_SECRET en .env: cada reinicio cierra las sesiones abiertas.");
+  }
+  console.log("");
 });

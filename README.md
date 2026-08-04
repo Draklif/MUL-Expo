@@ -15,17 +15,35 @@ celular durante el evento, con promedios en tiempo real.
 npm install
 ```
 
-Solo descarga Express, EJS, session y `qrcode-svg` (para el QR de los
-certificados, sin dependencias propias). **No compila nada nativo.**
+Solo descarga Express, EJS, session, `qrcode-svg` (para el QR de los
+certificados) y `nodemailer` (para los correos). Ninguno tiene dependencias
+propias y **no se compila nada nativo.**
 
-Abre `config.js` y:
+La configuración vive en dos archivos, y la diferencia importa: **`config.js`
+se sube a git y el `.env` no.**
+
+Abre `config.js` —cómo funciona la app— y:
 
 1. Ajusta el array `DOCENTES`: cada uno con su `name` y su `email`
    institucional, que es con lo que entra.
    Y `PERIODO_INICIAL`, el semestre con el que arranca la base.
-2. Cambia `PASSWORD`: es la misma para todos los docentes.
-3. Ajusta `CRITERIOS` si quieres otros nombres de rúbrica.
-4. Cambia `ESCALA_MAX` si prefieres 0-10 en vez de 0-5.
+2. Ajusta `CRITERIOS` si quieres otros nombres de rúbrica.
+3. Cambia `ESCALA_MAX` si prefieres 0-10 en vez de 0-5.
+
+Copia `.env.example` como `.env` —lo secreto— y llénalo:
+
+| Variable | Para qué | ¿Obligatoria? |
+|---|---|---|
+| `PASSWORD_DOCENTES` | La contraseña compartida de los docentes | **Sí**: sin ella la app no arranca |
+| `SESSION_SECRET` | Firma las cookies de sesión | No, pero sin ella cada reinicio cierra las sesiones |
+| `PORT` | Puerto del servidor (vacío = 3000) | No |
+| `SMTP_USER`, `SMTP_PASS`, `SITIO_URL` | Los [correos automáticos](#correos-automáticos) | No: sin ellas no salen avisos y ya |
+
+> **Nada de contraseñas en `config.js`.** Con la clave a la vista en el
+> repositorio y los correos de `DOCENTES` al lado, cualquiera que lo lea entra
+> al panel a aprobar registros o borrar materias. Lo mismo con la firma de las
+> sesiones: si es un texto fijo en el código, se fabrica la cookie de un
+> docente sin necesitar la contraseña. Por eso las dos salieron a `.env`.
 
 `DOMINIO` es el dominio institucional (`uniboyaca.edu.co`). Todo correo de la
 app —el de los docentes al entrar y el de los estudiantes al registrarse— tiene
@@ -39,9 +57,10 @@ que terminar en él; cualquier otro se rechaza.
 
 ## Cómo entran los docentes
 
-En `/acceso`, con **correo institucional + la contraseña compartida**. El correo
-dice quién es cada quien; la contraseña es la segunda barrera. Ya no hay lista
-de nombres desplegable: quien no sepa un correo válido no ve a nadie.
+En `/acceso`, con **correo institucional + la contraseña compartida**
+(`PASSWORD_DOCENTES` en el `.env`). El correo dice quién es cada quien; la
+contraseña es la segunda barrera. Ya no hay lista de nombres desplegable: quien
+no sepa un correo válido no ve a nadie.
 
 Si el correo o la clave están mal, el mensaje es el mismo ("Correo o contraseña
 incorrectos") para que la página no sirva para averiguar quiénes son docentes.
@@ -288,6 +307,92 @@ sala, compañeros de equipo, fecha, firma del docente y «Universidad de Boyacá
 Ingeniería en Multimedia». **La nota numérica no aparece.** El emisor se cambia
 con `institucion` en `data/expo.json`, y `evento.fecha` (hoy vacío) reemplaza la
 fecha de emisión cuando se defina el día de la Expo.
+
+## Correos automáticos
+
+La app le escribe al estudiante en tres momentos. Todo es **opcional**: sin
+configurar nada funciona igual que antes, solo que sin avisos.
+
+| Cuándo | A quién | Qué lleva |
+|---|---|---|
+| Al registrarse | Al contacto que llenó el formulario | El código, la materia, la sala, el equipo y el enlace para consultar el estado |
+| Al aprobar o rechazar | Al mismo contacto | El resultado, la sala si quedó aprobado y el motivo si el docente lo escribió |
+| Al avisar los certificados | A cada integrante, uno por uno | Su reconocimiento y el enlace a su certificado |
+
+### Configurarlo
+
+Copia `.env.example` como `.env` (ese archivo **no se sube a git**) y llena:
+
+```
+SMTP_USER=tucuenta@gmail.com
+SMTP_PASS=abcd efgh ijkl mnop
+SITIO_URL=https://xxxxx.ngrok-free.app
+```
+
+`SMTP_PASS` **no es la contraseña de tu Gmail**: es una *contraseña de
+aplicación* de 16 letras que se genera en
+[myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords),
+y para eso la cuenta necesita la verificación en dos pasos activa. Se puede
+pegar con espacios o sin ellos.
+
+`SITIO_URL` es la dirección por la que entran los estudiantes: es la que llevan
+los enlaces del correo, y **con ngrok cambia cada vez que se levanta el túnel**.
+Si se deja vacía, cada enlace sale de la dirección por la que llegó esa visita:
+sirve para el estudiante que se registra desde el túnel, pero el docente que
+aprueba desde `localhost` mandaría enlaces a `localhost`. Al arrancar, la
+consola avisa si eso está pasando.
+
+Al arrancar se ve desde qué cuenta salen los correos:
+
+```
+  ✓ Correos:                 desde tucuenta@gmail.com
+```
+
+Lo que se ve en `config.js` es solo la cara del remitente: `CORREO.remitente`
+(el nombre que aparece como quien envía) y `CORREO.responder_a` (a dónde va la
+respuesta si el estudiante le contesta al correo; vacío = a la cuenta de
+Gmail).
+
+### El aviso de los certificados es un botón aparte
+
+Emitir certificados es idempotente y se repite cada vez que cambia una nota;
+un correo, en cambio, no se puede devolver. Por eso **generar no avisa**: en la
+materia aparece un botón *«Avisar por correo a N estudiantes»* que se toca
+cuando el podio ya está definitivo.
+
+- A cada estudiante se le avisa **una sola vez**: regenerar los certificados no
+  vuelve a escribirle a nadie. En la lista de certificados cada uno dice
+  `✉ avisado` o `sin avisar`.
+- Si un correo no sale, ese certificado **queda pendiente** y el botón sigue
+  ahí para reintentar. Nadie recibe el aviso dos veces.
+- Los certificados sin correo (de proyectos cargados a mano, sin registro) no
+  se pueden avisar y quedan por fuera de la cuenta.
+- Si después de avisar cambia un puesto, ese correo ya salió: lo que se manda
+  es un enlace, y el certificado en `/certificado/CODIGO` sí muestra siempre el
+  dato actualizado.
+
+### Si algo falla
+
+Ningún fallo de correo tumba lo que lo provocó: un registro queda guardado y
+una aprobación crea el proyecto aunque el envío reviente. Los avisos del
+registro y de la revisión salen en segundo plano —el estudiante ve su código en
+pantalla sin esperar al correo— y lo único que dejan es un renglón en la
+consola:
+
+```
+  ✉ mfrios@uniboyaca.edu.co · Registro recibido · código K7M2QP
+  ! No se pudo enviar a apena@uniboyaca.edu.co: Invalid login: 535-5.7.8 …
+```
+
+Cosas que conviene saber antes del evento:
+
+- Gmail gratuito aguanta unos **500 correos al día**. Para una Expo entera
+  alcanza de sobra, pero si se pasa, Google bloquea el envío por 24 horas.
+- Un correo de Gmail a `@uniboyaca.edu.co` puede caer en **no deseado**. La
+  página de confirmación ya se lo dice al estudiante, y el código igual se ve
+  en pantalla y se consulta en `/registro/estado`.
+- Si el correo está apagado, la vista de la materia lo dice en vez de mostrar
+  el botón de avisos.
 
 ## Crear varias materias de una vez
 

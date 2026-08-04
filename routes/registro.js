@@ -5,6 +5,7 @@ const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
 const { etiquetaPuesto } = require("../lib/certificados");
+const envios = require("../lib/envios");
 const periodos = require("../lib/periodos");
 const {
   generarCodigo,
@@ -181,6 +182,11 @@ router.post("/", (req, res) => {
   }
 
   limiteRegistro.registrar(req.ip);
+
+  // El correo con el código sale aparte: si el envío falla o se demora, el
+  // registro ya está hecho y el estudiante ve su código igual en pantalla.
+  envios.avisoRegistro(buscarPorCodigo(codigo), envios.urlBase(req));
+
   res.redirect(`/registro/listo/${codigo}`);
 });
 
@@ -188,7 +194,13 @@ router.post("/", (req, res) => {
 router.get("/listo/:codigo", (req, res) => {
   const solicitud = buscarPorCodigo(req.params.codigo);
   if (!solicitud) return res.redirect("/registro/estado");
-  res.render("registro-estado", { solicitud, codigo: solicitud.codigo, recienEnviada: true, error: null });
+  res.render("registro-estado", {
+    solicitud,
+    codigo: solicitud.codigo,
+    recienEnviada: true,
+    error: null,
+    correoActivo: envios.activo(),
+  });
 });
 
 // ---------- Consulta de estado ----------
@@ -200,6 +212,7 @@ router.get("/estado", (req, res) => {
     codigo,
     recienEnviada: false,
     error: codigo && !solicitud ? "No encontramos ningún registro con ese código." : null,
+    correoActivo: envios.activo(),
   });
 });
 

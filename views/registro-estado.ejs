@@ -18,6 +18,12 @@
         este código para consultar el estado más adelante.
       </p>
       <p class="codigo-grande"><%= solicitud.codigo %></p>
+      <% if (correoActivo) { %>
+        <p style="margin-top:14px">
+          También te lo mandamos a <strong><%= solicitud.contacto_email %></strong>.
+          Si no aparece en unos minutos, revisa el correo no deseado.
+        </p>
+      <% } %>
       <p style="margin-top:18px">
         Mientras tanto, mira <a href="/expositores">cómo se monta un stand</a>:
         eso también se evalúa.

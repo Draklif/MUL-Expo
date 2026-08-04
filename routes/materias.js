@@ -3,7 +3,13 @@ const db = require("../db/database");
 const { parseLista } = require("../lib/listas");
 const { contenidoExpo } = require("../lib/contenido");
 const { rankingDeMateria } = require("../lib/ranking");
-const { emitirDeMateria, deMateria, etiquetaPuesto } = require("../lib/certificados");
+const {
+  emitirDeMateria,
+  deMateria,
+  etiquetaPuesto,
+  avisarPendientes,
+} = require("../lib/certificados");
+const envios = require("../lib/envios");
 
 const router = express.Router();
 
@@ -144,6 +150,7 @@ router.get("/:id", (req, res) => {
     revisadas,
     podio,
     certificados,
+    correoActivo: envios.activo(),
   });
 });
 
@@ -159,7 +166,46 @@ router.post("/:id/certificados", (req, res) => {
   );
 });
 
+// Avisarle por correo a cada estudiante que ya tiene su certificado.
+//
+// Es un botón aparte a propósito: emitir se repite cada vez que cambia una
+// nota, y avisar no se puede deshacer. El docente manda los correos cuando ya
+// está conforme con el podio, no antes. Este sí espera a que salgan para poder
+// decir cuántos llegaron.
+router.post("/:id/certificados/avisos", async (req, res) => {
+  const materiaId = Number(req.params.id);
+  const materia = db.prepare("SELECT id FROM materias WHERE id = ?").get(materiaId);
+  if (!materia) return res.status(404).send("Materia no encontrada");
+
+  let r = { enviados: 0, fallaron: 0 };
+  try {
+    r = await avisarPendientes(materiaId, req.periodo.id, envios.urlBase(req));
+  } catch (e) {
+    console.error(`  ! Avisos de certificados de la materia ${materiaId}: ${e.message}`);
+  }
+
+  res.redirect(
+    `/materias/${materiaId}?avisados=${r.enviados}&fallaron=${r.fallaron}#certificados`
+  );
+});
+
 // ---------- Revisión de registros de expositores ----------
+
+// Completa la solicitud con lo que el correo necesita nombrar: la materia y la
+// sala se guardan por id, y el revisor es quien acaba de tocar el botón.
+function paraElCorreo(solicitud, req) {
+  const { salas } = contenidoExpo();
+  const materia = db
+    .prepare("SELECT nombre FROM materias WHERE id = ?")
+    .get(solicitud.materia_id);
+
+  return {
+    ...solicitud,
+    materia_nombre: materia ? materia.nombre : "",
+    sala_nombre: (salas.find((s) => s.id === solicitud.sala) || {}).name || solicitud.sala,
+    revisor: req.session.docente.name,
+  };
+}
 
 // Aprobar: crea el proyecto y suma a los integrantes a la lista de la materia
 router.post("/:id/solicitudes/:sid/aprobar", (req, res) => {
@@ -208,20 +254,38 @@ router.post("/:id/solicitudes/:sid/aprobar", (req, res) => {
     throw e;
   }
 
+  // El aviso sale aparte: el proyecto ya quedó creado pase lo que pase con el
+  // correo.
+  envios.avisoRevision(
+    { ...paraElCorreo(solicitud, req), estado: "aprobada" },
+    envios.urlBase(req)
+  );
+
   res.redirect(`/materias/${materiaId}?revisado=aprobada`);
 });
 
 // Rechazar: queda registrado con el motivo, sin crear proyecto
 router.post("/:id/solicitudes/:sid/rechazar", (req, res) => {
   const materiaId = Number(req.params.id);
+  const solicitudId = Number(req.params.sid);
   const nota = String(req.body.nota || "").trim().slice(0, 300);
 
-  db.prepare(
-    `UPDATE solicitudes
-     SET estado = 'rechazada', nota_docente = ?, revisado_por = ?,
-         revisado_at = CURRENT_TIMESTAMP
-     WHERE id = ? AND materia_id = ? AND estado = 'pendiente'`
-  ).run(nota || null, req.session.docente.id, Number(req.params.sid), materiaId);
+  const info = db
+    .prepare(
+      `UPDATE solicitudes
+       SET estado = 'rechazada', nota_docente = ?, revisado_por = ?,
+           revisado_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND materia_id = ? AND estado = 'pendiente'`
+    )
+    .run(nota || null, req.session.docente.id, solicitudId, materiaId);
+
+  // Solo se avisa si el rechazo cambió algo. Si la solicitud ya estaba
+  // revisada, el UPDATE no toca nada y nadie tiene que recibir un correo
+  // repetido.
+  if (info.changes) {
+    const solicitud = db.prepare("SELECT * FROM solicitudes WHERE id = ?").get(solicitudId);
+    envios.avisoRevision(paraElCorreo(solicitud, req), envios.urlBase(req));
+  }
 
   res.redirect(`/materias/${materiaId}?revisado=rechazada`);
 });

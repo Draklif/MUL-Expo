@@ -13,7 +13,11 @@ const DOMINIO = "uniboyaca.edu.co";
 
 // Contraseña compartida para todos los docentes.
 // El correo identifica a cada quien; esta clave es la segunda barrera.
-const PASSWORD = "expo2026";
+//
+// Va en el .env (PASSWORD_DOCENTES) y NO aquí: este archivo se sube a git, y
+// con la clave a la vista más los correos de abajo, cualquiera que lea el
+// repositorio puede entrar al panel. Sin ella la app no arranca.
+const PASSWORD = String(process.env.PASSWORD_DOCENTES || "").trim();
 
 // Lista de docentes habilitados. Entran con su correo + la contraseña de arriba.
 //
@@ -27,6 +31,18 @@ const DOCENTES = [
   { name: "Manuel Corredor", email: "mancorredor@uniboyaca.edu.co" },
   { name: "Oscar Pérez",     email: "lperez54@uniboyaca.edu.co" },
 ];
+
+// Correos automáticos (código de registro, resultado de la revisión y aviso
+// del certificado). La cuenta y la contraseña de aplicación NO van aquí: van
+// en el archivo .env, que no se sube a git. Sin esas dos variables la app
+// funciona igual, solo que nadie recibe avisos.
+const CORREO = {
+  // Nombre que ve el estudiante como remitente.
+  remitente: "Expo Multimedia",
+  // A dónde va la respuesta si le contesta al correo. Vacío = a la cuenta que
+  // envía (la de Gmail).
+  responder_a: "",
+};
 
 // Criterios de la rúbrica (los mismos para TODOS los proyectos).
 // Escala 0 a 5. El promedio final del proyecto es el promedio de
@@ -54,6 +70,7 @@ module.exports = {
   DOMINIO,
   PASSWORD,
   DOCENTES,
+  CORREO,
   CRITERIOS,
   CRITERIOS_IND,
   ESCALA_MAX,

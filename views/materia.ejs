@@ -170,6 +170,19 @@
     </div>
   <% } %>
 
+  <% if (query.avisados !== undefined) {
+       const ok = Number(query.avisados) || 0, mal = Number(query.fallaron) || 0; %>
+    <div class="alert <%= mal ? 'err' : 'ok' %>">
+      <% if (ok) { %>✉ <%= ok %> correo<%= ok === 1 ? '' : 's' %> enviado<%= ok === 1 ? '' : 's' %>.<% } %>
+      <% if (mal) { %>
+        <%= mal %> no <%= mal === 1 ? 'salió y queda pendiente' : 'salieron y quedan pendientes' %>:
+        se puede reintentar.
+      <% } else if (!ok) { %>
+        No había avisos pendientes.
+      <% } %>
+    </div>
+  <% } %>
+
   <% if (podio.length) { %>
     <ol class="podio">
       <% podio.forEach(p => { %>
@@ -198,6 +211,31 @@
     participación para el resto. Los datos quedan congelados al emitirlos.
   </p>
 
+  <%/* Avisar es un paso aparte de emitir: emitir se repite cada vez que cambia
+       una nota, pero un correo no se puede devolver. */%>
+  <% const porAvisar = certificados.filter(c => c.email && !c.avisado_at).length;
+     const sinCorreo = certificados.filter(c => !c.email).length; %>
+
+  <% if (correoActivo && porAvisar) { %>
+    <form method="POST" action="/materias/<%= materia.id %>/certificados/avisos" style="margin-top:12px"
+          onsubmit="return confirm('Se le manda a cada estudiante el enlace de su certificado, con el puesto que tiene ahora mismo. Un correo no se puede devolver: hazlo cuando el podio ya esté definitivo.');">
+      <button type="submit" class="btn block">
+        Avisar por correo a <%= porAvisar %> estudiante<%= porAvisar === 1 ? '' : 's' %>
+      </button>
+    </form>
+    <p class="hint" style="margin-top:8px">
+      Les llega el enlace de su certificado. A cada quien se le avisa una sola
+      vez, así que regenerar los certificados no vuelve a escribirle a nadie.<% if (sinCorreo) { %>
+      <%= sinCorreo %> certificado<%= sinCorreo === 1 ? '' : 's' %> no tiene<%= sinCorreo === 1 ? '' : 'n' %>
+      correo (proyectos cargados a mano) y queda<%= sinCorreo === 1 ? '' : 'n' %> por fuera.<% } %>
+    </p>
+  <% } else if (certificados.length && !correoActivo) { %>
+    <p class="hint" style="margin-top:8px">
+      El aviso por correo está apagado: falta configurar la cuenta de envío en
+      el archivo <code>.env</code> del servidor.
+    </p>
+  <% } %>
+
   <% if (certificados.length) { %>
     <details class="panel" style="margin-top:12px">
       <summary>Ver los <%= certificados.length %> certificados y sus enlaces</summary>
@@ -208,7 +246,10 @@
               <span class="cert-medalla <%= c.etiqueta.cls %>"><%= c.puesto || '·' %></span>
               <span class="cert-quien">
                 <strong><%= c.estudiante %></strong>
-                <em><%= c.etiqueta.label %> · <%= c.proyecto_titulo %></em>
+                <em>
+                  <%= c.etiqueta.label %> · <%= c.proyecto_titulo %><%
+                    if (c.email) { %> · <%= c.avisado_at ? '✉ avisado' : 'sin avisar' %><% } %>
+                </em>
               </span>
               <a href="/certificado/<%= c.codigo %>" target="_blank" rel="noopener" class="cert-link">
                 <%= c.codigo %> ↗

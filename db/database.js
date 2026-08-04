@@ -152,6 +152,10 @@ function agregarColumna(tabla, columna, definicion) {
 
 agregarColumna("estudiantes", "email", "TEXT");
 agregarColumna("proyectos", "sala", "TEXT");
+// Cuándo se le avisó por correo al estudiante. Nulo = todavía no sabe que su
+// certificado existe; es lo que evita repetirle el aviso cada vez que se
+// regeneran los certificados de la materia.
+agregarColumna("certificados", "avisado_at", "DATETIME");
 
 // ---------- Semestre inicial ----------
 // Si no hay ninguno, se crea el de config.js y se marca activo.
