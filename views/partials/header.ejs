@@ -1,7 +1,7 @@
 <%- include('head', { title: typeof title !== 'undefined' ? title : 'Expo Eval', descripcion: null }) %>
   <% if (docente) { %>
   <header class="topbar">
-    <a href="/" class="brand">Expo<em>Eval</em></a>
+    <a href="/expo" class="brand">Expo<em>Eval</em></a>
     <div class="user">
       <strong><%= docente.name %></strong>
       <form method="POST" action="/logout" style="display:inline">
@@ -12,6 +12,6 @@
   <nav class="nav-pills">
     <a href="/panel" class="<%= typeof active !== 'undefined' && active === 'home' ? 'active' : '' %>">Materias</a>
     <a href="/tablero" class="<%= typeof active !== 'undefined' && active === 'tablero' ? 'active' : '' %>">Tablero en vivo</a>
-    <a href="/">Landing de la Expo</a>
+    <a href="/expo">Landing de la Expo</a>
   </nav>
   <% } %>

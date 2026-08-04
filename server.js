@@ -10,7 +10,7 @@ const path = require("path");
 
 const db = require("./db/database");
 const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD } = require("./config");
-const { contenidoExpo } = require("./lib/contenido");
+const { contenidoExpo, contenidoPrograma } = require("./lib/contenido");
 const { DOMINIO, PATRON_HTML } = require("./lib/correos");
 
 const authRouter = require("./routes/auth");
@@ -90,15 +90,23 @@ app.use("/proyectos", requireAuth, conPeriodo, proyectosRouter);
 app.use("/api", requireAuth, conPeriodo, apiRouter);
 app.use("/periodos", requireAuth, periodosRouter);
 
-// Landing pública de la Expo Multimedia
+// Portada pública del programa. Es el hub: quien llegue a la raíz cae aquí y
+// desde aquí entra a la Expo, a los eventos y a lo que venga.
 app.get("/", (req, res) => {
+  res.render("multimedia", { ...contenidoPrograma() });
+});
+
+// Landing pública de la Expo Multimedia. Vivía en "/" hasta que la portada del
+// programa le tomó el lugar; no hay redirección desde "/" a propósito: un
+// enlace viejo aterriza en el hub, que enlaza la Expo bien visible.
+app.get("/expo", (req, res) => {
   res.render("landing", { ...contenidoExpo() });
 });
 
 // Guía de montaje para los expositores (pública)
 app.get("/expositores", (req, res) => {
   const contenido = contenidoExpo();
-  if (!contenido.requisitos) return res.redirect("/");
+  if (!contenido.requisitos) return res.redirect("/expo");
   res.render("expositores", { ...contenido });
 });
 
@@ -151,7 +159,8 @@ app.get("/tablero", requireAuth, conPeriodo, (req, res) => {
 // ---------- Arrancar ----------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`\n  ✓ Expo Multimedia corriendo en http://localhost:${PORT}`);
+  console.log(`\n  ✓ Ingeniería en Multimedia en http://localhost:${PORT}`);
+  console.log(`  ✓ Expo Multimedia:         http://localhost:${PORT}/expo`);
   console.log(`  ✓ Acceso docentes:         http://localhost:${PORT}/acceso`);
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(

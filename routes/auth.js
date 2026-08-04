@@ -59,8 +59,11 @@ router.post("/acceso", procesarAcceso);
 router.get("/login", (req, res) => res.redirect("/acceso"));
 router.post("/login", procesarAcceso);
 
+// Al salir se vuelve a la Expo, no a la portada del programa: todo el panel
+// docente es la herramienta de la Expo y soltarlos en el hub institucional es
+// cambiarles de aplicación sin avisar.
 router.post("/logout", (req, res) => {
-  req.session.destroy(() => res.redirect("/"));
+  req.session.destroy(() => res.redirect("/expo"));
 });
 
 module.exports = router;

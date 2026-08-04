@@ -75,7 +75,8 @@ npm start
 Verás:
 
 ```
-  ✓ Expo Multimedia corriendo en http://localhost:3000
+  ✓ Ingeniería en Multimedia en http://localhost:3000
+  ✓ Expo Multimedia:         http://localhost:3000/expo
   ✓ Acceso docentes:         http://localhost:3000/acceso
   ✓ Para exponer con ngrok:  ngrok http 3000
 ```
@@ -86,7 +87,8 @@ Abre `http://localhost:3000` en el navegador del PC.
 
 | Ruta | Quién entra | Qué es |
 |---|---|---|
-| `/` | Cualquiera, sin login | Landing pública de la Expo: el recorrido, el plano, los horarios |
+| `/` | Cualquiera, sin login | Portada del programa: qué es Multimedia, los ejes, laboratorios y la puerta a la Expo y a los eventos |
+| `/expo` | Cualquiera, sin login | Landing pública de la Expo: el recorrido, el plano, los horarios |
 | `/expositores` | Estudiantes, sin login | Guía de montaje: qué debe tener el stand |
 | `/registro` | Estudiantes, sin login | Registro de expositores |
 | `/registro/estado` | Estudiantes, sin login | Consulta del estado con el código |
@@ -152,7 +154,7 @@ botón.
 
 ### Editar el contenido público
 
-Todo lo que se ve en `/` vive en `data/expo.json`. Se edita el archivo y se
+Todo lo que se ve en `/expo` vive en `data/expo.json`. Se edita el archivo y se
 recarga el navegador: el servidor lo relee cuando cambia, **sin reiniciar**.
 
 - `evento` — nombre, tipo, cuándo, dónde y la descripción del hero.
@@ -166,6 +168,34 @@ recarga el navegador: el servidor lo relee cuando cambia, **sin reiniciar**.
 
 El contenido salió del tablero del plan integrador (`Plan/data/*.json`), pero a
 partir de aquí las dos cosas son independientes: editar uno no toca al otro.
+
+### La portada del programa
+
+La raíz `/` ya no es la Expo: es la cara de Ingeniería en Multimedia, y desde
+ahí se entra a la Expo, a los eventos y a las salidas pedagógicas. Su contenido
+vive en `data/programa.json` y funciona igual —se edita y se recarga, sin
+reiniciar—. Tiene identidad propia (clara, azul `#0921AD` con acentos en el
+verde lima de la facultad) y por eso carga su **propia hoja de estilos**,
+`public/multimedia.css`: `styles.css` es oscura de raíz y apilar las dos
+obligaría a deshacer cada regla a mano.
+
+Dos cosas que conviene saber antes de tocarla:
+
+- **`agenda.bloques[].proximamente`** es el interruptor de "próximamente". En
+  `true` la tarjeta sale apagada y sin enlace. Para encender una sección: se
+  pone en `false`, se escribe el `href` y listo — no hay que tocar código ni
+  CSS.
+- **`marca.logo`** es la ranura del logo. Mientras esté vacío se dibuja un
+  monograma tipográfico. Cuando llegue el archivo oficial se deja en
+  `public/marca/` y se escribe aquí la ruta: ocupa exactamente la misma caja,
+  así que no se mueve nada. El favicon se cambia en `views/partials/head.ejs`.
+
+> **El verde lima solo va sobre azul.** Sobre blanco da 2.2:1 de contraste, que
+> no alcanza ni para texto ni para un ícono que signifique algo por sí solo.
+> Sobre el azul del programa llega a 5.2:1 y ahí sí se lee. Por eso en
+> `multimedia.css` el lima aparece como `color` únicamente dentro de
+> `.mul-banda`; en el resto de la página es relleno, filete o forma
+> decorativa. Si algún día se ve texto verde sobre blanco, es un bug.
 
 ### Horarios e itinerario
 

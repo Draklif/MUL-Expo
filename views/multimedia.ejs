@@ -1,0 +1,448 @@
+<%- include('partials/head', {
+      title: seo.titulo,
+      descripcion: seo.descripcion,
+      css: '/multimedia.css',
+      themeColor: '#ffffff'
+    }) %>
+
+<%/* ───── FIGURAS ─────
+     Como la página no lleva fotos, el peso visual lo cargan estas formas.
+     Viven aquí una sola vez y se instancian con <use>. */%>
+<svg class="mul-sprite" aria-hidden="true" focusable="false">
+  <symbol id="fig-arco" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M3 33a17 17 0 0 1 34 0" stroke-linecap="round"/>
+    <path d="M11 33a9 9 0 0 1 18 0" stroke-linecap="round"/>
+    <circle cx="20" cy="33" r="2.5" fill="currentColor" stroke="none"/>
+  </symbol>
+  <symbol id="fig-malla" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="4" y="4" width="14" height="14" rx="3"/>
+    <rect x="22" y="4" width="14" height="14" rx="3"/>
+    <rect x="4" y="22" width="14" height="14" rx="3"/>
+    <rect x="22" y="22" width="14" height="14" rx="3"/>
+  </symbol>
+  <symbol id="fig-orbita" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="20" cy="20" r="6"/>
+    <ellipse cx="20" cy="20" rx="17" ry="8"/>
+    <ellipse cx="20" cy="20" rx="8" ry="17"/>
+  </symbol>
+  <symbol id="fig-marco" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2">
+    <rect x="4" y="7" width="32" height="24" rx="3"/>
+    <path d="M4 14h32" stroke-linecap="round"/>
+    <circle cx="9" cy="10.5" r="1.3" fill="currentColor" stroke="none"/>
+    <path d="M14 22h12" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="fig-onda" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M3 20h4l4-11 5 22 5-16 4 9h12"/>
+  </symbol>
+  <symbol id="fig-check" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 10.5l4 4 8-9"/>
+  </symbol>
+  <symbol id="fig-mas" viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+    <path d="M11 4v14M4 11h14"/>
+  </symbol>
+  <symbol id="fig-flecha" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4 10h12M11 5l5 5-5 5"/>
+  </symbol>
+  <symbol id="fig-correo" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+    <rect x="2" y="4" width="16" height="12" rx="2"/>
+    <path d="M2.5 5.5L10 11l7.5-5.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="fig-tel" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8">
+    <path d="M4 3h3l1.5 4-2 1.5a10 10 0 0 0 5 5l1.5-2 4 1.5v3a1 1 0 0 1-1.1 1A14 14 0 0 1 3 4.1 1 1 0 0 1 4 3z" stroke-linejoin="round"/>
+  </symbol>
+</svg>
+
+<%/* ───── ENCABEZADO ───── */%>
+<header class="mul-top">
+  <a href="/" class="mul-marca">
+    <%/* Ranura del logo: mientras marca.logo esté vacío se dibuja el
+         monograma. Las dos variantes ocupan la misma caja, así que soltar
+         el archivo oficial no mueve nada de la maqueta. */%>
+    <% if (marca.logo) { %>
+      <img class="mul-logo" src="<%= marca.logo %>" alt="<%= marca.alt %>" />
+    <% } else { %>
+      <span class="mul-monograma" aria-hidden="true">IM</span>
+    <% } %>
+    <span class="mul-marca-txt">
+      <strong>Ingeniería en</strong>
+      <em>Multimedia</em>
+    </span>
+  </a>
+
+  <button class="mul-menu" id="mul-menu" aria-expanded="false" aria-controls="mul-nav" aria-label="Menú">
+    <svg class="abrir" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 6h14M3 10h14M3 14h14"/></svg>
+    <svg class="cerrar" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+  </button>
+
+  <nav class="mul-nav" id="mul-nav">
+    <% (nav.items || []).forEach((it) => { %>
+      <a href="<%= it.href %>" class="<%= it.destacado ? 'destacado' : '' %>"><%= it.texto %></a>
+    <% }) %>
+    <% if (docente) { %><a href="/panel" class="panel">Mi panel</a><% } %>
+  </nav>
+</header>
+
+<main>
+
+  <%/* ───── HERO ───── */%>
+  <% if (hero) { %>
+  <section class="mul-hero">
+    <svg class="mul-hero-fig" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true">
+      <circle cx="100" cy="100" r="94" stroke-width="1"/>
+      <circle cx="100" cy="100" r="70" stroke-width="1"/>
+      <circle cx="100" cy="100" r="46" stroke-width="1"/>
+      <ellipse cx="100" cy="100" rx="94" ry="40" stroke-width="1"/>
+      <ellipse cx="100" cy="100" rx="40" ry="94" stroke-width="1"/>
+      <circle cx="100" cy="6" r="5" fill="#62C520" stroke="none"/>
+    </svg>
+
+    <div class="mul-ancho">
+      <p class="mul-eyebrow"><%= hero.eyebrow %></p>
+      <h1><%= hero.titulo %> <em><%= hero.titulo_enfasis %></em></h1>
+      <p class="mul-lead"><%= hero.lead %></p>
+
+      <div class="mul-ctas">
+        <% (hero.ctas || []).forEach((c) => { %>
+          <a href="<%= c.href %>" class="mul-btn <%= c.estilo === 'linea' ? 'linea' : '' %>"><%= c.texto %></a>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── FICHA: LAS CIFRAS DURAS ───── */%>
+  <% if (ficha) { %>
+  <section class="mul-ficha">
+    <div class="mul-ancho">
+      <div class="mul-stats">
+        <% (ficha.stats || []).forEach((s) => { %>
+          <div class="mul-stat">
+            <span class="mul-stat-valor"><%= s.valor %></span>
+            <span class="mul-stat-unidad"><%= s.unidad %></span>
+            <span class="mul-stat-nota"><%= s.nota %></span>
+          </div>
+        <% }) %>
+      </div>
+
+      <% if ((ficha.sellos || []).length) { %>
+        <ul class="mul-sellos">
+          <% ficha.sellos.forEach((s) => { %><li class="mul-pill"><%= s %></li><% }) %>
+        </ul>
+      <% } %>
+
+      <% if (ficha.legal) { %><p class="mul-legal"><%= ficha.legal %></p><% } %>
+
+      <% if (ficha.oficial) { %>
+        <a class="mul-oficial" href="<%= ficha.oficial.href %>" target="_blank" rel="noopener">
+          <svg width="15" height="15" aria-hidden="true"><use href="#fig-flecha"/></svg>
+          <span><%= ficha.oficial.texto %><small><%= ficha.oficial.nota %></small></span>
+        </a>
+      <% } %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── QUÉ ES EL PROGRAMA ───── */%>
+  <% if (quees) { %>
+  <section id="programa" class="mul-sec">
+    <div class="mul-ancho">
+      <div class="mul-sec-head">
+        <p class="mul-eyebrow"><%= quees.eyebrow %></p>
+        <h2><%= quees.titulo %></h2>
+      </div>
+
+      <div class="mul-cols">
+        <div class="mul-quees-txt">
+          <% (quees.parrafos || []).forEach((p) => { %><p><%= p %></p><% }) %>
+        </div>
+
+        <div class="mul-perfiles">
+          <% [quees.perfil, quees.ocupacional].forEach((p) => { if (!p) return; %>
+            <article class="mul-perfil">
+              <h3><%= p.titulo %></h3>
+              <p><%= p.texto %></p>
+            </article>
+          <% }) %>
+        </div>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── QUÉ SE ESTUDIA ─────
+       <details> nativo: se abre y se cierra sin una línea de JavaScript,
+       igual que las asignaturas de la landing de la Expo. */%>
+  <% if (ejes) { %>
+  <section id="estudias" class="mul-sec">
+    <div class="mul-ancho">
+      <div class="mul-sec-head">
+        <p class="mul-eyebrow"><%= ejes.eyebrow %></p>
+        <h2><%= ejes.titulo %></h2>
+        <p class="mul-lead"><%= ejes.lead %></p>
+      </div>
+
+      <div class="mul-ejes-lista">
+        <% (ejes.items || []).forEach((e, i) => { %>
+          <details class="mul-eje" id="<%= e.id %>" <%= i === 0 ? 'open' : '' %>>
+            <summary>
+              <svg class="mul-eje-fig" aria-hidden="true"><use href="#fig-<%= e.figura %>"/></svg>
+              <h3><%= e.titulo %></h3>
+              <svg class="mul-eje-mas" aria-hidden="true"><use href="#fig-mas"/></svg>
+            </summary>
+            <div class="mul-eje-cuerpo">
+              <p><%= e.desc %></p>
+              <% if ((e.etiquetas || []).length) { %>
+                <ul class="mul-tags">
+                  <% e.etiquetas.forEach((t) => { %><li class="mul-pill simple"><%= t %></li><% }) %>
+                </ul>
+              <% } %>
+            </div>
+          </details>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── EXPO MULTIMEDIA (banda azul) ─────
+       El único enlace a la landing oscura. El contenido de la Expo vive en
+       data/expo.json: aquí va solo el gancho. */%>
+  <% if (expo) { %>
+  <section class="mul-banda mul-expo">
+    <svg class="mul-banda-trama" aria-hidden="true">
+      <defs>
+        <pattern id="trama-expo" width="26" height="26" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="2" fill="currentColor"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#trama-expo)"/>
+    </svg>
+
+    <div class="mul-ancho">
+      <p class="mul-eyebrow"><%= expo.eyebrow %></p>
+      <h2><%= expo.titulo %></h2>
+      <p class="mul-expo-lema"><%= expo.lema %></p>
+      <p class="mul-expo-desc"><%= expo.desc %></p>
+
+      <% if ((expo.puntos || []).length) { %>
+        <ul class="mul-expo-puntos">
+          <% expo.puntos.forEach((p) => { %>
+            <li><svg aria-hidden="true"><use href="#fig-check"/></svg><span><%= p %></span></li>
+          <% }) %>
+        </ul>
+      <% } %>
+
+      <% if (expo.cta) { %>
+        <a href="<%= expo.cta.href %>" class="mul-btn claro">
+          <%= expo.cta.texto %>
+          <svg width="17" height="17" aria-hidden="true"><use href="#fig-flecha"/></svg>
+        </a>
+      <% } %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── EVENTOS Y SALIDAS ─────
+       Un bloque en espera es un <div> sin enlace; uno activo es un <a>.
+       Cambia solo con el flag del JSON, sin tocar CSS. */%>
+  <% if (agenda) { %>
+  <section id="agenda" class="mul-sec">
+    <div class="mul-ancho">
+      <div class="mul-sec-head">
+        <p class="mul-eyebrow"><%= agenda.eyebrow %></p>
+        <h2><%= agenda.titulo %></h2>
+        <p class="mul-lead"><%= agenda.lead %></p>
+      </div>
+
+      <div class="mul-bloques">
+        <% (agenda.bloques || []).forEach((b) => { %>
+          <% const espera = b.proximamente || !b.href; %>
+          <% if (espera) { %>
+            <div class="mul-bloque espera" aria-disabled="true">
+              <div class="mul-bloque-top">
+                <h3><%= b.titulo %></h3>
+                <span class="mul-badge espera"><%= b.etiqueta || 'Próximamente' %></span>
+              </div>
+              <p><%= b.desc %></p>
+            </div>
+          <% } else { %>
+            <a class="mul-bloque" href="<%= b.href %>">
+              <div class="mul-bloque-top">
+                <h3><%= b.titulo %></h3>
+                <% if (b.etiqueta) { %><span class="mul-badge"><%= b.etiqueta %></span><% } %>
+              </div>
+              <p><%= b.desc %></p>
+              <span class="mul-bloque-ir">Ver más <svg width="16" height="16" aria-hidden="true"><use href="#fig-flecha"/></svg></span>
+            </a>
+          <% } %>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── LABORATORIOS ───── */%>
+  <% if (laboratorios) { %>
+  <section id="laboratorios" class="mul-sec">
+    <div class="mul-ancho">
+      <div class="mul-sec-head">
+        <p class="mul-eyebrow"><%= laboratorios.eyebrow %></p>
+        <h2><%= laboratorios.titulo %></h2>
+        <p class="mul-lead"><%= laboratorios.lead %></p>
+      </div>
+
+      <% const labs = laboratorios.items || [];
+         const destacados = labs.filter((l) => l.destacado);
+         const resto = labs.filter((l) => !l.destacado);
+         const figuras = ['fig-marco', 'fig-onda', 'fig-malla']; %>
+
+      <% if (destacados.length) { %>
+        <div class="mul-labs-destacados">
+          <% destacados.forEach((l, i) => { %>
+            <article class="mul-lab">
+              <svg class="mul-lab-fig" aria-hidden="true"><use href="#<%= figuras[i % figuras.length] %>"/></svg>
+              <h3><%= l.name %></h3>
+              <% if (l.desc) { %><p><%= l.desc %></p><% } %>
+            </article>
+          <% }) %>
+        </div>
+      <% } %>
+
+      <% if (resto.length) { %>
+        <ul class="mul-labs-lista">
+          <% resto.forEach((l) => { %><li><%= l.name %></li><% }) %>
+        </ul>
+      <% } %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── CONTACTO (banda azul) ───── */%>
+  <% if (contacto) { %>
+  <section id="contacto" class="mul-banda mul-contacto">
+    <div class="mul-ancho">
+      <p class="mul-eyebrow"><%= contacto.eyebrow %></p>
+      <h2><%= contacto.titulo %></h2>
+      <p class="mul-lead"><%= contacto.lead %></p>
+
+      <div class="mul-contacto-grid">
+        <% if (contacto.director) { const d = contacto.director; %>
+          <article class="mul-tarjeta">
+            <h3><%= d.nombre %></h3>
+            <p class="cargo"><%= d.cargo %></p>
+            <ul class="mul-datos">
+              <li>
+                <svg aria-hidden="true"><use href="#fig-correo"/></svg>
+                <a href="mailto:<%= d.email %>"><%= d.email %></a>
+              </li>
+              <li>
+                <svg aria-hidden="true"><use href="#fig-tel"/></svg>
+                <a href="tel:<%= d.telefono.replace(/\s/g, '') %>"><%= d.telefono %></a>
+                <% if (d.extension) { %><span>· Ext. <%= d.extension %></span><% } %>
+              </li>
+            </ul>
+          </article>
+        <% } %>
+
+        <% if (contacto.sede) { %>
+          <p class="mul-sede">
+            <strong><%= contacto.sede.titulo %></strong>
+            <%= contacto.sede.direccion %><br />
+            <%= contacto.sede.ciudad %><br />
+            <%= institucion %>
+          </p>
+        <% } %>
+      </div>
+    </div>
+  </section>
+  <% } %>
+
+</main>
+
+<%/* ───── PIE ───── */%>
+<footer class="mul-foot">
+  <div class="mul-ancho">
+    <div class="mul-foot-fila">
+      <a href="/" class="mul-marca">
+        <% if (marca.logo_pie || marca.logo) { %>
+          <img class="mul-logo" src="<%= marca.logo_pie || marca.logo %>" alt="<%= marca.alt %>" />
+        <% } else { %>
+          <span class="mul-monograma" aria-hidden="true">IM</span>
+        <% } %>
+        <span class="mul-marca-txt">
+          <strong>Ingeniería en</strong>
+          <em>Multimedia</em>
+        </span>
+      </a>
+
+      <nav class="mul-foot-links">
+        <a href="/expo">Expo Multimedia</a>
+        <% if (ficha && ficha.oficial) { %>
+          <a href="<%= ficha.oficial.href %>" target="_blank" rel="noopener">Sitio oficial</a>
+        <% } %>
+        <a href="#contacto">Contacto</a>
+      </nav>
+    </div>
+
+    <div class="mul-foot-legal">
+      <%= facultad %> · <%= institucion %>
+      <%/* Igual que en la Expo: el acceso de docentes no se anuncia, solo
+           queda este enlace discreto al pie. */%>
+      · <a href="/acceso" class="mul-foot-acceso">Acceso docentes</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Menú del encabezado en pantallas angostas. Sin esto el nav se sale de la
+  // pantalla en móvil y el enlace a la Expo queda inalcanzable.
+  (function () {
+    var boton = document.getElementById("mul-menu");
+    var nav = document.getElementById("mul-nav");
+    if (!boton || !nav) return;
+
+    boton.addEventListener("click", function () {
+      var abierto = nav.classList.toggle("abierto");
+      boton.setAttribute("aria-expanded", abierto ? "true" : "false");
+    });
+
+    // Al tocar un enlace el menú se cierra solo: si no, tapa la sección a la
+    // que se acaba de saltar.
+    nav.addEventListener("click", function (e) {
+      if (e.target.closest("a")) {
+        nav.classList.remove("abierto");
+        boton.setAttribute("aria-expanded", "false");
+      }
+    });
+  })();
+
+  // Marca en el encabezado la sección que se está viendo. Es adorno: si el
+  // navegador no trae IntersectionObserver, la página funciona igual.
+  (function () {
+    if (!("IntersectionObserver" in window)) return;
+
+    var enlaces = {};
+    document.querySelectorAll('.mul-nav a[href^="#"]').forEach(function (a) {
+      enlaces[a.getAttribute("href").slice(1)] = a;
+    });
+
+    var secciones = Object.keys(enlaces)
+      .map(function (id) { return document.getElementById(id); })
+      .filter(Boolean);
+    if (!secciones.length) return;
+
+    var obs = new IntersectionObserver(
+      function (entradas) {
+        entradas.forEach(function (en) {
+          var a = enlaces[en.target.id];
+          if (a) a.classList.toggle("activo", en.isIntersecting);
+        });
+      },
+      { rootMargin: "-45% 0px -50% 0px" }
+    );
+
+    secciones.forEach(function (s) { obs.observe(s); });
+  })();
+</script>
+
+<%- include('partials/footer') %>

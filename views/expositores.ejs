@@ -3,9 +3,9 @@
 <% const porSala = Object.fromEntries(salas.map(s => [s.id, s])); %>
 
 <header class="pub-top">
-  <a href="/" class="pub-brand">Expo <em>Multimedia</em></a>
+  <a href="/expo" class="pub-brand">Expo <em>Multimedia</em></a>
   <nav class="pub-nav">
-    <a href="/">Volver a la Expo</a>
+    <a href="/expo">Volver a la Expo</a>
     <% if (registro && registro.abierto) { %><a href="/registro" class="pub-destacado">Registrar proyecto</a><% } %>
   </nav>
 </header>
@@ -34,7 +34,7 @@
       <div class="bloque-head">
         <h2><%= bloque.titulo %></h2>
         <% if (sala) { %>
-          <a href="/#<%= sala.id %>" class="bloque-sala"><span class="dot"></span><%= sala.name %></a>
+          <a href="/expo#<%= sala.id %>" class="bloque-sala"><span class="dot"></span><%= sala.name %></a>
         <% } %>
       </div>
       <% if (bloque.subtitulo) { %><p class="sec-lead"><%= bloque.subtitulo %></p><% } %>
