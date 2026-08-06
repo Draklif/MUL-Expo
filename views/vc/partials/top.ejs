@@ -1,0 +1,80 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     Cabecera del sitio del torneo: la marca, el menú y las pestañas de
+     juegos.
+
+     El color de toda la página se inyecta aquí, en un :root, y no como
+     estilo de un contenedor: el degradado del fondo cuelga de <body>, que
+     está en el head y no se puede envolver desde una vista.
+
+     El menú es UNO SOLO para las dos pantallas: los mismos enlaces en el
+     mismo orden. En escritorio se pintan a la derecha de la marca y en
+     celular bajan a una barra fija abajo, al alcance del pulgar. Lo único
+     que cambia es el CSS —los íconos se esconden arriba y los rótulos se
+     achican abajo—, así que no hay dos menús que mantener sincronizados ni
+     nada duplicado en el HTML.
+     ───────────────────────────────────────────────────────────────── */%>
+<style>:root { --juego: <%= juego ? juego.acento : '#ff4655' %>; }</style>
+
+<%
+  // Los íconos solo se ven en la barra de abajo, pero se dibujan siempre:
+  // en escritorio el CSS los oculta. Van aquí como trazos sueltos —sin
+  // relleno y con currentColor— para que tomen el color del juego cuando la
+  // pestaña está activa, sin tener que repetir cada figura en dos colores.
+  const ICONOS = {
+    inicio:      '<path d="M3 11l9-7 9 7v8a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>',
+    bracket:     '<path d="M4 5v4h5M4 19v-4h5M9 9v6M9 12h5M14 12h6"/>',
+    calendario:  '<rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    equipos:     '<circle cx="9" cy="8" r="3"/><path d="M3.5 20a5.5 5.5 0 0111 0M16 5.5a3 3 0 010 5.5M17.5 20a6 6 0 00-1.5-4"/>',
+    inscripcion: '<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M12 8v8M8 12h8"/>',
+  };
+  const icono = (k) =>
+    `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONOS[k]}</svg>`;
+%>
+
+<header class="vc-top">
+  <div class="vc-top-in publica">
+    <a href="/virtual-champions" class="vc-marca">Virtual <em>Champions</em></a>
+
+    <nav class="vc-nav tabs" aria-label="Secciones del torneo">
+      <a href="/virtual-champions" class="<%= activa === 'inicio' ? 'on' : '' %>"
+         <%- activa === 'inicio' ? 'aria-current="page"' : '' %>>
+        <%- icono('inicio') %><span>Inicio</span>
+      </a>
+
+      <% if (juego) { %>
+        <a href="/vc/<%= juego.id %>/bracket" class="<%= activa === 'bracket' ? 'on' : '' %>"
+           <%- activa === 'bracket' ? 'aria-current="page"' : '' %>>
+          <%- icono('bracket') %><span>Bracket</span>
+        </a>
+        <a href="/vc/<%= juego.id %>/calendario" class="<%= activa === 'calendario' ? 'on' : '' %>"
+           <%- activa === 'calendario' ? 'aria-current="page"' : '' %>>
+          <%- icono('calendario') %><span>Calendario</span>
+        </a>
+        <a href="/vc/<%= juego.id %>/equipos" class="<%= activa === 'equipos' ? 'on' : '' %>"
+           <%- activa === 'equipos' ? 'aria-current="page"' : '' %>>
+          <%- icono('equipos') %><span>Equipos</span>
+        </a>
+      <% } %>
+
+      <a href="/vc/inscripcion" class="<%= activa === 'inscripcion' ? 'on' : '' %>"
+         <%- activa === 'inscripcion' ? 'aria-current="page"' : '' %>>
+        <%- icono('inscripcion') %><span>Inscripción</span>
+      </a>
+    </nav>
+  </div>
+</header>
+
+<%/* Con un solo juego configurado las pestañas sobran: no hay entre qué
+     elegir y solo ocupan una franja. */%>
+<% if (juegos.length > 1) { %>
+<div class="vc-juegos">
+  <div class="vc-juegos-in">
+    <% juegos.forEach(function (j) { %>
+      <a href="/vc/<%= j.id %>/bracket"
+         class="vc-juego <%= juego && j.id === juego.id ? 'on' : '' %>"
+         style="--jc: <%= j.acento %>"><%= j.nombre %></a>
+    <% }); %>
+  </div>
+</div>
+<% } %>

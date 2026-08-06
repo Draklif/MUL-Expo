@@ -1,0 +1,51 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     Una partida en formato tarjeta. La usan la landing, el calendario y la
+     ficha de equipo, así que recibe `p` (una partida ya decorada por
+     lib/vc.js).
+
+     Con `compacta: true` la cabecera se queda solo con el nombre de la
+     ronda. Es para el calendario: allá el día ya es el título de la sección
+     y la hora está en la columna de la izquierda, así que los chips y el
+     "cuándo" dirían por tercera vez lo mismo. Quien esté en el calendario ya
+     sabe cuándo es cada partida —a eso entró—.
+
+     El estado no se pierde por quitar el chip: una partida en vivo sigue
+     marcada con el filo rojo y el fondo teñido, y una ya jugada se reconoce
+     porque tiene marcador en vez de guiones.
+     ───────────────────────────────────────────────────────────────── */%>
+<%
+  const m = p.inicio ? momentoDe(p.inicio) : null;
+  const ganaA = p.ganador_id && p.ganador_id === p.equipo_a_id;
+  const ganaB = p.ganador_id && p.ganador_id === p.equipo_b_id;
+  const clase = (gana, otro, id) =>
+    !id ? "pordefinir" : gana ? "gana" : otro ? "pierde" : "";
+  // typeof y no un valor por defecto: quien no pase la variable no la tiene
+  // definida, y leerla de frente sería un ReferenceError.
+  const simple = typeof compacta !== "undefined" && compacta;
+%>
+<a href="/vc/partida/<%= p.id %>" class="partida <%= p.estado === 'en_vivo' ? 'es-vivo' : '' %>">
+  <div class="partida-top">
+    <span class="ronda"><%= p.ronda %></span>
+    <% if (!simple) { %>
+      <span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span>
+      <span class="chip chip-bo"><%= p.formato_label %></span>
+      <% if (p.presencial) { %><span class="chip acento chip-sede">Presencial</span><% } %>
+      <span class="cuando">
+        <% if (m) { %><%= m.diaCorto %> · <%= m.hora %><% } else { %>Por programar<% } %>
+      </span>
+    <% } %>
+  </div>
+
+  <div class="partida-cuerpo">
+    <div class="lado <%= clase(ganaA, ganaB, p.equipo_a_id) %>">
+      <span class="escudo chico"><%= p.tag_a || (p.equipo_a_id ? p.equipo_a.slice(0, 3) : '·') %></span>
+      <span class="nombre"><%= p.equipo_a %></span>
+      <span class="marcador"><%= p.equipo_a_id ? p.marcador_a : '–' %></span>
+    </div>
+    <div class="lado <%= clase(ganaB, ganaA, p.equipo_b_id) %>">
+      <span class="escudo chico"><%= p.tag_b || (p.equipo_b_id ? p.equipo_b.slice(0, 3) : '·') %></span>
+      <span class="nombre"><%= p.equipo_b %></span>
+      <span class="marcador"><%= p.equipo_b_id ? p.marcador_b : '–' %></span>
+    </div>
+  </div>
+</a>

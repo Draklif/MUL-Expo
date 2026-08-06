@@ -28,6 +28,9 @@ const DOMINIO = "uniboyaca.edu.co";
 //   lema   — una línea para la página de aviso mientras no tenga la suya.
 //   datos  — archivo de data/ con el contenido. Vacío = todavía no tiene.
 //   vista  — plantilla de views/. Vacío = usa la página de aviso.
+//   ruta   — true si el evento trae su propio router (su página necesita
+//            datos de la base, no solo del JSON). El servidor entonces no le
+//            registra la dirección automática: la pone el router.
 const EVENTOS = [
   {
     slug: "expo",
@@ -41,9 +44,10 @@ const EVENTOS = [
     slug: "virtual-champions",
     nombre: "Virtual Champions",
     fecha: "",
-    lema: "",
-    datos: "",
-    vista: "",
+    lema: "El torneo de esports del programa. Clasificatorias en línea, final en vivo.",
+    datos: "virtual-champions.json",
+    vista: "vc/landing",
+    ruta: true,
   },
   {
     slug: "jam-de-altura",
@@ -67,6 +71,68 @@ const EVENTOS = [
 // aquí su slug (o EVENTO=slug en el .env, que pesa más y sirve para probar sin
 // tocar el archivo). Vacío = manda la fecha, que es lo normal.
 const EVENTO_ACTIVO = "";
+
+// ---------------------------------------------------------------------
+//  VIRTUAL CHAMPIONS
+// ---------------------------------------------------------------------
+// El torneo de esports. Cada juego que se vaya a jugar entra en la lista de
+// abajo: agregarlo o quitarlo es todo lo que hace falta para que aparezca (o
+// desaparezca) del sitio público y del panel. Nada más en el código nombra a
+// Valorant ni a League of Legends.
+//
+//   id         — identificador corto. Va en la dirección (/vc/valorant/bracket)
+//                y en la clase de CSS (.juego-valorant), así que no se cambia
+//                una vez haya torneos creados.
+//   acento     — el color del juego. Manda en su página y en sus tarjetas.
+//   titulares  — cuántos juegan. Es el mínimo que se le pide a un equipo al
+//                inscribirse y el tamaño de los equipos que arma el docente.
+//   suplentes  — cuántos más se admiten en el registro.
+//   roles      — las opciones del selector de rol en la inscripción.
+//   nick       — cómo se llama el nombre en el juego, para no pedir "usuario"
+//                a secas.
+//   mapas      — sugerencias del selector al cargar un mapa en vivo. La consola
+//                deja escribir cualquier otro, así que la lista puede quedar
+//                corta sin bloquear a nadie.
+const VC = {
+  juegos: [
+    {
+      id: "valorant",
+      nombre: "Valorant",
+      acento: "#ff4655",
+      titulares: 5,
+      suplentes: 2,
+      roles: ["Duelista", "Iniciador", "Controlador", "Centinela", "Flex"],
+      nick: { label: "Riot ID", ejemplo: "Nairo#LAN" },
+      mapas: ["Ascent", "Bind", "Haven", "Split", "Lotus", "Sunset", "Icebox", "Breeze"],
+    },
+    {
+      id: "lol",
+      nombre: "League of Legends",
+      acento: "#c8aa6e",
+      titulares: 5,
+      suplentes: 2,
+      roles: ["Top", "Jungla", "Medio", "ADC", "Soporte"],
+      nick: { label: "Riot ID", ejemplo: "Nairo#LAN" },
+      mapas: ["Grieta del Invocador"],
+    },
+  ],
+
+  // Formatos de serie disponibles al armar el bracket. BO1 = una partida,
+  // BO3 = el primero que gane dos, BO5 = el primero que gane tres.
+  formatos: [1, 3, 5],
+
+  // Con qué formato arranca cada ronda al generar el bracket: las eliminatorias
+  // son virtuales a una sola partida y la final es presencial al mejor de cinco.
+  formato_ronda: 1,
+  formato_final: 5,
+  final_presencial: true,
+};
+
+// Contraseña del panel de Virtual Champions. Es DISTINTA a la de la Expo a
+// propósito: los mismos docentes, pero dos herramientas separadas. Va en el
+// .env (PASSWORD_VC). Sin ella el panel del torneo queda cerrado, pero el
+// resto del sitio funciona igual.
+const PASSWORD_VC = String(process.env.PASSWORD_VC || "").trim();
 
 // Contraseña compartida para todos los docentes.
 // El correo identifica a cada quien; esta clave es la segunda barrera.
@@ -127,7 +193,9 @@ module.exports = {
   DOMINIO,
   EVENTOS,
   EVENTO_ACTIVO,
+  VC,
   PASSWORD,
+  PASSWORD_VC,
   DOCENTES,
   CORREO,
   CRITERIOS,

@@ -1,0 +1,20 @@
+<%/* Cabecera del panel. Deliberadamente distinta a la del sitio público:
+     aquí no hay pestañas de juego ni marca grande, solo dónde estás, quién
+     eres y la salida. */%>
+<style>:root { --juego: <%= typeof juego !== 'undefined' && juego ? juego.acento : '#ff4655' %>; }</style>
+
+<header class="vc-top panel-top">
+  <div class="vc-top-in panel">
+    <a href="/vc/panel" class="vc-marca">Panel <em>VC</em></a>
+    <nav class="vc-nav">
+      <a href="/vc/panel">Torneos</a>
+      <a href="/virtual-champions">Ver el sitio</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:12px;margin-left:12px">
+      <span class="mini"><%= docenteVC.name %><%= periodoVC ? " · " + periodoVC.codigo : "" %></span>
+      <form method="POST" action="/vc/salir" style="margin:0">
+        <button type="submit" class="btn ghost chico">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

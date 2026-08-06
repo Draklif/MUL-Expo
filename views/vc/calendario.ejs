@@ -1,0 +1,32 @@
+<%- include('../partials/head', { title: title, descripcion: 'Calendario del torneo de ' + (juego ? juego.nombre : 'Virtual Champions'), css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="vc">
+  <section class="vc-sec">
+    <p class="eyebrow"><%= juego ? juego.nombre : "Virtual Champions" %></p>
+    <h2>Calendario</h2>
+    <p class="sec-lead">Todas las partidas del torneo, con día y hora. Las que aún no tienen fecha aparecen al final.</p>
+  </section>
+
+  <% if (!dias.length) { %>
+    <div class="vacio" style="margin-top:26px">
+      Todavía no hay partidas programadas.
+      <div style="margin-top:14px"><a href="/vc/inscripcion" class="btn chico">Inscribirme</a></div>
+    </div>
+  <% } else { %>
+    <% dias.forEach(function (d) { %>
+      <h3 class="dia-tit"><%= d.dia %></h3>
+      <% d.partidas.forEach(function (p) { %>
+        <div class="franja">
+          <div class="hora">
+            <% if (p.momento) { %><%= p.momento.hora %><% } else { %>—<% } %>
+          </div>
+          <div><%- include('partials/tarjeta-partida', { p: p, compacta: true }) %></div>
+        </div>
+      <% }); %>
+    <% }); %>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

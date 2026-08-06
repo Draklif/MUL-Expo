@@ -1,0 +1,303 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="vc">
+
+  <%/* ───── CABECERA Y ESTADO ───── */%>
+  <section class="vc-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow"><%= juego ? juego.nombre : torneo.juego %></p>
+        <h2><%= torneo.nombre %></h2>
+      </div>
+      <div class="acciones">
+        <a href="/vc/<%= torneo.juego %>/bracket" class="btn ghost chico">Ver público</a>
+      </div>
+    </div>
+
+    <%/* Mensajes de lo que acaba de pasar. Van aquí y no en cada sección
+         porque todos vienen del mismo redirect con su bandera. */%>
+    <% if (query.revisado) { %><div class="aviso bueno"><p style="margin:0">Inscripción revisada. Al capitán le llegó el correo.</p></div><% } %>
+    <% if (query.armado) { %><div class="aviso bueno"><p style="margin:0">Equipo armado con <%= query.armado %> jugadores. A cada uno le llegó su aviso.</p></div><% } %>
+    <% if (query.bracket) { %><div class="aviso bueno"><p style="margin:0">Bracket generado. El torneo quedó en curso y las inscripciones se cerraron.</p></div><% } %>
+    <% if (query.error === "pocos") { %><div class="aviso malo"><p style="margin:0">Hacen falta al menos dos equipos aprobados para armar el bracket.</p></div><% } %>
+    <% if (query.error === "jugadas") { %><div class="aviso malo"><p style="margin:0">No se puede rehacer el bracket: ya hay partidas jugadas.</p></div><% } %>
+    <% if (query.error === "armar") { %><div class="aviso malo"><p style="margin:0">Para armar un equipo hace falta un nombre y al menos dos jugadores libres.</p></div><% } %>
+    <% if (query.error === "bracket") { %><div class="aviso malo"><p style="margin:0">No se pudo armar el bracket. Revisa la consola del servidor.</p></div><% } %>
+
+    <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/estado" class="tarjeta" style="margin-top:8px">
+      <div class="fila" style="align-items:end">
+        <div class="campo" style="margin:0">
+          <label for="estado">Estado del torneo</label>
+          <select name="estado" id="estado">
+            <option value="inscripcion" <%= torneo.estado === "inscripcion" ? "selected" : "" %>>Inscripciones</option>
+            <option value="en_curso"    <%= torneo.estado === "en_curso"    ? "selected" : "" %>>En curso</option>
+            <option value="finalizado"  <%= torneo.estado === "finalizado"  ? "selected" : "" %>>Terminado</option>
+          </select>
+        </div>
+        <div class="campo" style="margin:0">
+          <label for="inscripcion_abierta">Inscripciones</label>
+          <select name="inscripcion_abierta" id="inscripcion_abierta">
+            <option value="1" <%= torneo.inscripcion_abierta ? "selected" : "" %>>Abiertas</option>
+            <option value="0" <%= torneo.inscripcion_abierta ? "" : "selected" %>>Cerradas</option>
+          </select>
+        </div>
+        <div><button type="submit" class="btn chico">Guardar</button></div>
+      </div>
+    </form>
+  </section>
+
+  <%/* ───── INSCRIPCIONES POR REVISAR ───── */%>
+  <section class="vc-sec" id="inscripciones">
+    <p class="eyebrow">Por revisar</p>
+    <h2 style="font-size:22px"><%= pendientes.length %> inscripciones</h2>
+
+    <% if (!pendientes.length) { %>
+      <div class="vacio" style="margin-top:16px">Nada pendiente.</div>
+    <% } else { %>
+      <% pendientes.forEach(function (e) { %>
+        <div class="tarjeta" style="margin-top:14px">
+          <div style="display:flex;gap:13px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+            <span class="escudo"><%= e.tag || e.nombre.slice(0, 3) %></span>
+            <div>
+              <strong style="font-family:var(--display);font-size:17px;text-transform:uppercase"><%= e.nombre %></strong>
+              <div class="mini"><%= e.jugadores.length %> jugadores · <%= e.contacto_nombre %> · <%= e.contacto_email %></div>
+            </div>
+            <span class="chip" style="margin-left:auto"><%= e.codigo %></span>
+          </div>
+
+          <ul class="roster">
+            <% e.jugadores.forEach(function (j) { %>
+              <li>
+                <span class="nick"><%= j.nick || "—" %></span>
+                <span class="quien"><%= j.nombre %> · <%= j.email %></span>
+                <span class="rol"><%= j.rol || "" %><%= j.suplente ? " · suplente" : "" %></span>
+              </li>
+            <% }); %>
+          </ul>
+
+          <form method="POST" action="/vc/panel/equipos/<%= e.id %>/revisar" style="margin-top:14px">
+            <div class="campo">
+              <label for="nota-<%= e.id %>">Nota (va en el correo si lo rechazas)</label>
+              <input type="text" name="nota_docente" id="nota-<%= e.id %>" maxlength="400"
+                     placeholder="Les falta un jugador / hay alguien repetido…" />
+            </div>
+            <div class="acciones">
+              <button type="submit" name="estado" value="aprobado" class="btn chico">Aprobar</button>
+              <button type="submit" name="estado" value="rechazado" class="btn ghost chico">Rechazar</button>
+            </div>
+          </form>
+        </div>
+      <% }); %>
+    <% } %>
+  </section>
+
+  <%/* ───── JUGADORES SIN EQUIPO ─────
+       El caso que pidió el usuario: quien se inscribe solo espera aquí hasta
+       que haya suficientes para armar un equipo. */%>
+  <section class="vc-sec" id="libres">
+    <p class="eyebrow">Se inscribieron solos</p>
+    <h2 style="font-size:22px"><%= libres.length %> esperando equipo</h2>
+    <p class="sec-lead">
+      <% if (juego) { %>
+        Un equipo de <%= juego.nombre %> necesita <%= juego.titulares %> jugadores.
+      <% } %>
+      Marca a los que van juntos, ponle nombre al equipo y queda creado y aprobado.
+      A cada uno le llega un correo con quiénes le tocaron.
+    </p>
+
+    <% if (!libres.length) { %>
+      <div class="vacio" style="margin-top:16px">Nadie esperando.</div>
+    <% } else { %>
+      <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/armar" style="margin-top:16px">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th style="width:40px"></th>
+              <th>Jugador</th>
+              <th>Nick</th>
+              <th>Rol</th>
+              <th>Correo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% libres.forEach(function (j) { %>
+              <tr>
+                <td><input type="checkbox" name="jugador" value="<%= j.id %>" /></td>
+                <td><%= j.nombre %></td>
+                <td><%= j.nick || "—" %></td>
+                <td class="mini"><%= j.rol || "—" %></td>
+                <td class="mini"><%= j.email %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+
+        <div class="fila" style="margin-top:16px;align-items:end;max-width:640px">
+          <div class="campo" style="margin:0">
+            <label for="armar-nombre">Nombre del equipo</label>
+            <input type="text" name="nombre" id="armar-nombre" maxlength="40" required />
+          </div>
+          <div class="campo" style="margin:0">
+            <label for="armar-tag">Tag</label>
+            <input type="text" name="tag" id="armar-tag" maxlength="5" />
+          </div>
+          <div><button type="submit" class="btn chico">Armar equipo</button></div>
+        </div>
+      </form>
+    <% } %>
+  </section>
+
+  <%/* ───── EQUIPOS CONFIRMADOS ───── */%>
+  <section class="vc-sec" id="equipos">
+    <p class="eyebrow">Confirmados</p>
+    <h2 style="font-size:22px"><%= aprobados.length %> equipos</h2>
+
+    <% if (!aprobados.length) { %>
+      <div class="vacio" style="margin-top:16px">Todavía no hay equipos aprobados.</div>
+    <% } else { %>
+      <table class="tabla">
+        <thead>
+          <tr><th>Equipo</th><th>Jugadores</th><th>Código</th><th>Origen</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% aprobados.forEach(function (e) { %>
+            <tr>
+              <td>
+                <a href="/vc/equipo/<%= e.id %>" style="text-decoration:none">
+                  <strong style="font-family:var(--display);text-transform:uppercase"><%= e.nombre %></strong>
+                </a>
+              </td>
+              <td><%= e.jugadores.length %></td>
+              <td class="mini"><%= e.codigo %></td>
+              <td class="mini"><%= e.armado ? "Armado aquí" : "Se inscribió" %></td>
+              <td>
+                <form method="POST" action="/vc/panel/equipos/<%= e.id %>/borrar" style="margin:0"
+                      onsubmit="return confirm('¿Borrar <%= e.nombre %>? Sus jugadores vuelven a la lista de espera.')">
+                  <button type="submit" class="btn ghost chico">Borrar</button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+
+    <% if (rechazados.length) { %>
+      <p class="mini" style="margin-top:14px"><%= rechazados.length %> inscripciones rechazadas.</p>
+    <% } %>
+  </section>
+
+  <%/* ───── BRACKET ───── */%>
+  <section class="vc-sec" id="bracket">
+    <p class="eyebrow">La competencia</p>
+    <h2 style="font-size:22px">Bracket</h2>
+
+    <% if (!bracket.length) { %>
+      <p class="sec-lead">
+        Todavía no hay bracket. Se arma con los <%= aprobados.length %> equipos aprobados:
+        se siembran, se completa con descansos si no son potencia de dos y las llaves
+        quedan conectadas, así que cerrar una partida sube al ganador solo.
+      </p>
+    <% } else if (!sePuedeRegenerar) { %>
+      <p class="sec-lead">
+        Ya hay partidas jugadas, así que el bracket no se puede rehacer. Lo que sí se
+        puede es cambiar el formato de una ronda o los datos de una partida suelta.
+      </p>
+    <% } else { %>
+      <p class="sec-lead">Todavía no se juega nada, así que se puede rehacer.</p>
+    <% } %>
+
+    <% if (sePuedeRegenerar && aprobados.length >= 2) { %>
+      <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/bracket" class="tarjeta"
+            style="margin-top:16px;max-width:760px"
+            <%= bracket.length ? "onsubmit=\"return confirm('Esto rehace el bracket desde cero. ¿Seguro?')\"" : "" %>>
+        <div class="fila" style="align-items:end">
+          <div class="campo" style="margin:0">
+            <label for="formato">Rondas normales</label>
+            <select name="formato" id="formato">
+              <% formatos.forEach(function (f) { %>
+                <option value="<%= f %>" <%= f === 1 ? "selected" : "" %>>BO<%= f %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="campo" style="margin:0">
+            <label for="formato_final">Final</label>
+            <select name="formato_final" id="formato_final">
+              <% formatos.forEach(function (f) { %>
+                <option value="<%= f %>" <%= f === 5 ? "selected" : "" %>>BO<%= f %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="campo" style="margin:0">
+            <label for="final_presencial">Sede de la final</label>
+            <select name="final_presencial" id="final_presencial">
+              <option value="1" selected>Presencial</option>
+              <option value="0">Virtual</option>
+            </select>
+          </div>
+          <div><button type="submit" class="btn chico"><%= bracket.length ? "Rehacer" : "Generar" %> bracket</button></div>
+        </div>
+      </form>
+    <% } %>
+
+    <% if (bracket.length) { %>
+      <div style="margin-top:24px">
+        <% bracket.forEach(function (r) { %>
+          <div class="tarjeta" style="margin-bottom:14px">
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+              <strong style="font-family:var(--display);text-transform:uppercase;letter-spacing:.06em"><%= r.nombre %></strong>
+              <span class="chip acento"><%= r.formato_label %></span>
+              <% if (r.presencial) { %><span class="chip">Presencial</span><% } %>
+
+              <form method="POST" action="/vc/panel/rondas/<%= r.id %>" style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <select name="formato" style="width:auto;padding:6px 9px;font-size:13px">
+                  <% formatos.forEach(function (f) { %>
+                    <option value="<%= f %>" <%= f === r.formato ? "selected" : "" %>>BO<%= f %></option>
+                  <% }); %>
+                </select>
+                <select name="presencial" style="width:auto;padding:6px 9px;font-size:13px">
+                  <option value="0" <%= r.presencial ? "" : "selected" %>>Virtual</option>
+                  <option value="1" <%= r.presencial ? "selected" : "" %>>Presencial</option>
+                </select>
+                <button type="submit" class="btn ghost chico">Aplicar</button>
+              </form>
+            </div>
+
+            <table class="tabla">
+              <tbody>
+                <% r.partidas.forEach(function (p) { %>
+                  <tr>
+                    <td style="width:44%">
+                      <strong style="font-family:var(--display);text-transform:uppercase"><%= p.equipo_a %></strong>
+                      <span style="color:var(--ink-mute)"> vs </span>
+                      <strong style="font-family:var(--display);text-transform:uppercase"><%= p.equipo_b %></strong>
+                    </td>
+                    <td style="font-family:var(--display);font-weight:700"><%= p.marcador_a %> – <%= p.marcador_b %></td>
+                    <td><span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span></td>
+                    <td class="mini">
+                      <% const m = p.inicio ? momentoDe(p.inicio) : null; %>
+                      <% if (m) { %><%= m.diaCorto %> · <%= m.hora %><% } else { %>Sin hora<% } %>
+                    </td>
+                    <td><a href="/vc/panel/partidas/<%= p.id %>" class="btn ghost chico">Abrir</a></td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ───── BORRAR ───── */%>
+  <section class="vc-sec">
+    <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/borrar"
+          onsubmit="return confirm('Esto borra el torneo entero: equipos, jugadores, bracket y resultados. ¿Seguro?')">
+      <button type="submit" class="btn ghost chico">Borrar este torneo</button>
+      <p class="mini" style="margin-top:8px">Se lleva todo lo suyo: equipos, inscripciones, bracket y marcadores.</p>
+    </form>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,301 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LANDING DE VIRTUAL CHAMPIONS
+
+     Lo de arriba cambia durante el torneo y sale de la base (partida en
+     vivo, próximas, bracket, equipos); lo de abajo es el texto que no
+     cambia y sale de data/virtual-champions.json.
+
+     Cada sección está protegida con un if: un torneo recién creado, sin
+     equipos ni bracket, tiene que renderizar una página corta y no un error.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: hero ? hero.entradilla : evento.desc, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="vc">
+
+  <%/* ───── HERO ───── */%>
+  <section class="vc-hero">
+    <p class="eyebrow"><%= programa %> · <%= institucion %></p>
+    <h1>Virtual <em>Champions</em></h1>
+
+    <% if (hero && hero.lema) { %><p class="lema"><%= hero.lema %></p><% } %>
+    <% if (hero && hero.entradilla) { %><p class="entradilla"><%= hero.entradilla %></p><% } %>
+
+    <div class="vc-hero-acciones">
+      <a href="/vc/inscripcion" class="btn">Inscribirme</a>
+      <% if (juego && torneo) { %>
+        <a href="/vc/<%= juego.id %>/bracket" class="btn ghost">Ver el bracket</a>
+      <% } %>
+    </div>
+
+    <div class="vc-datos">
+      <div class="vc-dato">
+        <div class="k">Juegos</div>
+        <div class="v"><%= juegos.map(function (j) { return j.nombre; }).join(" · ") %></div>
+      </div>
+      <div class="vc-dato">
+        <div class="k">Equipos</div>
+        <div class="v"><%= equipos.length || "—" %></div>
+      </div>
+      <div class="vc-dato">
+        <div class="k">Estado</div>
+        <div class="v">
+          <% if (!torneo) { %>Por abrir
+          <% } else if (torneo.estado === "inscripcion") { %>Inscripciones
+          <% } else if (torneo.estado === "en_curso") { %>En curso
+          <% } else { %>Terminado<% } %>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── EN VIVO ─────
+       Esta sección la reescribe sola el poll de más abajo. Se pinta primero
+       en el servidor para que quien llegue vea el marcador de una sin
+       esperar a que corra el JavaScript. */%>
+  <section class="vc-sec" id="vivo" <%= enVivo.length ? '' : 'hidden' %>>
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Ahora mismo</p>
+        <h2>En vivo</h2>
+      </div>
+      <span class="chip vivo">Actualizando</span>
+    </div>
+    <div class="grid" id="vivo-lista">
+      <% enVivo.forEach(function (p) { %>
+        <%- include('partials/tarjeta-partida', { p: p }) %>
+      <% }); %>
+    </div>
+  </section>
+
+  <%/* ───── PRÓXIMAS ───── */%>
+  <% if (proximas.length) { %>
+  <section class="vc-sec" id="proximas">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Calendario</p>
+        <h2>Próximas partidas</h2>
+      </div>
+      <% if (juego) { %>
+        <a href="/vc/<%= juego.id %>/calendario" class="btn ghost chico">Ver todo</a>
+      <% } %>
+    </div>
+    <div class="grid" id="proximas-lista">
+      <% proximas.forEach(function (p) { %>
+        <%- include('partials/tarjeta-partida', { p: p }) %>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── ÚLTIMOS RESULTADOS ───── */%>
+  <% if (ultimas.length) { %>
+  <section class="vc-sec">
+    <p class="eyebrow">Ya se jugaron</p>
+    <h2>Resultados</h2>
+    <div class="grid" style="margin-top:22px">
+      <% ultimas.forEach(function (p) { %>
+        <%- include('partials/tarjeta-partida', { p: p }) %>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── BRACKET ───── */%>
+  <% if (bracket.length) { %>
+  <section class="vc-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow"><%= juego ? juego.nombre : "Torneo" %></p>
+        <h2>El camino a la final</h2>
+      </div>
+      <% if (juego) { %>
+        <a href="/vc/<%= juego.id %>/bracket" class="btn ghost chico">Bracket completo</a>
+      <% } %>
+    </div>
+    <%- include('partials/bracket') %>
+  </section>
+  <% } %>
+
+  <%/* ───── EQUIPOS ───── */%>
+  <% if (equipos.length) { %>
+  <section class="vc-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Quiénes juegan</p>
+        <h2><%= equipos.length %> equipos</h2>
+      </div>
+      <% if (juego) { %>
+        <a href="/vc/<%= juego.id %>/equipos" class="btn ghost chico">Ver los rosters</a>
+      <% } %>
+    </div>
+    <div class="grid">
+      <% equipos.slice(0, 8).forEach(function (e) { %>
+        <a href="/vc/equipo/<%= e.id %>" class="tarjeta fila" style="text-decoration:none">
+          <span class="escudo"><%= e.tag || e.nombre.slice(0, 3) %></span>
+          <span class="txt">
+            <span class="eq-nombre chica"><%= e.nombre %></span>
+            <span class="mini"><%= e.jugadores.length %> jugadores</span>
+          </span>
+        </a>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── CÓMO SE JUEGA ───── */%>
+  <% if (formato && formato.puntos && formato.puntos.length) { %>
+  <section class="vc-sec">
+    <p class="eyebrow">El formato</p>
+    <h2><%= formato.titulo %></h2>
+    <% if (formato.lead) { %><p class="sec-lead"><%= formato.lead %></p><% } %>
+    <div class="grid" style="margin-top:24px">
+      <% formato.puntos.forEach(function (b) { %>
+        <div class="tarjeta cortada">
+          <h3 style="font-size:16px;color:var(--juego);margin-bottom:9px"><%= b.titulo %></h3>
+          <p style="color:var(--ink-dim);margin:0"><%= b.texto %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── INSCRIPCIÓN ───── */%>
+  <section class="vc-sec">
+    <p class="eyebrow">Participar</p>
+    <h2>Inscríbete</h2>
+    <p class="sec-lead">
+      Con tu equipo completo o tú solo. Si te inscribes solo, quedas en la lista
+      de espera y te asignamos equipo apenas se junten los jugadores que faltan.
+      <% if (esperando > 0) { %>
+        Ahora mismo hay <strong><%= esperando %></strong> esperando.
+      <% } %>
+    </p>
+    <div class="vc-hero-acciones" style="margin-bottom:0">
+      <a href="/vc/inscripcion" class="btn">Inscribirme</a>
+      <a href="/vc/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+    </div>
+  </section>
+
+  <%/* ───── REGLAS ───── */%>
+  <% if (reglamento && reglamento.reglas && reglamento.reglas.length) { %>
+  <section class="vc-sec">
+    <p class="eyebrow">Sin letra chica</p>
+    <h2><%= reglamento.titulo %></h2>
+    <% if (reglamento.lead) { %><p class="sec-lead"><%= reglamento.lead %></p><% } %>
+    <ol class="reglas" style="margin-top:20px">
+      <% reglamento.reglas.forEach(function (r) { %><li><%= r %></li><% }); %>
+    </ol>
+  </section>
+  <% } %>
+
+  <%/* ───── PREMIOS ───── */%>
+  <% if (premios && premios.puestos && premios.puestos.length) { %>
+  <section class="vc-sec">
+    <p class="eyebrow">Lo que está en juego</p>
+    <h2><%= premios.titulo %></h2>
+    <% if (premios.lead) { %><p class="sec-lead"><%= premios.lead %></p><% } %>
+    <div class="grid" style="margin-top:24px">
+      <% premios.puestos.forEach(function (x) { %>
+        <div class="tarjeta cortada">
+          <div class="eyebrow" style="margin-bottom:6px"><%= x.puesto %></div>
+          <p style="margin:0;color:var(--ink-dim)"><%= x.premio %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── PREGUNTAS ───── */%>
+  <% if (faq && faq.preguntas && faq.preguntas.length) { %>
+  <section class="vc-sec">
+    <p class="eyebrow">Antes de preguntar</p>
+    <h2><%= faq.titulo %></h2>
+    <div style="margin-top:18px">
+      <% faq.preguntas.forEach(function (q) { %>
+        <details class="faq">
+          <summary><%= q.p %></summary>
+          <div class="r"><%= q.r %></div>
+        </details>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+</main>
+
+<%- include('partials/pie') %>
+
+<% if (torneo) { %>
+<script>
+  // Refresco del marcador en vivo.
+  //
+  // Una sola petición por vuelta trae todo lo que cambia (las partidas en
+  // vivo y las próximas). Y el reloj solo corre si hay algo en vivo: una
+  // página abierta un martes cualquiera no tiene por qué estar pidiéndole
+  // nada al servidor cada cinco segundos.
+  (function () {
+    var TORNEO = <%= torneo.id %>;
+    var CADA = 5000;
+    var lista = document.getElementById("vivo-lista");
+    var seccion = document.getElementById("vivo");
+    var reloj = null;
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function lado(nombre, tag, puntos, gana, pierde, hay) {
+      var cls = !hay ? "pordefinir" : gana ? "gana" : pierde ? "pierde" : "";
+      return '<div class="lado ' + cls + '">' +
+        '<span class="escudo chico">' + esc(tag || (nombre || "·").slice(0, 3)) + "</span>" +
+        '<span class="nombre">' + esc(nombre) + "</span>" +
+        '<span class="marcador">' + (hay ? puntos : "–") + "</span></div>";
+    }
+
+    function tarjeta(p) {
+      var ganaA = p.ganador_id && p.ganador_id === p.equipo_a_id;
+      var ganaB = p.ganador_id && p.ganador_id === p.equipo_b_id;
+      return '<a href="/vc/partida/' + p.id + '" class="partida es-vivo">' +
+        '<div class="partida-top">' +
+          '<span class="ronda">' + esc(p.ronda) + "</span>" +
+          '<span class="chip vivo">En vivo</span>' +
+          '<span class="chip chip-bo">' + esc(p.formato_label) + "</span>" +
+        "</div>" +
+        '<div class="partida-cuerpo">' +
+          lado(p.equipo_a, p.tag_a, p.marcador_a, ganaA, ganaB, p.equipo_a_id) +
+          lado(p.equipo_b, p.tag_b, p.marcador_b, ganaB, ganaA, p.equipo_b_id) +
+        "</div></a>";
+    }
+
+    function pintar(datos) {
+      var vivas = datos.en_vivo || [];
+      seccion.hidden = vivas.length === 0;
+      lista.innerHTML = vivas.map(tarjeta).join("");
+
+      // Se acabó lo que había en vivo: se apaga el reloj y se recarga una
+      // vez para traer el resto de la página ya con los resultados.
+      if (!vivas.length && reloj) {
+        clearInterval(reloj);
+        reloj = null;
+        location.reload();
+      }
+    }
+
+    function consultar() {
+      fetch("/vc/api/vivo?torneo=" + TORNEO)
+        .then(function (r) { return r.json(); })
+        .then(pintar)
+        .catch(function () { /* un fallo de red no rompe la página: se reintenta solo */ });
+    }
+
+    if (<%= enVivo.length %> > 0) {
+      reloj = setInterval(consultar, CADA);
+    }
+  })();
+</script>
+<% } %>
+
+<%- include('../partials/footer') %>

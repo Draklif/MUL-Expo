@@ -1,0 +1,41 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     El bracket en columnas, una por ronda. Recibe `bracket` (lo que
+     devuelve vc.bracketDe) y se arrastra a lo ancho en pantallas chicas:
+     un cuadro de eliminación apilado en vertical deja de ser un cuadro.
+     ───────────────────────────────────────────────────────────────── */%>
+<div class="bracket">
+  <% bracket.forEach(function (r) { %>
+    <div class="ronda">
+      <div class="ronda-tit">
+        <span><%= r.nombre %></span>
+        <span class="bo"><%= r.formato_label %><%= r.presencial ? " · Presencial" : "" %></span>
+      </div>
+
+      <% r.partidas.forEach(function (p) {
+           const ganaA = p.ganador_id && p.ganador_id === p.equipo_a_id;
+           const ganaB = p.ganador_id && p.ganador_id === p.equipo_b_id;
+           const m = p.inicio ? momentoDe(p.inicio) : null;
+           const cls = function (gana, otro, id) {
+             return !id ? "pordefinir" : gana ? "gana" : otro ? "pierde" : "";
+           };
+      %>
+        <a href="/vc/partida/<%= p.id %>" class="llave <%= p.estado === 'en_vivo' ? 'es-vivo' : '' %>">
+          <div class="llave-lado <%= cls(ganaA, ganaB, p.equipo_a_id) %>">
+            <span class="escudo chico"><%= p.tag_a || (p.equipo_a_id ? p.equipo_a.slice(0, 3) : '·') %></span>
+            <span class="nombre"><%= p.equipo_a %></span>
+            <span class="pts"><%= p.equipo_a_id ? p.marcador_a : '–' %></span>
+          </div>
+          <div class="llave-lado <%= cls(ganaB, ganaA, p.equipo_b_id) %>">
+            <span class="escudo chico"><%= p.tag_b || (p.equipo_b_id ? p.equipo_b.slice(0, 3) : '·') %></span>
+            <span class="nombre"><%= p.equipo_b %></span>
+            <span class="pts"><%= p.equipo_b_id ? p.marcador_b : '–' %></span>
+          </div>
+          <div class="llave-pie">
+            <span><% if (p.estado === 'en_vivo') { %><span class="chip vivo">En vivo</span><% } else if (m) { %><%= m.diaCorto %> · <%= m.hora %><% } else { %>Por programar<% } %></span>
+            <span><%= p.formato_label %></span>
+          </div>
+        </a>
+      <% }); %>
+    </div>
+  <% }); %>
+</div>

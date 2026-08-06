@@ -1,0 +1,55 @@
+<%- include('../partials/head', { title: title, descripcion: equipo.nombre + ' en Virtual Champions', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="vc">
+  <section class="vc-sec">
+    <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">
+      <span class="escudo grande"><%= equipo.tag || equipo.nombre.slice(0, 3) %></span>
+      <div>
+        <p class="eyebrow" style="margin-bottom:6px">
+          <%= equipo.juego ? equipo.juego.nombre : "Virtual Champions" %>
+        </p>
+        <h2 style="font-size:clamp(28px,6vw,46px)"><%= equipo.nombre %></h2>
+        <p class="mini" style="margin:8px 0 0">
+          <%= equipo.jugadores.length %> jugadores<%= equipo.armado ? " · equipo armado por la organización" : "" %>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── ROSTER ───── */%>
+  <section class="vc-sec">
+    <p class="eyebrow">Roster</p>
+    <h2 style="font-size:22px">Quiénes juegan</h2>
+    <ul class="roster" style="margin-top:16px;max-width:640px">
+      <% equipo.jugadores.forEach(function (j) { %>
+        <li>
+          <span class="nick"><%= j.nick || j.nombre %></span>
+          <% if (j.capitan) { %><span class="cap">CAP</span><% } %>
+          <% if (j.nick) { %><span class="quien"><%= j.nombre %></span><% } %>
+          <span class="rol">
+            <%= j.rol || "" %><%= j.suplente ? (j.rol ? " · suplente" : "suplente") : "" %>
+          </span>
+        </li>
+      <% }); %>
+    </ul>
+  </section>
+
+  <%/* ───── PARTIDAS ───── */%>
+  <% if (partidas.length) { %>
+  <section class="vc-sec">
+    <p class="eyebrow">Su camino</p>
+    <h2 style="font-size:22px">Partidas</h2>
+    <div class="grid" style="margin-top:16px">
+      <% partidas.forEach(function (p) { %>
+        <%- include('partials/tarjeta-partida', { p: p }) %>
+      <% }); %>
+    </div>
+  </section>
+  <% } else { %>
+    <div class="vacio" style="margin-top:26px">Este equipo todavía no tiene partidas en el bracket.</div>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,195 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="vc angosto">
+
+  <section class="vc-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow"><%= torneo.nombre %> · <%= partida.ronda %></p>
+        <h2 style="font-size:24px"><%= partida.equipo_a %> vs <%= partida.equipo_b %></h2>
+      </div>
+      <div class="acciones">
+        <a href="/vc/panel/torneos/<%= partida.torneo_id %>#bracket" class="btn ghost chico">Volver</a>
+        <a href="/vc/partida/<%= partida.id %>" class="btn ghost chico">Ver público</a>
+      </div>
+    </div>
+
+    <% if (query.ok) { %><div class="aviso bueno"><p style="margin:0">Guardado.</p></div><% } %>
+    <% if (query.error === "mapas") { %>
+      <div class="aviso malo"><p style="margin:0">Ya están los <%= partida.formato_real %> mapas del <%= partida.formato_label %>. Borra uno si te equivocaste.</p></div>
+    <% } %>
+
+    <%/* ───── MARCADOR ACTUAL ─────
+         Es de solo lectura a propósito: el marcador de la serie sale de
+         contar los mapas ganados y no se puede escribir a mano. Así no queda
+         una partida diciendo 2-0 con un solo mapa cargado. */%>
+    <div class="tablero">
+      <div class="equipo"><div class="nombre"><%= partida.equipo_a %></div></div>
+      <div class="cifras">
+        <span class="<%= partida.ganador_id === partida.equipo_a_id ? 'gana' : '' %>"><%= partida.marcador_a %></span>
+        <span class="sep">:</span>
+        <span class="<%= partida.ganador_id === partida.equipo_b_id ? 'gana' : '' %>"><%= partida.marcador_b %></span>
+      </div>
+      <div class="equipo"><div class="nombre"><%= partida.equipo_b %></div></div>
+    </div>
+    <p class="mini" style="text-align:center;margin-top:10px">
+      <%= partida.formato_label %> · gana el primero que llegue a
+      <%= Math.ceil(partida.formato_real / 2) %>.
+      El marcador lo calculan los mapas de abajo.
+    </p>
+  </section>
+
+  <%/* ───── ESTADO ───── */%>
+  <section class="vc-sec">
+    <p class="eyebrow">En vivo</p>
+    <h2 style="font-size:20px">Estado de la partida</h2>
+    <p class="sec-lead">
+      Poner "en vivo" es lo que la saca en la portada con el punto rojo.
+      Cerrarla no se hace desde aquí: se cierra sola cuando el marcador alcanza.
+    </p>
+
+    <form method="POST" action="/vc/panel/partidas/<%= partida.id %>/estado" style="margin-top:14px">
+      <div class="acciones">
+        <button type="submit" name="estado" value="en_vivo"
+                class="btn chico" <%= partida.estado === "en_vivo" ? "disabled" : "" %>>Poner en vivo</button>
+        <button type="submit" name="estado" value="programada"
+                class="btn ghost chico" <%= partida.estado === "programada" ? "disabled" : "" %>>Programada</button>
+        <button type="submit" name="estado" value="aplazada"
+                class="btn ghost chico" <%= partida.estado === "aplazada" ? "disabled" : "" %>>Aplazar</button>
+        <span class="chip <%= partida.estado_info.cls %>"><%= partida.estado_info.label %></span>
+      </div>
+    </form>
+  </section>
+
+  <%/* ───── MAPAS ───── */%>
+  <section class="vc-sec" id="mapas">
+    <p class="eyebrow">La serie</p>
+    <h2 style="font-size:20px">Mapas · <%= partida.mapas.length %> de <%= partida.formato_real %></h2>
+
+    <% partida.mapas.forEach(function (m, i) { %>
+      <form method="POST" action="/vc/panel/mapas/<%= m.id %>" class="consola">
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <strong style="font-family:var(--display);text-transform:uppercase">Mapa <%= i + 1 %></strong>
+          <span class="chip"><%= m.mapa || "sin nombre" %></span>
+          <% if (m.estado === "jugado") { %>
+            <span class="chip ok">Cerrado · ganó <%= m.ganador === "a" ? partida.equipo_a : partida.equipo_b %></span>
+          <% } else { %>
+            <span class="chip vivo">Jugando</span>
+          <% } %>
+        </div>
+
+        <div class="puntos">
+          <label style="margin:0;text-align:right"><%= partida.equipo_a %></label>
+          <input type="number" name="puntos_a" min="0" max="99" value="<%= m.puntos_a %>" />
+          <input type="number" name="puntos_b" min="0" max="99" value="<%= m.puntos_b %>" />
+          <label style="margin:0"><%= partida.equipo_b %></label>
+        </div>
+
+        <div class="acciones" style="margin-top:14px">
+          <button type="submit" name="accion" value="guardar" class="btn ghost chico">Guardar marcador</button>
+
+          <% if (m.estado !== "jugado") { %>
+            <%/* Cerrar el mapa es lo que lo hace contar para la serie. El
+                 ganador sale del marcador; los botones con nombre son para
+                 el empate o para corregir una muerte súbita. */%>
+            <button type="submit" name="accion" value="cerrar" class="btn chico">Cerrar mapa</button>
+            <button type="submit" name="accion" value="cerrar" class="btn ghost chico"
+                    formnovalidate onclick="this.form.ganador.value='a'">Ganó <%= partida.tag_a || partida.equipo_a %></button>
+            <button type="submit" name="accion" value="cerrar" class="btn ghost chico"
+                    formnovalidate onclick="this.form.ganador.value='b'">Ganó <%= partida.tag_b || partida.equipo_b %></button>
+          <% } %>
+
+          <input type="hidden" name="ganador" value="" />
+        </div>
+      </form>
+
+      <form method="POST" action="/vc/panel/mapas/<%= m.id %>/borrar" style="margin:-8px 0 16px"
+            onsubmit="return confirm('¿Borrar el mapa <%= i + 1 %>? El marcador de la serie se vuelve a contar.')">
+        <button type="submit" class="btn ghost chico">Borrar mapa <%= i + 1 %></button>
+      </form>
+    <% }); %>
+
+    <% if (partida.mapas.length < partida.formato_real) { %>
+      <form method="POST" action="/vc/panel/partidas/<%= partida.id %>/mapas" class="consola">
+        <div class="fila" style="align-items:end">
+          <div class="campo" style="margin:0">
+            <label for="mapa">Mapa <%= partida.mapas.length + 1 %></label>
+            <input type="text" name="mapa" id="mapa" maxlength="60" list="mapas-sugeridos"
+                   placeholder="<%= juego && juego.mapas.length ? juego.mapas[0] : 'Nombre del mapa' %>" />
+            <datalist id="mapas-sugeridos">
+              <% (juego ? juego.mapas : []).forEach(function (nombre) { %>
+                <option value="<%= nombre %>"></option>
+              <% }); %>
+            </datalist>
+          </div>
+          <div><button type="submit" class="btn chico">Empezar mapa</button></div>
+        </div>
+      </form>
+    <% } %>
+  </section>
+
+  <%/* ───── DATOS DE LA PARTIDA ───── */%>
+  <section class="vc-sec">
+    <p class="eyebrow">Programación</p>
+    <h2 style="font-size:20px">Datos de la partida</h2>
+
+    <form method="POST" action="/vc/panel/partidas/<%= partida.id %>" class="tarjeta" style="margin-top:14px">
+      <div class="fila">
+        <div class="campo">
+          <label for="equipo_a_id">Equipo A</label>
+          <select name="equipo_a_id" id="equipo_a_id">
+            <option value="">Por definir</option>
+            <% equipos.forEach(function (e) { %>
+              <option value="<%= e.id %>" <%= e.id === partida.equipo_a_id ? "selected" : "" %>><%= e.nombre %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="equipo_b_id">Equipo B</label>
+          <select name="equipo_b_id" id="equipo_b_id">
+            <option value="">Por definir</option>
+            <% equipos.forEach(function (e) { %>
+              <option value="<%= e.id %>" <%= e.id === partida.equipo_b_id ? "selected" : "" %>><%= e.nombre %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="inicio">Día y hora</label>
+          <input type="datetime-local" name="inicio" id="inicio"
+                 value="<%= partida.inicio ? partida.inicio.replace(" ", "T") : "" %>" />
+        </div>
+        <div class="campo">
+          <label for="formato">Formato</label>
+          <select name="formato" id="formato">
+            <option value="">El de la ronda (<%= partida.formato_label %>)</option>
+            <% formatos.forEach(function (f) { %>
+              <option value="<%= f %>" <%= f === partida.formato ? "selected" : "" %>>BO<%= f %></option>
+            <% }); %>
+          </select>
+          <p class="ayuda">Solo si esta partida se sale de la regla de su ronda.</p>
+        </div>
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="lugar">Dónde</label>
+          <input type="text" name="lugar" id="lugar" maxlength="80"
+                 value="<%= partida.lugar || "" %>" placeholder="En línea / Auditorio" />
+        </div>
+        <div class="campo">
+          <label for="stream_url">Transmisión</label>
+          <input type="url" name="stream_url" id="stream_url" maxlength="300"
+                 value="<%= partida.stream_url || "" %>" placeholder="https://twitch.tv/…" />
+        </div>
+      </div>
+
+      <button type="submit" class="btn chico">Guardar</button>
+    </form>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

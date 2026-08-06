@@ -1,0 +1,206 @@
+<%- include('../partials/head', { title: title, descripcion: partida.equipo_a + ' contra ' + partida.equipo_b + ' · ' + partida.ronda, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<%
+  const ganaA = partida.ganador_id && partida.ganador_id === partida.equipo_a_id;
+  const ganaB = partida.ganador_id && partida.ganador_id === partida.equipo_b_id;
+%>
+
+<main class="vc angosto">
+  <section class="vc-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow"><%= partida.ronda %> · <%= partida.formato_label %></p>
+        <h2 style="font-size:22px">
+          <% if (momento) { %><%= momento.dia %> · <%= momento.hora %><% } else { %>Fecha por confirmar<% } %>
+        </h2>
+      </div>
+      <div class="acciones">
+        <span class="chip <%= partida.estado_info.cls %>" id="estado-chip"><%= partida.estado_info.label %></span>
+        <% if (partida.presencial) { %><span class="chip acento">Presencial</span><% } %>
+      </div>
+    </div>
+
+    <%/* ───── MARCADOR ───── */%>
+    <div class="tablero" id="tablero">
+      <div class="equipo">
+        <% if (partida.equipo_a_id) { %>
+          <a href="/vc/equipo/<%= partida.equipo_a_id %>">
+            <span class="escudo grande"><%= partida.tag_a || partida.equipo_a.slice(0, 3) %></span>
+            <div class="nombre"><%= partida.equipo_a %></div>
+          </a>
+        <% } else { %>
+          <span class="escudo grande vacio">·</span>
+          <div class="nombre" style="color:var(--ink-mute)">Por definir</div>
+        <% } %>
+      </div>
+
+      <div class="cifras">
+        <span class="<%= ganaA ? 'gana' : '' %>" id="marc-a"><%= partida.marcador_a %></span>
+        <span class="sep">:</span>
+        <span class="<%= ganaB ? 'gana' : '' %>" id="marc-b"><%= partida.marcador_b %></span>
+      </div>
+
+      <div class="equipo">
+        <% if (partida.equipo_b_id) { %>
+          <a href="/vc/equipo/<%= partida.equipo_b_id %>">
+            <span class="escudo grande"><%= partida.tag_b || partida.equipo_b.slice(0, 3) %></span>
+            <div class="nombre"><%= partida.equipo_b %></div>
+          </a>
+        <% } else { %>
+          <span class="escudo grande vacio">·</span>
+          <div class="nombre" style="color:var(--ink-mute)">Por definir</div>
+        <% } %>
+      </div>
+    </div>
+
+    <% if (partida.lugar || partida.stream_url) { %>
+      <p class="mini partida-meta">
+        <% if (partida.lugar) { %><span><%= partida.lugar %></span><% } %>
+        <% if (partida.stream_url) { %>
+          <a href="<%= partida.stream_url %>" rel="noopener" target="_blank">Ver la transmisión</a>
+        <% } %>
+      </p>
+    <% } %>
+  </section>
+
+  <%/* ───── MAPAS ─────
+       El detalle mapa a mapa: es lo que convierte un 2-1 en una historia. */%>
+  <section class="vc-sec">
+    <p class="eyebrow">La serie</p>
+    <h2 style="font-size:22px"><%= partida.formato_label %> · <%= partida.mapas.length %> de <%= partida.formato_real %></h2>
+
+    <% if (!partida.mapas.length) { %>
+      <div class="vacio" style="margin-top:16px">Todavía no arranca la serie.</div>
+    <% } else { %>
+      <table class="mapas" id="tabla-mapas">
+        <thead>
+          <tr>
+            <th style="width:34px">#</th>
+            <th>Mapa</th>
+            <th style="text-align:center">Marcador</th>
+            <th style="text-align:right">Ganó</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% partida.mapas.forEach(function (m, i) { %>
+            <tr class="<%= m.estado === 'en_vivo' ? 'jugando' : '' %>">
+              <td class="mini"><%= i + 1 %></td>
+              <td><%= m.mapa || "—" %></td>
+              <td class="puntos">
+                <span class="<%= m.ganador === 'a' ? 'gana' : '' %>"><%= m.puntos_a %></span>
+                <span style="color:var(--ink-mute)">–</span>
+                <span class="<%= m.ganador === 'b' ? 'gana' : '' %>"><%= m.puntos_b %></span>
+              </td>
+              <td style="text-align:right">
+                <% if (m.estado === 'en_vivo') { %>
+                  <span class="chip vivo">Jugando</span>
+                <% } else if (m.ganador === 'a') { %>
+                  <%= partida.equipo_a %>
+                <% } else if (m.ganador === 'b') { %>
+                  <%= partida.equipo_b %>
+                <% } else { %>
+                  <span class="mini">—</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+  <%/* ───── ROSTERS ───── */%>
+  <% if (partida.roster_a.length || partida.roster_b.length) { %>
+  <section class="vc-sec">
+    <p class="eyebrow">Alineaciones</p>
+    <h2 style="font-size:22px">Quiénes juegan</h2>
+    <div class="grid" style="margin-top:16px">
+      <% [[partida.equipo_a, partida.roster_a], [partida.equipo_b, partida.roster_b]].forEach(function (par) { %>
+        <% if (par[1].length) { %>
+          <div class="tarjeta">
+            <h3 style="font-size:14px;color:var(--juego);margin-bottom:8px"><%= par[0] %></h3>
+            <ul class="roster">
+              <% par[1].forEach(function (j) { %>
+                <li>
+                  <span class="nick"><%= j.nick || j.nombre %></span>
+                  <% if (j.capitan) { %><span class="cap">CAP</span><% } %>
+                  <% if (j.rol) { %><span class="rol"><%= j.rol %></span><% } %>
+                </li>
+              <% }); %>
+            </ul>
+          </div>
+        <% } %>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+
+<% if (partida.estado === "en_vivo") { %>
+<script>
+  // Mientras la partida esté en vivo, esta página se actualiza sola cada
+  // cinco segundos: el marcador de la serie y la tabla de mapas. Cuando la
+  // partida se cierra, se recarga una vez para dejarla en su forma final y
+  // el reloj se apaga.
+  (function () {
+    var ID = <%= partida.id %>;
+    var reloj = setInterval(consultar, 5000);
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function fila(m, i, p) {
+      var quien = m.estado === "en_vivo"
+        ? '<span class="chip vivo">Jugando</span>'
+        : m.ganador === "a" ? esc(p.equipo_a)
+        : m.ganador === "b" ? esc(p.equipo_b)
+        : '<span class="mini">—</span>';
+
+      return '<tr class="' + (m.estado === "en_vivo" ? "jugando" : "") + '">' +
+        '<td class="mini">' + (i + 1) + "</td>" +
+        "<td>" + esc(m.mapa || "—") + "</td>" +
+        '<td class="puntos">' +
+          '<span class="' + (m.ganador === "a" ? "gana" : "") + '">' + m.puntos_a + "</span>" +
+          '<span style="color:var(--ink-mute)">–</span>' +
+          '<span class="' + (m.ganador === "b" ? "gana" : "") + '">' + m.puntos_b + "</span>" +
+        "</td>" +
+        '<td style="text-align:right">' + quien + "</td></tr>";
+    }
+
+    function pintar(datos) {
+      var p = datos.partida;
+      if (!p) return;
+
+      document.getElementById("marc-a").textContent = p.marcador_a;
+      document.getElementById("marc-b").textContent = p.marcador_b;
+
+      var tabla = document.getElementById("tabla-mapas");
+      if (tabla && p.mapas) {
+        tabla.tBodies[0].innerHTML = p.mapas.map(function (m, i) { return fila(m, i, p); }).join("");
+      }
+
+      // Se acabó: la página completa (ganador resaltado, rosters, chip de
+      // estado) la arma el servidor mejor que este script.
+      if (p.estado !== "en_vivo") {
+        clearInterval(reloj);
+        location.reload();
+      }
+    }
+
+    function consultar() {
+      fetch("/vc/api/vivo?partida=" + ID)
+        .then(function (r) { return r.json(); })
+        .then(pintar)
+        .catch(function () { /* si se cae la red, se reintenta a los cinco segundos */ });
+    }
+  })();
+</script>
+<% } %>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,49 @@
+<%- include('../partials/head', { title: title, descripcion: 'Equipos inscritos en el torneo de ' + (juego ? juego.nombre : 'Virtual Champions'), css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="vc">
+  <section class="vc-sec">
+    <p class="eyebrow"><%= juego ? juego.nombre : "Virtual Champions" %></p>
+    <h2><%= equipos.length %> equipos</h2>
+    <p class="sec-lead">
+      Los que ya están confirmados en el torneo.
+      <% if (esperando > 0) { %>
+        Además hay <strong><%= esperando %></strong> jugadores esperando equipo:
+        se arman en cuanto se junten los que faltan.
+      <% } %>
+    </p>
+  </section>
+
+  <% if (!equipos.length) { %>
+    <div class="vacio" style="margin-top:26px">
+      Todavía no hay equipos confirmados.
+      <div style="margin-top:14px"><a href="/vc/inscripcion" class="btn chico">Inscribir el mío</a></div>
+    </div>
+  <% } else { %>
+    <div class="grid" style="margin-top:8px">
+      <% equipos.forEach(function (e) { %>
+        <a href="/vc/equipo/<%= e.id %>" class="tarjeta cortada" style="text-decoration:none">
+          <div class="eq-cabeza">
+            <span class="escudo"><%= e.tag || e.nombre.slice(0, 3) %></span>
+            <span class="txt">
+              <span class="eq-nombre"><%= e.nombre %></span>
+              <span class="mini"><%= e.jugadores.length %> jugadores<%= e.armado ? " · equipo armado" : "" %></span>
+            </span>
+          </div>
+          <ul class="roster">
+            <% e.jugadores.slice(0, 5).forEach(function (j) { %>
+              <li>
+                <span class="nick"><%= j.nick || j.nombre %></span>
+                <% if (j.capitan) { %><span class="cap">CAP</span><% } %>
+                <% if (j.rol) { %><span class="rol"><%= j.rol %></span><% } %>
+              </li>
+            <% }); %>
+          </ul>
+        </a>
+      <% }); %>
+    </div>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

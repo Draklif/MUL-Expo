@@ -1,0 +1,124 @@
+<%- include('../partials/head', { title: title, descripcion: 'Consulta el estado de tu inscripción con tu código.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="vc angosto">
+  <section class="vc-sec">
+    <p class="eyebrow">Tu inscripción</p>
+    <h2><%= recienEnviada ? "Listo" : "Consultar" %></h2>
+  </section>
+
+  <% if (recienEnviada) { %>
+    <div class="aviso bueno" style="margin-top:20px">
+      <p style="margin:0">
+        Quedaste inscrito.
+        <% if (correoActivo) { %>
+          Te mandamos el código al correo, pero anótalo también: es lo que sirve
+          para consultar en qué va todo.
+        <% } else { %>
+          <strong>Anota este código</strong>: es lo que sirve para consultar en qué
+          va todo.
+        <% } %>
+      </p>
+    </div>
+    <div class="codigo-grande"><%= codigo %></div>
+  <% } %>
+
+  <%/* ───── BUSCADOR ───── */%>
+  <form method="GET" action="/vc/inscripcion/estado" style="margin:22px 0">
+    <div class="campo">
+      <label for="codigo">Tu código</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <input type="text" name="codigo" id="codigo" maxlength="6" required
+               value="<%= codigo %>" placeholder="ABC234"
+               style="flex:1;min-width:160px;font-family:var(--mono);letter-spacing:.2em;text-transform:uppercase" />
+        <button type="submit" class="btn">Consultar</button>
+      </div>
+    </div>
+  </form>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <%/* ───── RESULTADO: EQUIPO ───── */%>
+  <% if (encontrado && encontrado.tipo === "equipo") { %>
+    <% const e = encontrado.equipo; %>
+    <div class="tarjeta cortada" style="margin-top:8px">
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:14px">
+        <span class="escudo"><%= e.tag || e.nombre.slice(0, 3) %></span>
+        <div>
+          <strong style="font-family:var(--display);font-size:18px;text-transform:uppercase"><%= e.nombre %></strong>
+          <div class="mini"><%= e.juego ? e.juego.nombre : "" %></div>
+        </div>
+        <span class="chip <%= (e.estado === 'aprobado' ? 'ok' : e.estado === 'rechazado' ? 'no' : 'pend') %>"
+              style="margin-left:auto">
+          <%= e.estado === "aprobado" ? "Aprobado" : e.estado === "rechazado" ? "No aprobado" : "Pendiente" %>
+        </span>
+      </div>
+
+      <% if (e.estado === "pendiente") { %>
+        <p style="color:var(--ink-dim)">
+          La organización todavía no ha revisado la inscripción. Cuando lo haga te
+          llega un correo <% if (e.contacto_email) { %>a <%= e.contacto_email %><% } %>.
+        </p>
+      <% } else if (e.estado === "rechazado") { %>
+        <p style="color:var(--ink-dim)">
+          <% if (e.nota_docente) { %>
+            <strong>Lo que dice la organización:</strong><br /><%= e.nota_docente %>
+          <% } else { %>
+            No quedó aprobada y no dejaron un motivo. Escríbeles para saber qué ajustar.
+          <% } %>
+        </p>
+      <% } else { %>
+        <p style="color:var(--ink-dim)">Están dentro del torneo. Sus partidas salen en el bracket.</p>
+        <a href="/vc/equipo/<%= e.id %>" class="btn chico">Ver el equipo</a>
+      <% } %>
+
+      <ul class="roster" style="margin-top:16px">
+        <% e.jugadores.forEach(function (j) { %>
+          <li>
+            <span class="nick"><%= j.nick || j.nombre %></span>
+            <% if (j.capitan) { %><span class="cap">CAP</span><% } %>
+            <% if (j.nick) { %><span class="quien"><%= j.nombre %></span><% } %>
+            <% if (j.rol) { %><span class="rol"><%= j.rol %></span><% } %>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  <% } %>
+
+  <%/* ───── RESULTADO: INSCRIPCIÓN INDIVIDUAL ───── */%>
+  <% if (encontrado && encontrado.tipo === "jugador") { %>
+    <% const j = encontrado.jugador; %>
+    <div class="tarjeta cortada" style="margin-top:8px">
+      <div class="eyebrow" style="margin-bottom:8px">Inscripción individual</div>
+      <strong style="font-family:var(--display);font-size:18px;text-transform:uppercase"><%= j.nombre %></strong>
+      <div class="mini" style="margin-bottom:14px">
+        <%= j.juego ? j.juego.nombre : "" %><%= j.nick ? " · " + j.nick : "" %>
+      </div>
+
+      <% if (j.equipo) { %>
+        <p style="color:var(--ink-dim)">
+          Ya tienes equipo: <strong style="color:var(--juego)"><%= j.equipo.nombre %></strong>.
+        </p>
+        <a href="/vc/equipo/<%= j.equipo.id %>" class="btn chico">Ver el equipo</a>
+      <% } else { %>
+        <p style="color:var(--ink-dim)">
+          Estás en la lista de espera. Todavía no tienes equipo.
+          <% if (j.juego) { %>
+            Hacen falta <strong><%= Math.max(0, j.juego.titulares - j.esperando) %></strong>
+            jugadores más para armar uno
+            (van <%= j.esperando %> de <%= j.juego.titulares %>).
+          <% } %>
+        </p>
+        <p class="mini" style="margin:0">
+          Cuando se complete te llega un correo con el nombre del equipo y con
+          quiénes te tocaron.
+        </p>
+      <% } %>
+    </div>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

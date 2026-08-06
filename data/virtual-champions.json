@@ -1,0 +1,83 @@
+{
+  "programa": "Ingeniería en Multimedia",
+  "institucion": "Universidad de Boyacá",
+
+  "evento": {
+    "name": "Virtual Champions",
+    "tipo": "Torneo de esports",
+    "estado": "Inscripciones abiertas",
+    "cuando": "Segundo semestre",
+    "sede": "Clasificatorias en línea · Final presencial",
+    "desc": "El torneo de esports del programa. Equipos del semestre, llaves de eliminación directa y una final que se juega en vivo, con público."
+  },
+
+  "hero": {
+    "titulo": "Virtual Champions",
+    "lema": "Clasifica en línea. Gana en vivo.",
+    "entradilla": "Ocho llaves, una final presencial y todo el semestre por delante. Arma tu equipo o inscríbete solo: si te falta gente, nosotros te la conseguimos."
+  },
+
+  "formato": {
+    "titulo": "Cómo se juega",
+    "lead": "Eliminación directa. El que pierde, sale.",
+    "puntos": [
+      {
+        "titulo": "Fase virtual · BO1",
+        "texto": "Todas las rondas hasta la semifinal se juegan en línea, a una sola partida. Se pierde una y se acabó, así que no hay partidas de trámite."
+      },
+      {
+        "titulo": "Final presencial · BO5",
+        "texto": "La final se juega en la universidad, al mejor de cinco, con los dos equipos en la misma sala y el marcador en pantalla grande."
+      },
+      {
+        "titulo": "Marcador en vivo",
+        "texto": "El resultado de cada mapa se carga mientras se juega: esta página se actualiza sola, sin recargar."
+      }
+    ]
+  },
+
+  "reglamento": {
+    "titulo": "Reglas del torneo",
+    "lead": "Cortas, para que nadie tenga que preguntarlas.",
+    "reglas": [
+      "Todos los jugadores tienen que ser estudiantes activos del programa y usar su correo institucional.",
+      "Un jugador solo puede estar en un equipo por juego. Inscribirse dos veces invalida las dos inscripciones.",
+      "El nick que se registra es con el que se juega. Si entras con otra cuenta, la partida se da por perdida.",
+      "Diez minutos de espera y el equipo que no aparece pierde por incomparecencia.",
+      "Las horas las pone la organización y salen en el calendario. Un cambio se avisa por correo al capitán.",
+      "Cualquier reclamo se hace ante la organización el mismo día de la partida, no después."
+    ]
+  },
+
+  "premios": {
+    "titulo": "Qué se lleva el campeón",
+    "lead": "Además del derecho a decirlo todo el semestre.",
+    "puestos": [
+      { "puesto": "Campeón", "premio": "Trofeo del torneo y reconocimiento del programa" },
+      { "puesto": "Subcampeón", "premio": "Medalla y reconocimiento del programa" },
+      { "puesto": "MVP de la final", "premio": "Reconocimiento individual" }
+    ]
+  },
+
+  "faq": {
+    "titulo": "Preguntas frecuentes",
+    "preguntas": [
+      {
+        "p": "No tengo equipo. ¿Igual me puedo inscribir?",
+        "r": "Sí, y es lo normal. Te inscribes solo y quedas en la lista de espera; cuando se junten los jugadores que hacen falta, la organización arma el equipo y te avisa por correo con quiénes te tocó."
+      },
+      {
+        "p": "¿Cuántos jugadores necesita un equipo?",
+        "r": "Los que pida el juego: cinco titulares en Valorant y en League of Legends. Puedes registrar hasta dos suplentes más."
+      },
+      {
+        "p": "¿Puedo jugar en Valorant y en League of Legends?",
+        "r": "Sí. Son torneos distintos y las inscripciones son aparte. Lo que no se puede es estar en dos equipos del mismo juego."
+      },
+      {
+        "p": "Perdí mi código. ¿Cómo consulto mi inscripción?",
+        "r": "El código llega al correo con el que te inscribiste. Si no aparece, escríbele a la organización con tu nombre y el juego."
+      }
+    ]
+  }
+}

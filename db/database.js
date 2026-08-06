@@ -138,6 +138,136 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_cert_materia ON certificados(materia_id);
   CREATE INDEX IF NOT EXISTS idx_cert_email   ON certificados(email);
+
+  -- =================================================================
+  --  VIRTUAL CHAMPIONS
+  --  El torneo de esports vive aparte de la Expo: no comparte ninguna
+  --  tabla con ella. Todo lo suyo lleva el prefijo vc_.
+  -- =================================================================
+
+  -- Un torneo es un juego en un semestre. Dos juegos a la vez son dos
+  -- torneos, cada uno con sus equipos y su bracket.
+  CREATE TABLE IF NOT EXISTS vc_torneos (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    juego               TEXT NOT NULL,
+    nombre              TEXT NOT NULL,
+    periodo_id          INTEGER,
+    estado              TEXT NOT NULL DEFAULT 'inscripcion',
+    inscripcion_abierta INTEGER NOT NULL DEFAULT 1,
+    cupo_equipos        INTEGER,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (periodo_id) REFERENCES periodos(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vc_torneo_juego ON vc_torneos(juego, periodo_id);
+
+  -- Equipos inscritos. El código de 6 caracteres es el mismo invento del
+  -- registro de la Expo: se dicta, se teclea y con él se consulta el estado
+  -- sin necesidad de cuenta.
+  CREATE TABLE IF NOT EXISTS vc_equipos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    torneo_id       INTEGER NOT NULL,
+    codigo          TEXT NOT NULL UNIQUE,
+    nombre          TEXT NOT NULL,
+    tag             TEXT,
+    estado          TEXT NOT NULL DEFAULT 'pendiente',
+    armado          INTEGER NOT NULL DEFAULT 0,
+    contacto_nombre TEXT,
+    contacto_email  TEXT,
+    nota_docente    TEXT,
+    revisado_por    INTEGER,
+    revisado_at     DATETIME,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (torneo_id)    REFERENCES vc_torneos(id) ON DELETE CASCADE,
+    FOREIGN KEY (revisado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vc_eq_torneo ON vc_equipos(torneo_id, estado);
+
+  -- Jugadores. equipo_id nulo = se inscribió solo y todavía no tiene equipo;
+  -- esos llevan su propio código para consultar en qué van. Un correo no
+  -- puede repetirse dentro del mismo torneo: es la identidad de la persona y
+  -- lo que impide que alguien juegue en dos equipos.
+  CREATE TABLE IF NOT EXISTS vc_jugadores (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    torneo_id  INTEGER NOT NULL,
+    equipo_id  INTEGER,
+    codigo     TEXT,
+    nombre     TEXT NOT NULL,
+    email      TEXT NOT NULL COLLATE NOCASE,
+    nick       TEXT,
+    rol        TEXT,
+    capitan    INTEGER NOT NULL DEFAULT 0,
+    suplente   INTEGER NOT NULL DEFAULT 0,
+    orden      INTEGER NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (torneo_id, email),
+    FOREIGN KEY (torneo_id) REFERENCES vc_torneos(id) ON DELETE CASCADE,
+    FOREIGN KEY (equipo_id) REFERENCES vc_equipos(id) ON DELETE SET NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vc_jug_torneo ON vc_jugadores(torneo_id, equipo_id);
+
+  -- Rondas del bracket. El formato (BO1/BO3/BO5) se pone por ronda; una
+  -- partida suelta puede llevar el suyo propio y le gana a este.
+  CREATE TABLE IF NOT EXISTS vc_rondas (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    torneo_id  INTEGER NOT NULL,
+    nombre     TEXT NOT NULL,
+    orden      INTEGER NOT NULL DEFAULT 0,
+    formato    INTEGER NOT NULL DEFAULT 1,
+    presencial INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (torneo_id) REFERENCES vc_torneos(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vc_rondas_torneo ON vc_rondas(torneo_id, orden);
+
+  -- Partidas. avanza_a_partida_id + avanza_a_slot son lo que mueve el bracket
+  -- solo: al cerrarse una partida, su ganador se escribe en el hueco que le
+  -- toca de la ronda siguiente.
+  CREATE TABLE IF NOT EXISTS vc_partidas (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    torneo_id           INTEGER NOT NULL,
+    ronda_id            INTEGER NOT NULL,
+    orden               INTEGER NOT NULL DEFAULT 0,
+    equipo_a_id         INTEGER,
+    equipo_b_id         INTEGER,
+    formato             INTEGER,
+    estado              TEXT NOT NULL DEFAULT 'programada',
+    inicio              TEXT,
+    lugar               TEXT,
+    stream_url          TEXT,
+    marcador_a          INTEGER NOT NULL DEFAULT 0,
+    marcador_b          INTEGER NOT NULL DEFAULT 0,
+    ganador_id          INTEGER,
+    avanza_a_partida_id INTEGER,
+    avanza_a_slot       TEXT,
+    updated_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (torneo_id)   REFERENCES vc_torneos(id) ON DELETE CASCADE,
+    FOREIGN KEY (ronda_id)    REFERENCES vc_rondas(id)  ON DELETE CASCADE,
+    FOREIGN KEY (equipo_a_id) REFERENCES vc_equipos(id) ON DELETE SET NULL,
+    FOREIGN KEY (equipo_b_id) REFERENCES vc_equipos(id) ON DELETE SET NULL,
+    FOREIGN KEY (ganador_id)  REFERENCES vc_equipos(id) ON DELETE SET NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vc_part_torneo ON vc_partidas(torneo_id, estado);
+  CREATE INDEX IF NOT EXISTS idx_vc_part_ronda  ON vc_partidas(ronda_id, orden);
+
+  -- Cada mapa (o cada partida, en LoL) de la serie. El marcador de la serie
+  -- no se escribe a mano: sale de contar los mapas ganados.
+  CREATE TABLE IF NOT EXISTS vc_mapas (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    partida_id INTEGER NOT NULL,
+    orden      INTEGER NOT NULL DEFAULT 0,
+    mapa       TEXT,
+    puntos_a   INTEGER NOT NULL DEFAULT 0,
+    puntos_b   INTEGER NOT NULL DEFAULT 0,
+    ganador    TEXT,
+    estado     TEXT NOT NULL DEFAULT 'pendiente',
+    FOREIGN KEY (partida_id) REFERENCES vc_partidas(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_vc_mapas_partida ON vc_mapas(partida_id, orden);
 `);
 
 // ---------- Migraciones suaves ----------

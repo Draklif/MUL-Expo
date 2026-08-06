@@ -1,0 +1,1259 @@
+/* =====================================================================
+   VIRTUAL CHAMPIONS
+   Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
+   La Expo es editorial y en serif; esto es lo contrario —negro casi puro,
+   mayúsculas condensadas, esquinas cortadas en diagonal y un color que
+   manda en toda la página—.
+
+   El color lo pone el juego, no la hoja: cada juego trae su acento en
+   config.js y se inyecta en --juego. Todo lo demás usa var(--juego), así
+   que agregar un juego nuevo no pide tocar ni una regla de aquí.
+   ===================================================================== */
+
+:root {
+  --bg: #0a0b0e;
+  --bg-elev: #101218;
+  --bg-card: #14161d;
+  --bg-hover: #191c25;
+  --linea: #22252f;
+  --linea-fuerte: #333846;
+
+  --ink: #eef0f6;
+  --ink-dim: #9aa0b4;
+  --ink-mute: #666d80;
+
+  /* Se reemplaza por el acento del juego que se esté viendo. El rojo es el
+     de la casa, para las páginas que no son de ningún juego en concreto. */
+  --juego: #ff4655;
+  --vivo: #ff3b3b;
+  --ok: #4ade80;
+  --alerta: #fbbf24;
+
+  --display: "Archivo", "Arial Narrow", sans-serif;
+  --body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --mono: "SFMono-Regular", Consolas, monospace;
+
+  /* El corte diagonal de las esquinas: es LA firma visual de todo esto. */
+  --corte: 10px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.6;
+  /* Un resplandor tenue del color del juego detrás de todo. */
+  background-image:
+    radial-gradient(900px 420px at 50% -180px, color-mix(in srgb, var(--juego) 16%, transparent), transparent);
+  background-repeat: no-repeat;
+}
+
+a { color: inherit; }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: .01em;
+  line-height: 1.05;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+p { margin: 0 0 1em; }
+img { max-width: 100%; }
+
+/* ---------------------------------------------------------------------
+   Piezas base
+   --------------------------------------------------------------------- */
+
+/* El corte de esquina. Se aplica con clip-path para no depender de bordes
+   falsos ni de pseudo-elementos girados. */
+.cortada {
+  clip-path: polygon(var(--corte) 0, 100% 0, 100% calc(100% - var(--corte)), calc(100% - var(--corte)) 100%, 0 100%, 0 var(--corte));
+}
+
+.eyebrow {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--juego);
+  margin: 0 0 10px;
+}
+
+.sec-lead {
+  color: var(--ink-dim);
+  max-width: 62ch;
+  margin: 10px 0 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border: 1px solid var(--linea-fuerte);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.chip.acento { border-color: var(--juego); color: var(--juego); }
+.chip.ok     { border-color: var(--ok); color: var(--ok); }
+.chip.alerta { border-color: var(--alerta); color: var(--alerta); }
+.chip.pend   { border-color: var(--alerta); color: var(--alerta); }
+.chip.no     { border-color: var(--linea-fuerte); color: var(--ink-mute); }
+.chip.fin    { border-color: var(--linea-fuerte); color: var(--ink-mute); }
+.chip.prog   { border-color: var(--linea-fuerte); color: var(--ink-dim); }
+.chip.apl    { border-color: var(--alerta); color: var(--alerta); }
+
+/* El punto que late del "EN VIVO". */
+.chip.vivo {
+  border-color: var(--vivo);
+  color: #fff;
+  background: color-mix(in srgb, var(--vivo) 22%, transparent);
+}
+
+.chip.vivo::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vivo);
+  animation: latido 1.4s ease-in-out infinite;
+}
+
+@keyframes latido {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .35; transform: scale(.75); }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 13px 26px;
+  background: var(--juego);
+  color: #0a0b0e;
+  border: 1px solid var(--juego);
+  text-decoration: none;
+  cursor: pointer;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+  transition: filter .15s, background .15s, color .15s;
+}
+
+.btn:hover { filter: brightness(1.12); }
+
+.btn.ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--linea-fuerte);
+}
+
+.btn.ghost:hover { border-color: var(--juego); color: var(--juego); }
+
+.btn.chico { padding: 9px 16px; font-size: 11px; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .4; pointer-events: none; }
+
+/* ---------------------------------------------------------------------
+   Cabecera y navegación
+   --------------------------------------------------------------------- */
+.vc-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--linea);
+}
+
+.vc-top-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 62px;
+  flex-wrap: wrap;
+}
+
+.vc-marca {
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.vc-marca em {
+  font-style: normal;
+  color: var(--juego);
+}
+
+.vc-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.vc-nav a {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-bottom: 2px solid transparent;
+}
+
+.vc-nav a:hover { color: var(--ink); }
+
+.vc-nav a.on {
+  color: var(--ink);
+  border-bottom-color: var(--juego);
+}
+
+/* Los íconos son solo para la barra de abajo del celular. */
+.vc-nav .ic { display: none; }
+
+/* Selector de juego: pestañas anchas con el color de cada uno. */
+.vc-juegos {
+  border-bottom: 1px solid var(--linea);
+  background: var(--bg-elev);
+}
+
+.vc-juegos-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+}
+
+.vc-juego {
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  text-decoration: none;
+  padding: 13px 20px;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.vc-juego::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.vc-juego:hover { color: var(--ink-dim); }
+
+.vc-juego.on {
+  color: var(--jc, var(--juego));
+  border-bottom-color: var(--jc, var(--juego));
+}
+
+/* ---------------------------------------------------------------------
+   Estructura
+   --------------------------------------------------------------------- */
+.vc {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+.vc.angosto { max-width: 780px; }
+
+.vc-sec { padding: 54px 0 0; }
+
+.vc-sec > h2 { font-size: 30px; }
+
+.sec-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.tarjeta {
+  background: var(--bg-card);
+  border: 1px solid var(--linea);
+  padding: 18px;
+  /* Columna para que lo de adentro pueda empujar hacia abajo y la tarjeta
+     llene el alto que le da la fila. */
+  display: flex;
+  flex-direction: column;
+}
+
+/* auto-fit y no auto-fill: con auto-fill las columnas que sobran siguen
+   ocupando su 1fr y las tarjetas se quedan cortas, con un hueco a la derecha.
+   Con auto-fit las columnas vacías se colapsan y las que hay se reparten todo
+   el ancho. Ese es el "stretch" que faltaba. */
+.grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  align-items: stretch;
+}
+
+/* Y en vertical: toda tarjeta de una grilla llena el alto de su fila, así una
+   tarjeta con más texto no deja a sus vecinas flotando a media altura. */
+.grid > * { height: 100%; }
+
+/* Nombre de equipo dentro de una tarjeta: nunca parte en dos líneas. Un
+   "Los Muiscas de la Sabana" al lado de un "Fénix" haría dos tarjetas de
+   alturas distintas, que es justo lo que no se quiere. */
+.eq-nombre {
+  display: block;
+  font-family: var(--display);
+  font-size: 17px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eq-nombre.chica { font-size: 15px; }
+
+/* Tarjeta que va en horizontal (escudo a la izquierda, texto a la derecha).
+   Es un modificador y no un estilo en línea porque .tarjeta ya es una columna
+   flex: escribir display:flex encima dejaba la dirección en column y mandaba
+   el escudo arriba del nombre. */
+.tarjeta.fila {
+  flex-direction: row;
+  align-items: center;
+  gap: 13px;
+}
+
+/* Sin esto, un nombre largo ensancha su columna en vez de recortarse. */
+.tarjeta .txt { min-width: 0; flex: 1; }
+.tarjeta .txt .mini { display: block; }
+
+/* Escudo + nombre arriba de una tarjeta que sigue siendo columna. */
+.eq-cabeza {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 12px;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------
+   Hero
+   --------------------------------------------------------------------- */
+.vc-hero {
+  padding: 64px 0 10px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.vc-hero h1 {
+  font-size: clamp(46px, 11vw, 108px);
+  letter-spacing: -.015em;
+  line-height: .92;
+}
+
+.vc-hero h1 em {
+  font-style: normal;
+  display: block;
+  color: var(--juego);
+}
+
+.vc-hero .lema {
+  font-family: var(--display);
+  font-size: clamp(15px, 2.4vw, 21px);
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 20px 0 0;
+}
+
+.vc-hero .entradilla {
+  max-width: 56ch;
+  color: var(--ink-dim);
+  margin: 16px 0 0;
+}
+
+.vc-hero-acciones {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 30px 0 40px;
+}
+
+.vc-datos {
+  display: flex;
+  gap: 34px;
+  flex-wrap: wrap;
+  padding: 0 0 26px;
+}
+
+.vc-dato .k {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.vc-dato .v {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+/* ---------------------------------------------------------------------
+   Escudo de equipo: el tag sobre el color. Sin imágenes.
+   --------------------------------------------------------------------- */
+.escudo {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--ink);
+  background: linear-gradient(150deg, color-mix(in srgb, var(--juego) 34%, #14161d), #14161d);
+  border: 1px solid var(--linea-fuerte);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  text-transform: uppercase;
+}
+
+.escudo.grande { width: 76px; height: 76px; flex-basis: 76px; font-size: 24px; }
+.escudo.chico  { width: 30px; height: 30px; flex-basis: 30px; font-size: 10px; }
+.escudo.vacio  { background: var(--bg-elev); color: var(--ink-mute); }
+
+/* ---------------------------------------------------------------------
+   Partida: la pieza que más se repite
+   --------------------------------------------------------------------- */
+.partida {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--linea);
+  border-left: 3px solid var(--linea-fuerte);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color .15s, background .15s;
+}
+
+.partida:hover { background: var(--bg-hover); border-left-color: var(--juego); }
+
+.partida.es-vivo {
+  border-left-color: var(--vivo);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--vivo) 9%, var(--bg-card)), var(--bg-card) 55%);
+}
+
+/* Sin flex-wrap: si los chips se pasan de renglón, esa tarjeta crece y la de
+   al lado no. Antes de partir la línea se recorta el nombre de la ronda, que
+   es lo que sobra. La altura queda clavada. */
+.partida-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--linea);
+  font-size: 12px;
+  color: var(--ink-mute);
+  min-height: 42px;
+  overflow: hidden;
+}
+
+.partida-top .ronda {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Los chips no se encogen; el que cede es el texto de la ronda. */
+.partida-top .chip { flex: 0 0 auto; }
+
+.partida-top .cuando {
+  margin-left: auto;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  padding-left: 4px;
+}
+
+/* Crece para llenar lo que le sobre a la tarjeta cuando su vecina es más
+   alta, en vez de dejar el hueco al final. */
+.partida-cuerpo {
+  padding: 14px 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.lado {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+}
+
+.lado + .lado { border-top: 1px solid var(--linea); }
+
+.lado .nombre {
+  font-family: var(--display);
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lado .marcador {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--ink-mute);
+  min-width: 28px;
+  text-align: right;
+}
+
+.lado.gana .marcador { color: var(--juego); }
+.lado.gana .nombre { color: var(--ink); }
+.lado.pierde .nombre, .lado.pierde .escudo { opacity: .45; }
+.lado.pordefinir .nombre { color: var(--ink-mute); font-style: italic; text-transform: none; }
+
+/* ---------------------------------------------------------------------
+   Marcador grande de la ficha de partida
+   --------------------------------------------------------------------- */
+.tablero {
+  background: var(--bg-card);
+  border: 1px solid var(--linea);
+  padding: 30px 22px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+}
+
+.tablero .equipo { display: grid; justify-items: center; gap: 10px; }
+
+.tablero .equipo .nombre {
+  font-family: var(--display);
+  font-size: clamp(17px, 3.4vw, 27px);
+  font-weight: 700;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+/* El enlace tiene que centrar por dentro, no solo centrarse él.
+   Con justify-items en .equipo se centra la caja del <a>, pero esa caja mide
+   lo que mida el nombre del equipo, y el escudo —que es más angosto— se
+   pegaba a su borde izquierdo. Resultado: "Boyacá Royals" empujaba su escudo
+   más a la izquierda que "Páramo" el suyo, y los dos quedaban descuadrados
+   respecto al marcador. Se nota sobre todo en celular, donde el nombre ocupa
+   casi todo el ancho. */
+.tablero .equipo a {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.tablero .equipo a:hover .nombre { color: var(--juego); }
+
+.tablero .cifras {
+  font-family: var(--display);
+  font-size: clamp(34px, 8vw, 60px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+.tablero .cifras .sep { color: var(--ink-mute); margin: 0 8px; }
+.tablero .cifras .gana { color: var(--juego); }
+
+/* Sede y transmisión, debajo del marcador. */
+.partida-meta {
+  margin-top: 14px;
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.partida-meta a { color: var(--juego); }
+
+/* Tabla de mapas */
+.mapas { width: 100%; border-collapse: collapse; margin-top: 18px; }
+
+.mapas th {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.mapas td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--linea);
+  font-size: 14px;
+}
+
+.mapas td.puntos {
+  font-family: var(--display);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mapas .gana { color: var(--juego); }
+.mapas tr.jugando td { background: color-mix(in srgb, var(--vivo) 7%, transparent); }
+
+/* Roster */
+.roster { list-style: none; margin: 0; padding: 0; }
+
+/* Cada renglón mide lo mismo pase lo que pase: nada parte en dos líneas y lo
+   que no cabe se recorta. Un nombre de cuatro palabras no puede hacer más
+   alta la tarjeta de su equipo. */
+.roster li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  border-bottom: 1px solid var(--linea);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.roster .nick {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.roster .quien {
+  color: var(--ink-dim);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.roster .rol {
+  margin-left: auto;
+  color: var(--ink-mute);
+  font-size: 12px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  padding-left: 8px;
+}
+.roster .cap { color: var(--juego); font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+
+/* ---------------------------------------------------------------------
+   Bracket: columnas por ronda con conectores
+   --------------------------------------------------------------------- */
+/* Una columna por ronda, todas del mismo ancho y todo alineado arriba.
+   Sin conectores: con las llaves pegadas al tope se lee de un vistazo qué
+   ronda tiene cuántas partidas —cuatro, dos, una— y las líneas solo
+   repetían esa misma información con más ruido.
+
+   Es grid y no flex para que las columnas se repartan el ancho solas: con
+   tres rondas salen tres columnas iguales, con cuatro salen cuatro. En
+   pantalla angosta el minmax obliga a arrastrar a lo ancho, que es la única
+   forma de que un cuadro de eliminación siga siendo un cuadro. */
+.bracket {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(230px, 1fr);
+  gap: 16px;
+  align-items: start;
+  overflow-x: auto;
+  padding-bottom: 14px;
+  scroll-snap-type: x proximity;
+}
+
+.ronda {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scroll-snap-align: start;
+  min-width: 0;
+}
+
+.ronda-tit {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--linea);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.ronda-tit > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.ronda-tit .bo { flex: 0 0 auto; }
+
+.ronda-tit .bo { color: var(--juego); }
+
+/* Todas las llaves miden lo mismo: dos lados de alto fijo y un pie de alto
+   fijo. Así las cuatro de cuartos, las dos de semis y la final se leen como
+   una sola retícula. */
+.llave {
+  background: var(--bg-card);
+  border: 1px solid var(--linea);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color .15s, background .15s;
+}
+
+.llave:hover { border-color: var(--juego); background: var(--bg-hover); }
+
+.llave.es-vivo { border-color: var(--vivo); }
+
+.llave-lado {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 11px;
+  font-size: 13px;
+  min-height: 48px;
+  overflow: hidden;
+}
+
+.llave-lado + .llave-lado { border-top: 1px solid var(--linea); }
+
+.llave-lado .nombre {
+  font-family: var(--display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.llave-lado .pts {
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--ink-mute);
+}
+
+.llave-lado.gana { background: color-mix(in srgb, var(--juego) 11%, transparent); }
+.llave-lado.gana .pts { color: var(--juego); }
+.llave-lado.pierde { opacity: .5; }
+.llave-lado.pordefinir .nombre { color: var(--ink-mute); font-style: italic; text-transform: none; }
+
+/* Alto fijo aunque adentro vaya un chip "EN VIVO", que es más alto que el
+   texto suelto de la hora. */
+.llave-pie {
+  padding: 8px 10px;
+  border-top: 1px solid var(--linea);
+  font-size: 11px;
+  color: var(--ink-mute);
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 32px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.llave-pie > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------------------
+   Calendario
+   --------------------------------------------------------------------- */
+.dia-tit {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--juego);
+  padding: 26px 0 12px;
+  border-bottom: 1px solid var(--linea);
+  margin-bottom: 14px;
+}
+
+.franja {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 16px;
+  align-items: start;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--linea);
+}
+
+.franja .hora {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  padding-top: 12px;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+label {
+  display: block;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 6px;
+}
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="datetime-local"], input[type="url"],
+select, textarea {
+  width: 100%;
+  background: var(--bg-elev);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  padding: 11px 13px;
+  border-radius: 0;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--juego);
+}
+
+input::placeholder, textarea::placeholder { color: var(--ink-mute); }
+
+.campo { margin-bottom: 16px; }
+.campo .ayuda { font-size: 12px; color: var(--ink-mute); margin: 5px 0 0; }
+
+.fila {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+fieldset { border: 0; margin: 0; padding: 0; }
+
+/* Elegir modalidad: dos tarjetas grandes, no dos radios chiquitos. */
+.opciones { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); margin-bottom: 22px; }
+
+.opcion {
+  display: block;
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--linea-fuerte);
+  padding: 16px;
+  cursor: pointer;
+}
+
+.opcion input { position: absolute; opacity: 0; pointer-events: none; }
+
+.opcion .t {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.opcion .d { font-size: 13px; color: var(--ink-dim); line-height: 1.5; }
+
+.opcion:has(input:checked) {
+  border-color: var(--juego);
+  background: color-mix(in srgb, var(--juego) 10%, var(--bg-card));
+}
+
+.opcion:has(input:checked) .t { color: var(--juego); }
+
+/* Fila de jugador en el formulario */
+.jugador {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1.3fr 1.6fr 1fr .9fr;
+  align-items: end;
+  padding: 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--linea);
+  margin-bottom: 10px;
+}
+
+.jugador label { font-size: 10px; }
+
+@media (max-width: 720px) {
+  .jugador { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---------------------------------------------------------------------
+   Avisos
+   --------------------------------------------------------------------- */
+.aviso {
+  border: 1px solid var(--linea-fuerte);
+  border-left: 3px solid var(--juego);
+  background: var(--bg-card);
+  padding: 14px 16px;
+  margin: 0 0 20px;
+}
+
+.aviso.malo { border-left-color: var(--vivo); }
+.aviso.bueno { border-left-color: var(--ok); }
+.aviso ul { margin: 6px 0 0; padding-left: 18px; }
+.aviso p:last-child { margin-bottom: 0; }
+
+.codigo-grande {
+  font-family: var(--mono);
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: .22em;
+  color: var(--juego);
+  text-align: center;
+  padding: 20px;
+  border: 1px dashed var(--linea-fuerte);
+  background: var(--bg-elev);
+  margin: 18px 0;
+}
+
+.vacio {
+  text-align: center;
+  color: var(--ink-mute);
+  padding: 46px 20px;
+  border: 1px dashed var(--linea-fuerte);
+}
+
+/* ---------------------------------------------------------------------
+   Preguntas y listas
+   --------------------------------------------------------------------- */
+.reglas { list-style: none; margin: 0; padding: 0; counter-reset: r; }
+
+.reglas li {
+  counter-increment: r;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--linea);
+  color: var(--ink-dim);
+}
+
+.reglas li::before {
+  content: counter(r, decimal-leading-zero);
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--juego);
+  font-size: 13px;
+  letter-spacing: .06em;
+}
+
+details.faq {
+  border-bottom: 1px solid var(--linea);
+  padding: 4px 0;
+}
+
+details.faq summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 14px 0;
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+}
+
+details.faq summary::-webkit-details-marker { display: none; }
+details.faq summary::after { content: "+"; float: right; color: var(--juego); }
+details.faq[open] summary::after { content: "–"; }
+details.faq .r { color: var(--ink-dim); padding-bottom: 14px; max-width: 68ch; }
+
+/* ---------------------------------------------------------------------
+   Pie
+   --------------------------------------------------------------------- */
+.vc-foot {
+  border-top: 1px solid var(--linea);
+  padding: 34px 20px 44px;
+  color: var(--ink-mute);
+  font-size: 13px;
+}
+
+.vc-foot-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.vc-foot a { color: var(--ink-dim); }
+.vc-foot .der { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
+
+/* El acceso de la organización va discreto, como el de la Expo. */
+.foot-acceso { color: var(--ink-mute); text-decoration: none; font-size: 12px; }
+.foot-acceso:hover { color: var(--juego); }
+
+/* ---------------------------------------------------------------------
+   Panel de la organización
+   --------------------------------------------------------------------- */
+.panel-top {
+  border-bottom: 1px solid var(--linea);
+  background: var(--bg-elev);
+}
+
+.tabla { width: 100%; border-collapse: collapse; }
+
+.tabla th {
+  font-family: var(--display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--linea);
+}
+
+.tabla td {
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: top;
+}
+
+.tabla tr:hover td { background: var(--bg-hover); }
+
+.acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+.mini { font-size: 12px; color: var(--ink-mute); }
+
+.consola {
+  background: var(--bg-elev);
+  border: 1px solid var(--linea-fuerte);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+
+.consola .puntos {
+  display: grid;
+  grid-template-columns: 1fr 70px 70px 1fr;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .consola .puntos { grid-template-columns: 1fr 1fr; }
+  .franja { grid-template-columns: 1fr; gap: 4px; }
+  .franja .hora { padding-top: 0; }
+
+  /* El marcador se apila: equipo, cifras, equipo. Con todo en una sola
+     columna, lo que acompaña al marcador también va centrado —una línea de
+     sede pegada a la izquierda debajo de un bloque centrado se ve como un
+     descuido—. */
+  .tablero { grid-template-columns: 1fr; gap: 14px; }
+  .partida-meta { justify-content: center; text-align: center; }
+}
+
+/* En pantalla angosta la cabecera de la partida ya no puede con todo. Como
+   no se le deja partir en dos renglones, se decide aquí qué sobra: el
+   formato y la sede se caen, y quedan la ronda, el estado y la hora, que es
+   lo que se viene a mirar. El detalle completo está a un toque, en la ficha. */
+@media (max-width: 460px) {
+  .partida-top .chip-bo,
+  .partida-top .chip-sede { display: none; }
+}
+
+/* =====================================================================
+   CELULAR — el menú se va abajo
+
+   Arriba, cinco enlaces al lado de la marca no caben y se iban envolviendo
+   en dos y tres renglones: una cabecera pegajosa de 150px comiéndose media
+   pantalla en cada scroll.
+
+   Abajo resuelve las dos cosas a la vez. La cabecera vuelve a un solo
+   renglón con la marca, y el menú queda fijo al borde inferior, que es
+   donde llega el pulgar sin cambiar el agarre del teléfono. Es el mismo
+   HTML: solo cambia cómo se pinta.
+   ===================================================================== */
+@media (max-width: 720px) {
+  /* La cabecera deja de difuminar el fondo. No es por gusto: backdrop-filter
+     convierte a su elemento en el marco de referencia de todo lo que tenga
+     dentro en position:fixed, y la barra de abajo —que vive en este mismo
+     header— se quedaría pegada bajo la cabecera en vez de irse al borde de
+     la pantalla. Fondo sólido y el problema desaparece. */
+  .vc-top {
+    backdrop-filter: none;
+    background: var(--bg);
+  }
+
+  .vc-top-in.publica {
+    flex-wrap: nowrap;
+    min-height: 54px;
+    gap: 12px;
+    padding: 0 16px;
+  }
+
+  .vc-marca { font-size: 15px; }
+
+  .vc-nav.tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    gap: 0;
+    flex-wrap: nowrap;
+    background: var(--bg-elev);
+    border-top: 1px solid var(--linea);
+    /* El borde inferior de los iPhone con gesto: sin esto, la última fila de
+       rótulos queda debajo de la barra del sistema. */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  /* Todas las pestañas del mismo ancho, repartiéndose la pantalla. */
+  .vc-nav.tabs a {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 9px 3px 8px;
+    font-size: 9px;
+    letter-spacing: .04em;
+    border-bottom: 0;
+    /* La marca de la pestaña activa se pasa arriba: abajo quedaría contra el
+       filo de la pantalla y no se vería. */
+    border-top: 2px solid transparent;
+  }
+
+  .vc-nav.tabs a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .vc-nav.tabs .ic {
+    display: block;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+  }
+
+  .vc-nav.tabs a.on {
+    color: var(--juego);
+    border-top-color: var(--juego);
+    background: color-mix(in srgb, var(--juego) 10%, transparent);
+  }
+
+  /* Sin esto la barra tapa el pie de página. Solo en las páginas que la
+     tienen: el panel no la lleva y no tiene por qué quedar con un hueco. */
+  body:has(.vc-nav.tabs) {
+    padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px));
+  }
+
+  /* Las pestañas de juego pasan a ser la fila de arriba, con más aire para
+     el dedo y arrastrables si algún día hay más de dos juegos. */
+  .vc-juegos-in { padding: 0 8px; }
+  .vc-juego { padding: 14px 16px; }
+
+  /* El panel es otra historia: son dos enlaces y el botón de salir. Se le
+     quita el nombre del docente, que es lo único prescindible, y con eso
+     entra en un renglón. */
+  .panel-top .vc-top-in { gap: 10px; padding: 0 14px; min-height: 54px; }
+  .panel-top .mini { display: none; }
+  .panel-top .vc-nav { gap: 0; }
+  .panel-top .vc-nav a { padding: 8px 10px; }
+}

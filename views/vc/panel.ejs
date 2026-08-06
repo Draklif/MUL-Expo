@@ -1,0 +1,85 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="vc">
+  <section class="vc-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Organización</p>
+        <h2>Torneos</h2>
+      </div>
+    </div>
+
+    <% if (!torneos.length) { %>
+      <div class="vacio">Todavía no hay ningún torneo. Crea el primero aquí abajo.</div>
+    <% } else { %>
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Torneo</th>
+            <th>Semestre</th>
+            <th>Estado</th>
+            <th>Equipos</th>
+            <th>Por revisar</th>
+            <th>Sin equipo</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% torneos.forEach(function (t) { %>
+            <tr>
+              <td>
+                <a href="/vc/panel/torneos/<%= t.id %>" style="text-decoration:none">
+                  <strong style="font-family:var(--display);text-transform:uppercase"><%= t.nombre %></strong>
+                </a>
+                <div class="mini"><%= t.juego_info ? t.juego_info.nombre : t.juego %></div>
+              </td>
+              <td class="mini"><%= t.periodo || "—" %></td>
+              <td>
+                <span class="chip <%= t.estado === 'en_curso' ? 'acento' : t.estado === 'finalizado' ? 'no' : 'ok' %>">
+                  <%= t.estado === "inscripcion" ? "Inscripciones" : t.estado === "en_curso" ? "En curso" : "Terminado" %>
+                </span>
+                <% if (t.n_vivo > 0) { %><span class="chip vivo"><%= t.n_vivo %> en vivo</span><% } %>
+              </td>
+              <td><%= t.n_equipos %></td>
+              <td><% if (t.n_pendientes > 0) { %><span class="chip pend"><%= t.n_pendientes %></span><% } else { %><span class="mini">—</span><% } %></td>
+              <td><% if (t.n_libres > 0) { %><span class="chip alerta"><%= t.n_libres %></span><% } else { %><span class="mini">—</span><% } %></td>
+              <td><a href="/vc/panel/torneos/<%= t.id %>" class="btn ghost chico">Abrir</a></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+
+  <%/* ───── CREAR ───── */%>
+  <section class="vc-sec">
+    <p class="eyebrow">Nuevo</p>
+    <h2 style="font-size:22px">Crear un torneo</h2>
+    <p class="sec-lead">
+      Uno por juego y por semestre. Entra al semestre activo
+      (<%= periodoVC ? periodoVC.codigo : "—" %>) y arranca con las inscripciones abiertas.
+    </p>
+
+    <form method="POST" action="/vc/panel/torneos" style="margin-top:18px;max-width:640px">
+      <div class="fila">
+        <div class="campo">
+          <label for="juego">Juego</label>
+          <select name="juego" id="juego" required>
+            <% juegos.forEach(function (j) { %>
+              <option value="<%= j.id %>"><%= j.nombre %></option>
+            <% }); %>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="nombre">Nombre (opcional)</label>
+          <input type="text" name="nombre" id="nombre" maxlength="80"
+                 placeholder="Virtual Champions · Valorant" />
+        </div>
+      </div>
+      <button type="submit" class="btn">Crear torneo</button>
+    </form>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,266 @@
+<%- include('../partials/head', { title: title, descripcion: 'Inscríbete al torneo de esports del programa, con tu equipo o solo.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="vc angosto">
+  <section class="vc-sec">
+    <p class="eyebrow">Participar</p>
+    <h2>Inscripción</h2>
+    <p class="sec-lead">
+      Con tu equipo completo o tú solo. Todos los correos tienen que ser
+      institucionales: es lo que identifica a cada jugador.
+    </p>
+  </section>
+
+  <% if (errores.length) { %>
+    <div class="aviso malo" style="margin-top:22px">
+      <strong>Revisa esto antes de seguir:</strong>
+      <ul><% errores.forEach(function (e) { %><li><%= e %></li><% }); %></ul>
+    </div>
+  <% } %>
+
+  <% if (!torneos.length) { %>
+    <div class="vacio" style="margin-top:22px">
+      No hay inscripciones abiertas en este momento.
+      <div style="margin-top:14px"><a href="/virtual-champions" class="btn ghost chico">Volver al torneo</a></div>
+    </div>
+  <% } else { %>
+
+  <form method="POST" action="/vc/inscripcion" style="margin-top:22px" id="form">
+
+    <%/* ───── JUEGO ───── */%>
+    <div class="campo">
+      <label for="torneo_id">En qué juego</label>
+      <select name="torneo_id" id="torneo_id" required>
+        <option value="">Elige el juego…</option>
+        <% torneos.forEach(function (t) { %>
+          <option value="<%= t.id %>"
+                  data-titulares="<%= t.juego_info.titulares %>"
+                  data-nick="<%= t.juego_info.nick.label %>"
+                  data-ejemplo="<%= t.juego_info.nick.ejemplo %>"
+                  data-roles="<%= t.juego_info.roles.join('|') %>"
+                  data-esperando="<%= t.esperando %>"
+                  <%= String(valores.torneo_id) === String(t.id) ? "selected" : "" %>>
+            <%= t.juego_info.nombre %> · <%= t.inscritos %> equipos inscritos
+          </option>
+        <% }); %>
+      </select>
+      <p class="ayuda" id="ayuda-juego">Cada juego es un torneo aparte: puedes estar en los dos.</p>
+    </div>
+
+    <%/* ───── MODALIDAD ─────
+         Dos tarjetas grandes en vez de dos radios: es la decisión más
+         importante del formulario y tiene que verse. */%>
+    <div class="opciones">
+      <label class="opcion">
+        <input type="radio" name="modo" value="equipo" <%= valores.modo !== "solo" ? "checked" : "" %> />
+        <span class="t">Con mi equipo</span>
+        <span class="d">Ya tenemos los jugadores. Los registro a todos aquí y quedamos inscritos como equipo.</span>
+      </label>
+      <label class="opcion">
+        <input type="radio" name="modo" value="solo" <%= valores.modo === "solo" ? "checked" : "" %> />
+        <span class="t">Yo solo</span>
+        <span class="d">No tengo equipo. Quedo en la lista de espera y me asignan uno cuando se junten los que faltan.</span>
+      </label>
+    </div>
+
+    <div class="aviso" id="aviso-solo" hidden>
+      <p style="margin:0">
+        Vas a quedar en la lista de espera. <strong>Cuando se junten los jugadores
+        necesarios</strong>, la organización arma el equipo y te llega un correo con
+        quiénes te tocaron. Si al cierre de inscripciones no se completó, te avisamos
+        igual.
+      </p>
+    </div>
+
+    <%/* ───── DATOS DEL EQUIPO ───── */%>
+    <fieldset id="bloque-equipo">
+      <div class="fila">
+        <div class="campo" style="flex:2">
+          <label for="equipo">Nombre del equipo</label>
+          <input type="text" name="equipo" id="equipo" maxlength="40"
+                 value="<%= valores.equipo || '' %>" placeholder="Los que sea" />
+        </div>
+        <div class="campo">
+          <label for="tag">Tag</label>
+          <input type="text" name="tag" id="tag" maxlength="5"
+                 value="<%= valores.tag || '' %>" placeholder="LQS" />
+          <p class="ayuda">Tres o cuatro letras. Es lo que sale en el escudo.</p>
+        </div>
+      </div>
+    </fieldset>
+
+    <%/* ───── CAPITÁN ───── */%>
+    <h3 style="font-size:15px;margin:26px 0 12px;color:var(--juego)" id="tit-capitan">Tú (capitán)</h3>
+
+    <div class="jugador">
+      <div>
+        <label for="capitan_nombre">Nombre</label>
+        <input type="text" name="capitan_nombre" id="capitan_nombre" required maxlength="120"
+               value="<%= valores.capitan_nombre || '' %>" />
+      </div>
+      <div>
+        <label for="capitan_email">Correo institucional</label>
+        <input type="email" name="capitan_email" id="capitan_email" required maxlength="160"
+               pattern="<%= PATRON_CORREO %>" value="<%= valores.capitan_email || '' %>"
+               placeholder="tunombre@<%= DOMINIO %>" />
+      </div>
+      <div>
+        <label for="capitan_nick" class="rot-nick">Nick</label>
+        <input type="text" name="capitan_nick" id="capitan_nick" required maxlength="60"
+               value="<%= valores.capitan_nick || '' %>" class="in-nick" />
+      </div>
+      <div>
+        <label for="capitan_rol">Rol</label>
+        <select name="capitan_rol" id="capitan_rol" class="sel-rol">
+          <option value="">—</option>
+        </select>
+      </div>
+    </div>
+
+    <%/* ───── COMPAÑEROS ───── */%>
+    <div id="bloque-companeros">
+      <h3 style="font-size:15px;margin:26px 0 12px;color:var(--juego)">Tu equipo</h3>
+      <p class="ayuda" style="margin:-6px 0 12px" id="ayuda-cuantos"></p>
+
+      <div id="jugadores">
+        <% (valores.jugadores.length ? valores.jugadores : [{}, {}, {}, {}]).forEach(function (j) { %>
+          <div class="jugador">
+            <div>
+              <label>Nombre</label>
+              <input type="text" name="jugador_nombre" maxlength="120" value="<%= j.nombre || '' %>" />
+            </div>
+            <div>
+              <label>Correo institucional</label>
+              <input type="email" name="jugador_email" maxlength="160"
+                     pattern="<%= PATRON_CORREO %>" value="<%= j.email || '' %>"
+                     placeholder="companero@<%= DOMINIO %>" />
+            </div>
+            <div>
+              <label class="rot-nick">Nick</label>
+              <input type="text" name="jugador_nick" maxlength="60" value="<%= j.nick || '' %>" class="in-nick" />
+            </div>
+            <div>
+              <label>Rol</label>
+              <select name="jugador_rol" class="sel-rol">
+                <option value="">—</option>
+              </select>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+
+      <button type="button" class="btn ghost chico" id="agregar">+ Agregar otro jugador</button>
+    </div>
+
+    <div style="margin-top:30px;display:flex;gap:12px;flex-wrap:wrap">
+      <button type="submit" class="btn">Inscribirme</button>
+      <a href="/vc/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+    </div>
+  </form>
+
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+
+<script>
+  // El formulario se acomoda a lo que se elige: el juego decide cómo se llama
+  // el nick y qué roles hay, y la modalidad decide si se piden compañeros.
+  // Todo esto es comodidad: el servidor vuelve a validar lo mismo por su
+  // cuenta y quien tenga el JavaScript apagado puede llenarlo igual.
+  (function () {
+    var form = document.getElementById("form");
+    if (!form) return;
+
+    var selJuego = document.getElementById("torneo_id");
+    var bloqueEquipo = document.getElementById("bloque-equipo");
+    var bloqueCompas = document.getElementById("bloque-companeros");
+    var avisoSolo = document.getElementById("aviso-solo");
+    var titCapitan = document.getElementById("tit-capitan");
+    var ayudaCuantos = document.getElementById("ayuda-cuantos");
+    var lista = document.getElementById("jugadores");
+    var valoresRol = <%- JSON.stringify((valores.jugadores || []).map(function (j) { return j.rol || ""; })) %>;
+    var rolCapitan = <%- JSON.stringify(valores.capitan_rol || "") %>;
+
+    function juegoElegido() {
+      var op = selJuego.options[selJuego.selectedIndex];
+      if (!op || !op.value) return null;
+      return {
+        titulares: Number(op.dataset.titulares) || 5,
+        nick: op.dataset.nick || "Nick",
+        ejemplo: op.dataset.ejemplo || "",
+        roles: (op.dataset.roles || "").split("|").filter(Boolean),
+        esperando: Number(op.dataset.esperando) || 0,
+      };
+    }
+
+    function esSolo() {
+      var r = form.querySelector('input[name="modo"]:checked');
+      return r && r.value === "solo";
+    }
+
+    // Los selects de rol se llenan desde el juego: cambiar de juego cambia
+    // las opciones sin perder lo que ya estaba elegido si sigue existiendo.
+    function pintarRoles(j) {
+      var selects = form.querySelectorAll(".sel-rol");
+      selects.forEach(function (sel, i) {
+        var previo = sel.value || (i === 0 ? rolCapitan : valoresRol[i - 1] || "");
+        sel.innerHTML = '<option value="">—</option>';
+        (j ? j.roles : []).forEach(function (rol) {
+          var op = document.createElement("option");
+          op.value = rol;
+          op.textContent = rol;
+          if (rol === previo) op.selected = true;
+          sel.appendChild(op);
+        });
+      });
+    }
+
+    function acomodar() {
+      var j = juegoElegido();
+      var solo = esSolo();
+
+      form.querySelectorAll(".rot-nick").forEach(function (l) {
+        l.textContent = j ? j.nick : "Nick";
+      });
+      form.querySelectorAll(".in-nick").forEach(function (i) {
+        i.placeholder = j ? j.ejemplo : "";
+      });
+
+      bloqueEquipo.hidden = solo;
+      bloqueCompas.hidden = solo;
+      avisoSolo.hidden = !solo;
+      titCapitan.textContent = solo ? "Tus datos" : "Tú (capitán)";
+
+      // Un campo oculto y obligatorio bloquea el envío sin decir por qué.
+      document.getElementById("equipo").required = !solo;
+
+      if (j && !solo) {
+        ayudaCuantos.textContent =
+          "Un equipo de este juego necesita " + j.titulares +
+          " jugadores contándote a ti. Los que agregues de más quedan como suplentes.";
+      } else if (j && solo && j.esperando > 0) {
+        ayudaCuantos.textContent = "";
+      }
+
+      pintarRoles(j);
+    }
+
+    document.getElementById("agregar").addEventListener("click", function () {
+      var copia = lista.firstElementChild.cloneNode(true);
+      copia.querySelectorAll("input").forEach(function (i) { i.value = ""; });
+      copia.querySelectorAll("select").forEach(function (s) { s.selectedIndex = 0; });
+      lista.appendChild(copia);
+      acomodar();
+    });
+
+    selJuego.addEventListener("change", acomodar);
+    form.querySelectorAll('input[name="modo"]').forEach(function (r) {
+      r.addEventListener("change", acomodar);
+    });
+
+    acomodar();
+  })();
+</script>
+
+<%- include('../partials/footer') %>

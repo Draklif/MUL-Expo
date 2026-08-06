@@ -21,8 +21,11 @@ const apiRouter = require("./routes/api");
 const registroRouter = require("./routes/registro");
 const certificadosRouter = require("./routes/certificados");
 const periodosRouter = require("./routes/periodos");
+const vcRouter = require("./routes/vc");
+const vcPanelRouter = require("./routes/vc-panel");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
+const { configurado: vcConfigurado } = require("./lib/vc-auth");
 
 // Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
 // dejar un login que rechaza a todo el mundo sin explicar por qué.
@@ -74,6 +77,9 @@ app.use((req, res, next) => {
   res.locals.EVENTOS = eventos.EVENTOS.map((e) => ({ ...e, url: eventos.url(e, vigente) }));
 
   res.locals.docente = req.session.docente || null;
+  // La sesión del torneo es otra: sirve para que el pie del sitio público
+  // ofrezca "ir al panel" a quien ya entró y "acceso" al resto.
+  res.locals.docenteVC = req.session.docenteVC || null;
   res.locals.query = req.query;
   res.locals.DOMINIO = DOMINIO;
   res.locals.PATRON_CORREO = PATRON_HTML;
@@ -117,7 +123,11 @@ function renderEvento(res, evento, base) {
 // La raíz es el evento más próximo a suceder —no hay dos a la vez, así que no
 // hace falta un menú de entrada—. Quien llegue sin enlace ve lo que viene.
 app.get("/", (req, res) => {
-  renderEvento(res, eventos.activo(), "/");
+  const vigente = eventos.activo();
+  // Un evento con router propio se arma con datos de la base, así que su
+  // página la sirve él y no renderEvento: la raíz manda a su dirección.
+  if (vigente.ruta) return res.redirect(`/${vigente.slug}`);
+  renderEvento(res, vigente, "/");
 });
 
 // Guía de montaje para los expositores de la Expo (pública)
@@ -129,6 +139,13 @@ app.get("/expositores", (req, res) => {
 
 // Registro de expositores (público: lo llenan los estudiantes)
 app.use("/registro", registroRouter);
+
+// Virtual Champions. Va con router propio y no con la página automática de
+// eventos porque su contenido no está en un JSON sino en la base: los
+// equipos, el bracket y el marcador cambian durante el torneo. El público va
+// primero para que el panel, que vive en el mismo /vc, no le pase por encima.
+app.use("/", vcRouter);
+app.use("/vc", vcPanelRouter);
 
 // Certificados (públicos: el QR de cada uno apunta a su página)
 app.use("/certificado", certificadosRouter);
@@ -178,6 +195,10 @@ app.get("/tablero", requireAuth, conPeriodo, (req, res) => {
 // app, la ruta de la app gana y nadie se queda sin panel.
 eventos.EVENTOS.forEach((evento) => {
   if (!evento.slug) return;
+  // Los que traen router propio ya pusieron su dirección más arriba, con los
+  // datos que necesitan. Registrarla otra vez aquí no la reemplazaría (gana la
+  // primera), pero dejarlo explícito evita la duda al leerlo.
+  if (evento.ruta) return;
   app.get(`/${evento.slug}`, (req, res) => renderEvento(res, evento, `/${evento.slug}`));
 });
 
@@ -190,11 +211,18 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`  · ${e.nombre.padEnd(24)} http://localhost:${PORT}/${e.slug}`);
   });
   console.log(`  ✓ Acceso docentes:         http://localhost:${PORT}/acceso`);
+  console.log(
+    vcConfigurado()
+      ? `  ✓ Panel Virtual Champions: http://localhost:${PORT}/vc/acceso`
+      : "  · Panel Virtual Champions: cerrado (falta PASSWORD_VC en .env)"
+  );
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(
     envios.activo()
       ? `  ✓ Correos:                 desde ${process.env.SMTP_USER}`
-      : "  · Correos:                 apagados (falta SMTP_USER/SMTP_PASS en .env)"
+      : envios.apagados()
+        ? "  · Correos:                 APAGADOS a propósito (CORREOS=off en .env)"
+        : "  · Correos:                 apagados (falta SMTP_USER/SMTP_PASS en .env)"
   );
   if (!process.env.SESSION_SECRET) {
     console.warn("  ! Sin SESSION_SECRET en .env: cada reinicio cierra las sesiones abiertas.");
