@@ -10,7 +10,8 @@ const path = require("path");
 
 const db = require("./db/database");
 const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD } = require("./config");
-const { contenidoExpo, contenidoPrograma } = require("./lib/contenido");
+const { contenidoEvento } = require("./lib/contenido");
+const eventos = require("./lib/eventos");
 const { DOMINIO, PATRON_HTML } = require("./lib/correos");
 
 const authRouter = require("./routes/auth");
@@ -67,6 +68,11 @@ app.use(
 
 // Variables globales para las vistas
 app.use((req, res, next) => {
+  // La lista de eventos se resuelve en cada petición y no al arrancar: así el
+  // día que cambie el vigente, el sitio se acomoda solo sin reiniciar.
+  const vigente = eventos.activo();
+  res.locals.EVENTOS = eventos.EVENTOS.map((e) => ({ ...e, url: eventos.url(e, vigente) }));
+
   res.locals.docente = req.session.docente || null;
   res.locals.query = req.query;
   res.locals.DOMINIO = DOMINIO;
@@ -90,22 +96,33 @@ app.use("/proyectos", requireAuth, conPeriodo, proyectosRouter);
 app.use("/api", requireAuth, conPeriodo, apiRouter);
 app.use("/periodos", requireAuth, periodosRouter);
 
-// Portada pública del programa. Es el hub: quien llegue a la raíz cae aquí y
-// desde aquí entra a la Expo, a los eventos y a lo que venga.
+// Página pública de un evento. La raíz la usa para el que esté vigente y cada
+// slug para el suyo; 'base' es la dirección desde la que se está viendo, para
+// que los enlaces de la página vuelvan a donde estaba el visitante.
+function renderEvento(res, evento, base) {
+  if (evento.vista) {
+    return res.render(evento.vista, { ...contenidoEvento(evento.datos), base, slug: evento.slug });
+  }
+  // Sin plantilla propia todavía: la página de aviso se arma con el config.
+  res.render("evento-proximo", {
+    ev: evento,
+    base,
+    slug: evento.slug,
+    fecha: eventos.fechaLarga(evento.fecha),
+    programa: "Ingeniería en Multimedia",
+    institucion: "Universidad de Boyacá",
+  });
+}
+
+// La raíz es el evento más próximo a suceder —no hay dos a la vez, así que no
+// hace falta un menú de entrada—. Quien llegue sin enlace ve lo que viene.
 app.get("/", (req, res) => {
-  res.render("multimedia", { ...contenidoPrograma() });
+  renderEvento(res, eventos.activo(), "/");
 });
 
-// Landing pública de la Expo Multimedia. Vivía en "/" hasta que la portada del
-// programa le tomó el lugar; no hay redirección desde "/" a propósito: un
-// enlace viejo aterriza en el hub, que enlaza la Expo bien visible.
-app.get("/expo", (req, res) => {
-  res.render("landing", { ...contenidoExpo() });
-});
-
-// Guía de montaje para los expositores (pública)
+// Guía de montaje para los expositores de la Expo (pública)
 app.get("/expositores", (req, res) => {
-  const contenido = contenidoExpo();
+  const contenido = eventos.contenidoDe("expo");
   if (!contenido.requisitos) return res.redirect("/expo");
   res.render("expositores", { ...contenido });
 });
@@ -156,11 +173,22 @@ app.get("/tablero", requireAuth, conPeriodo, (req, res) => {
   res.render("tablero");
 });
 
+// Cada evento en su propia dirección (/expo, /virtual-champions…). Van de
+// últimas a propósito: si algún día un slug se llamara igual que una ruta de la
+// app, la ruta de la app gana y nadie se queda sin panel.
+eventos.EVENTOS.forEach((evento) => {
+  if (!evento.slug) return;
+  app.get(`/${evento.slug}`, (req, res) => renderEvento(res, evento, `/${evento.slug}`));
+});
+
 // ---------- Arrancar ----------
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`\n  ✓ Ingeniería en Multimedia en http://localhost:${PORT}`);
-  console.log(`  ✓ Expo Multimedia:         http://localhost:${PORT}/expo`);
+  const vigente = eventos.activo();
+  console.log(`\n  ✓ ${vigente.nombre} en http://localhost:${PORT}`);
+  eventos.EVENTOS.filter((e) => e.slug !== vigente.slug).forEach((e) => {
+    console.log(`  · ${e.nombre.padEnd(24)} http://localhost:${PORT}/${e.slug}`);
+  });
   console.log(`  ✓ Acceso docentes:         http://localhost:${PORT}/acceso`);
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(

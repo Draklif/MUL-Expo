@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <%/* La barra del navegador en Android toma este color. La Expo es oscura y
-       el hub del programa es blanco: por eso es un local y no un fijo. */%>
+  <%/* La barra del navegador en Android toma este color. Es un local y no un
+       fijo porque cada evento puede traer su propio ambiente. */%>
   <meta name="theme-color" content="<%= typeof themeColor !== 'undefined' ? themeColor : '#0c0c0f' %>" />
   <title><%= typeof title !== 'undefined' ? title : 'Expo Multimedia' %></title>
   <% if (typeof descripcion !== 'undefined' && descripcion) { %>
@@ -21,10 +21,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <%/* Una sola hoja por página, no dos. El hub del programa es claro y
-       styles.css es oscuro de raíz (body, a, h1…): apilarlas obligaría a
-       deshacer 1990 líneas a mano. Quien no pase 'css' sigue con la de
-       siempre. */%>
+  <%/* Una sola hoja por página, no dos. Si un evento quiere identidad propia,
+       pasa su 'css' y reemplaza a styles.css entera: apilar las dos obligaría a
+       deshacer a mano cada regla de la que está debajo (styles.css es oscura
+       desde body, a, h1…). Quien no pase 'css' sigue con la de siempre. */%>
   <link rel="stylesheet" href="<%= typeof css !== 'undefined' ? css : '/styles.css' %>" />
 </head>
 <body>

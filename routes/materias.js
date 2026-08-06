@@ -1,7 +1,7 @@
 const express = require("express");
 const db = require("../db/database");
 const { parseLista } = require("../lib/listas");
-const { contenidoExpo } = require("../lib/contenido");
+const { contenidoDe } = require("../lib/eventos");
 const { rankingDeMateria } = require("../lib/ranking");
 const {
   emitirDeMateria,
@@ -125,7 +125,7 @@ router.get("/:id", (req, res) => {
     )
     .all(req.params.id, req.periodo.id);
 
-  const { salas } = contenidoExpo();
+  const { salas } = contenidoDe("expo");
   for (const s of solicitudes) {
     s.integrantes = integrantesDeSolicitud.all(s.id);
     s.sala_nombre = (salas.find((x) => x.id === s.sala) || {}).name || s.sala;
@@ -194,7 +194,7 @@ router.post("/:id/certificados/avisos", async (req, res) => {
 // Completa la solicitud con lo que el correo necesita nombrar: la materia y la
 // sala se guardan por id, y el revisor es quien acaba de tocar el botón.
 function paraElCorreo(solicitud, req) {
-  const { salas } = contenidoExpo();
+  const { salas } = contenidoDe("expo");
   const materia = db
     .prepare("SELECT nombre FROM materias WHERE id = ?")
     .get(solicitud.materia_id);

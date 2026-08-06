@@ -1,5 +1,5 @@
 const express = require("express");
-const { contenidoExpo } = require("../lib/contenido");
+const { contenidoDe } = require("../lib/eventos");
 const { porCodigo, etiquetaPuesto, qrSvg } = require("../lib/certificados");
 
 const router = express.Router();
@@ -20,7 +20,7 @@ router.get("/:codigo", (req, res) => {
     url,
     qr: qrSvg(url, 160),
     puesto: etiquetaPuesto(cert.puesto),
-    ...contenidoExpo(),
+    ...contenidoDe("expo"),
   });
 });
 

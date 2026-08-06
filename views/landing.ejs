@@ -3,7 +3,7 @@
 <% const partes = evento.name.split(" "); %>
 
 <header class="pub-top">
-  <a href="/expo" class="pub-brand"><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></a>
+  <a href="<%= base %>" class="pub-brand"><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></a>
   <nav class="pub-nav">
     <a href="#recorrido">Recorrido</a>
     <a href="#lugar">El lugar</a>
@@ -303,6 +303,7 @@
   <div>
     <strong><%= evento.name %></strong>
     <span><%= programa %></span>
+    <%- include('partials/otros-eventos') %>
   </div>
   <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
     <%= docente ? 'Ir al panel' : 'Acceso docentes' %>

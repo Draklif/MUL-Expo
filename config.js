@@ -11,6 +11,63 @@ const PERIODO_INICIAL = "2026-20";
 // terminar en @DOMINIO; cualquier otro se rechaza.
 const DOMINIO = "uniboyaca.edu.co";
 
+// ---------------------------------------------------------------------
+//  EVENTOS DEL PROGRAMA
+// ---------------------------------------------------------------------
+// No hay dos eventos a la vez: la raíz "/" muestra el que esté más próximo a
+// suceder y ese es el único que ve quien llegue sin enlace. Cada evento vive
+// además en su propia dirección (/slug), que nunca cambia y sirve para
+// compartirlo antes o después de su turno.
+//
+// Para mover la raíz basta con las fechas: se escribe la de cada evento y el
+// sitio se acomoda solo el día que toque. El orden de esta lista solo decide
+// el desempate cuando ninguno tiene fecha futura.
+//
+//   slug   — la dirección (/expo). No se cambia una vez repartida.
+//   fecha  — AAAA-MM-DD del día del evento. Vacío = "por confirmar".
+//   lema   — una línea para la página de aviso mientras no tenga la suya.
+//   datos  — archivo de data/ con el contenido. Vacío = todavía no tiene.
+//   vista  — plantilla de views/. Vacío = usa la página de aviso.
+const EVENTOS = [
+  {
+    slug: "expo",
+    nombre: "Expo Multimedia",
+    fecha: "",
+    lema: "Todos los proyectos finales del semestre, en un solo recorrido.",
+    datos: "expo.json",
+    vista: "landing",
+  },
+  {
+    slug: "virtual-champions",
+    nombre: "Virtual Champions",
+    fecha: "",
+    lema: "",
+    datos: "",
+    vista: "",
+  },
+  {
+    slug: "jam-de-altura",
+    nombre: "Jam de Altura",
+    fecha: "",
+    lema: "",
+    datos: "",
+    vista: "",
+  },
+  {
+    slug: "music-fest",
+    nombre: "Multimedia Music Fest",
+    fecha: "",
+    lema: "",
+    datos: "",
+    vista: "",
+  },
+];
+
+// Deja la raíz clavada en un evento, pase lo que pase con las fechas: se pone
+// aquí su slug (o EVENTO=slug en el .env, que pesa más y sirve para probar sin
+// tocar el archivo). Vacío = manda la fecha, que es lo normal.
+const EVENTO_ACTIVO = "";
+
 // Contraseña compartida para todos los docentes.
 // El correo identifica a cada quien; esta clave es la segunda barrera.
 //
@@ -68,6 +125,8 @@ const ESCALA_MAX = 5;
 module.exports = {
   PERIODO_INICIAL,
   DOMINIO,
+  EVENTOS,
+  EVENTO_ACTIVO,
   PASSWORD,
   DOCENTES,
   CORREO,

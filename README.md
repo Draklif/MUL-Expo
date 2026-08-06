@@ -37,6 +37,7 @@ Copia `.env.example` como `.env` —lo secreto— y llénalo:
 | `PASSWORD_DOCENTES` | La contraseña compartida de los docentes | **Sí**: sin ella la app no arranca |
 | `SESSION_SECRET` | Firma las cookies de sesión | No, pero sin ella cada reinicio cierra las sesiones |
 | `PORT` | Puerto del servidor (vacío = 3000) | No |
+| `EVENTO` | Clava la raíz en un [evento](#los-eventos) (vacío = manda la fecha) | No |
 | `SMTP_USER`, `SMTP_PASS`, `SITIO_URL` | Los [correos automáticos](#correos-automáticos) | No: sin ellas no salen avisos y ya |
 
 > **Nada de contraseñas en `config.js`.** Con la clave a la vista en el
@@ -72,11 +73,13 @@ El login aguanta 10 intentos cada 10 minutos por dispositivo.
 npm start
 ```
 
-Verás:
+Verás (la primera línea es el evento que esté vigente):
 
 ```
-  ✓ Ingeniería en Multimedia en http://localhost:3000
-  ✓ Expo Multimedia:         http://localhost:3000/expo
+  ✓ Expo Multimedia en http://localhost:3000
+  · Virtual Champions        http://localhost:3000/virtual-champions
+  · Jam de Altura            http://localhost:3000/jam-de-altura
+  · Multimedia Music Fest    http://localhost:3000/music-fest
   ✓ Acceso docentes:         http://localhost:3000/acceso
   ✓ Para exponer con ngrok:  ngrok http 3000
 ```
@@ -87,15 +90,59 @@ Abre `http://localhost:3000` en el navegador del PC.
 
 | Ruta | Quién entra | Qué es |
 |---|---|---|
-| `/` | Cualquiera, sin login | Portada del programa: qué es Multimedia, los ejes, laboratorios y la puerta a la Expo y a los eventos |
-| `/expo` | Cualquiera, sin login | Landing pública de la Expo: el recorrido, el plano, los horarios |
+| `/` | Cualquiera, sin login | El [evento vigente](#los-eventos): el que esté más próximo a suceder |
+| `/expo` | Cualquiera, sin login | Página pública de la Expo: el recorrido, el plano, los horarios |
+| `/virtual-champions`, `/jam-de-altura`, `/music-fest` | Cualquiera, sin login | Los otros eventos del programa |
 | `/expositores` | Estudiantes, sin login | Guía de montaje: qué debe tener el stand |
 | `/registro` | Estudiantes, sin login | Registro de expositores |
 | `/registro/estado` | Estudiantes, sin login | Consulta del estado con el código |
 | `/certificado/:codigo` | Cualquiera, sin login | Certificado a pantalla completa (a donde apunta su QR) |
-| `/acceso` | Docentes | Login (enlace discreto al pie de la landing) |
+| `/acceso` | Docentes | Login (enlace discreto al pie de la página del evento) |
 | `/panel` | Docentes | Materias, registros por revisar, estudiantes y proyectos |
 | `/tablero` | Docentes | Ranking en vivo |
+
+## Los eventos
+
+El programa tiene varios eventos y **nunca hay dos a la vez**, así que la raíz
+`/` no es un menú de entrada: es directamente **el evento más próximo a
+suceder**. Quien llegue sin enlace ve lo que viene, sin un clic de por medio.
+
+Todo se maneja desde `EVENTOS`, en `config.js`:
+
+```js
+{ slug: "expo", nombre: "Expo Multimedia", fecha: "2026-11-20",
+  lema: "…", datos: "expo.json", vista: "landing" }
+```
+
+| Campo | Para qué |
+|---|---|
+| `slug` | La dirección propia del evento (`/expo`). No se cambia una vez repartida |
+| `fecha` | `AAAA-MM-DD` del día del evento. Vacío = "por confirmar" |
+| `lema` | Una línea para la página de aviso, mientras no tenga la suya |
+| `datos` | Archivo de `data/` con su contenido. Vacío = todavía no tiene |
+| `vista` | Plantilla de `views/`. Vacío = usa `evento-proximo.ejs` |
+
+**Cómo se decide la raíz:** gana el evento con la fecha más cercana que aún no
+haya pasado (el día del evento cuenta como vigente). O sea que basta con
+escribir las fechas una vez: el sitio cambia solo el día que toca. Si ninguno
+tiene fecha futura —porque están vacías o porque ya pasaron todas— manda el
+orden de la lista, y así el sitio nunca se queda sin portada.
+
+**Para forzarlo** —probar, o clavar la raíz en un evento pase lo que pase— hay
+dos llaves: `EVENTO_ACTIVO` en `config.js`, y `EVENTO=slug` en el `.env`, que
+pesa más y sirve para mirar una página sin tocar el archivo.
+
+Cada evento vive **además** en su propia dirección, que no cambia nunca: la
+Expo está siempre en `/expo`, esté o no en la raíz. Los enlaces repartidos
+sirven antes y después de su turno, y el pie de todas las páginas lleva a los
+demás eventos.
+
+**Un evento nuevo:** se agrega a la lista con su `slug` y ya es visitable —sale
+la página de aviso, con el nombre, la fecha y el lema—. Cuando tenga contenido
+se le crea su `data/*.json` y su vista, se apuntan en `datos` y `vista`, y la
+dirección sigue siendo la misma. Si quiere identidad visual propia, la vista
+puede pasarle otra hoja al head (`css: '/loquesea.css'`), que reemplaza a
+`styles.css` entera en vez de apilarse encima.
 
 ## Registro de expositores
 
@@ -149,7 +196,7 @@ existe en vez de duplicarlo. El endpoint es público, así que tiene un tope de 
 envíos cada 10 minutos por dispositivo.
 
 **Cerrar el registro:** en `data/expo.json`, `registro.abierto: false`. El
-formulario deja de recibir y la landing muestra `aviso_cerrado` en lugar del
+formulario deja de recibir y la página de la Expo muestra `aviso_cerrado` en lugar del
 botón.
 
 ### Editar el contenido público
@@ -168,34 +215,6 @@ recarga el navegador: el servidor lo relee cuando cambia, **sin reiniciar**.
 
 El contenido salió del tablero del plan integrador (`Plan/data/*.json`), pero a
 partir de aquí las dos cosas son independientes: editar uno no toca al otro.
-
-### La portada del programa
-
-La raíz `/` ya no es la Expo: es la cara de Ingeniería en Multimedia, y desde
-ahí se entra a la Expo, a los eventos y a las salidas pedagógicas. Su contenido
-vive en `data/programa.json` y funciona igual —se edita y se recarga, sin
-reiniciar—. Tiene identidad propia (clara, azul `#0921AD` con acentos en el
-verde lima de la facultad) y por eso carga su **propia hoja de estilos**,
-`public/multimedia.css`: `styles.css` es oscura de raíz y apilar las dos
-obligaría a deshacer cada regla a mano.
-
-Dos cosas que conviene saber antes de tocarla:
-
-- **`agenda.bloques[].proximamente`** es el interruptor de "próximamente". En
-  `true` la tarjeta sale apagada y sin enlace. Para encender una sección: se
-  pone en `false`, se escribe el `href` y listo — no hay que tocar código ni
-  CSS.
-- **`marca.logo`** es la ranura del logo. Mientras esté vacío se dibuja un
-  monograma tipográfico. Cuando llegue el archivo oficial se deja en
-  `public/marca/` y se escribe aquí la ruta: ocupa exactamente la misma caja,
-  así que no se mueve nada. El favicon se cambia en `views/partials/head.ejs`.
-
-> **El verde lima solo va sobre azul.** Sobre blanco da 2.2:1 de contraste, que
-> no alcanza ni para texto ni para un ícono que signifique algo por sí solo.
-> Sobre el azul del programa llega a 5.2:1 y ahí sí se lee. Por eso en
-> `multimedia.css` el lima aparece como `color` únicamente dentro de
-> `.mul-banda`; en el resto de la página es relleno, filete o forma
-> decorativa. Si algún día se ve texto verde sobre blanco, es un bug.
 
 ### Horarios e itinerario
 
@@ -280,7 +299,7 @@ decimales, y quien mande los planos reales solo tiene que pasarlos a esa escala:
 - Los espacios más altos que anchos rotan su etiqueta solos.
 
 El plano actual es **tentativo** y así está rotulado en la página. Al cambiar las
-medidas en el JSON, la landing se redibuja sola.
+medidas en el JSON, la página se redibuja sola.
 
 ## Semestres
 
@@ -442,8 +461,8 @@ En otra terminal:
 ngrok http 3000
 ```
 
-Comparte la URL `https://xxxxx.ngrok-free.app`: quien la abra cae en la landing
-de la Expo. Los docentes entran por `…/acceso` con su nombre y la contraseña
+Comparte la URL `https://xxxxx.ngrok-free.app`: quien la abra cae en la página
+del evento vigente. Los docentes entran por `…/acceso` con su nombre y la contraseña
 compartida.
 
 > Si usas el túnel de VS Code en su lugar, expón el puerto 3000 y comparte la URL.

@@ -1,0 +1,55 @@
+<%/* Página de un evento que todavía no tiene la suya. Se arma solo con lo que
+     hay en config.EVENTOS (nombre, fecha y lema), así que un evento nuevo es
+     visitable desde el minuto uno y se le va construyendo la página encima. */%>
+<%- include('partials/head', { title: ev.nombre + ' — ' + programa, descripcion: ev.lema }) %>
+
+<% const partes = ev.nombre.split(" "); %>
+
+<header class="pub-top">
+  <a href="<%= base %>" class="pub-brand"><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></a>
+  <nav class="pub-nav">
+    <% if (docente) { %><a href="/panel" class="pub-panel">Mi panel</a><% } %>
+  </nav>
+</header>
+
+<main class="pub">
+  <section class="pub-hero">
+    <p class="eyebrow"><%= programa %> · <%= institucion %></p>
+    <h1><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></h1>
+    <p class="lead">
+      <%= ev.lema || 'Este evento está en preparación. Aquí va a estar todo: qué es, cuándo, dónde y cómo participar.' %>
+    </p>
+
+    <div class="hero-meta">
+      <div>
+        <span>Cuándo</span>
+        <strong><%= fecha || 'Fecha por confirmar' %></strong>
+      </div>
+      <div>
+        <span>Estado</span>
+        <strong>En preparación</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="pub-sec">
+    <p class="sec-lead" style="margin-bottom:0">
+      Mientras tanto, esta dirección ya es la del evento: <code>/<%= ev.slug %></code>.
+      Se puede repartir desde ahora — cuando la página esté lista, aparece aquí
+      mismo sin cambiar el enlace.
+    </p>
+  </section>
+</main>
+
+<footer class="pub-foot">
+  <div>
+    <strong><%= ev.nombre %></strong>
+    <span><%= programa %></span>
+    <%- include('partials/otros-eventos') %>
+  </div>
+  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
+    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
+  </a>
+</footer>
+
+<%- include('partials/footer') %>

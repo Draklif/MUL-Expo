@@ -1,6 +1,6 @@
 const express = require("express");
 const db = require("../db/database");
-const { contenidoExpo } = require("../lib/contenido");
+const { contenidoDe } = require("../lib/eventos");
 const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
@@ -30,12 +30,12 @@ const listaMaterias = () =>
   db.prepare("SELECT id, nombre FROM materias ORDER BY nombre COLLATE NOCASE").all();
 
 function estadoRegistro() {
-  const { registro } = contenidoExpo();
+  const { registro } = contenidoDe("expo");
   return registro || { abierto: true };
 }
 
 function vistaFormulario(extra = {}) {
-  const { salas } = contenidoExpo();
+  const { salas } = contenidoDe("expo");
   return {
     materias: listaMaterias(),
     salas,
@@ -53,7 +53,7 @@ router.get("/", (req, res) => {
 
 router.post("/", (req, res) => {
   const registro = estadoRegistro();
-  const { salas } = contenidoExpo();
+  const { salas } = contenidoDe("expo");
   // Todo registro nuevo entra al semestre activo, mire lo que mire el docente.
   const periodoActivo = periodos.activo();
 
@@ -235,7 +235,7 @@ function buscarPorCodigo(codigo) {
     )
     .all(solicitud.id);
 
-  const { salas } = contenidoExpo();
+  const { salas } = contenidoDe("expo");
   solicitud.sala_nombre = (salas.find((s) => s.id === solicitud.sala) || {}).name || solicitud.sala;
 
   // Certificados del equipo, para que cada quien encuentre el suyo con el
