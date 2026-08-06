@@ -1,0 +1,163 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="jam">
+  <% if (aviso.borrada) { %>
+    <div class="aviso bueno" style="margin-top:26px"><p style="margin:0">Se borró la edición.</p></div>
+  <% } %>
+  <% if (aviso.error === "periodo_formato") { %>
+    <div class="aviso malo" style="margin-top:26px">
+      <p style="margin:0">El código del semestre va como <code>2026-20</code>: el año, un guion y 10 o 20.</p>
+    </div>
+  <% } %>
+
+  <section class="jam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Organización</p>
+        <h2>Ediciones</h2>
+      </div>
+    </div>
+
+    <% if (!ediciones.length) { %>
+      <div class="vacio">
+        Todavía no hay ninguna edición. Abre la primera aquí abajo y las
+        inscripciones quedan listas.
+      </div>
+    <% } else { %>
+      <div style="overflow-x:auto">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Edición</th>
+              <th>Semestre</th>
+              <th>Estado</th>
+              <th>Equipos</th>
+              <th>Por revisar</th>
+              <th>Sin equipo</th>
+              <th>Entregas</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% ediciones.forEach(function (e) { %>
+              <tr>
+                <td>
+                  <a href="/jam/panel/ediciones/<%= e.id %>" style="text-decoration:none">
+                    <span class="nom"><%= e.nombre %></span>
+                  </a>
+                  <div class="mini">
+                    <% if (e.fase.momento_inicio) { %>
+                      Arranca <%= e.fase.momento_inicio.diaCorto %>, <%= e.fase.momento_inicio.hora %>
+                    <% } else { %>
+                      Sin fecha
+                    <% } %>
+                  </div>
+                </td>
+                <td class="mini">
+                  <%= e.periodo || "—" %>
+                  <% if (e.periodo_activo) { %><br /><span class="chip ok">Activo</span><% } %>
+                </td>
+                <td>
+                  <span class="chip <%= e.estado === 'finalizada' ? 'no' : e.estado === 'en_curso' ? 'acento' : 'ok' %>">
+                    <%= e.estado === "inscripcion" ? "Inscripciones" : e.estado === "en_curso" ? "En curso" : "Cerrada" %>
+                  </span>
+                  <% if (e.fase.clave === "en_curso") { %><span class="chip vivo">Corriendo</span><% } %>
+                  <% if (e.tema_revelado) { %><span class="chip cian">Tema fuera</span><% } %>
+                </td>
+                <td><%= e.cifras.equipos %></td>
+                <td>
+                  <% if (e.cifras.pendientes > 0) { %>
+                    <span class="chip pend"><%= e.cifras.pendientes %></span>
+                  <% } else { %><span class="mini">—</span><% } %>
+                </td>
+                <td>
+                  <% if (e.cifras.solistas > 0) { %>
+                    <span class="chip alerta"><%= e.cifras.solistas %></span>
+                  <% } else { %><span class="mini">—</span><% } %>
+                </td>
+                <td><%= e.cifras.entregas || "—" %></td>
+                <td><a href="/jam/panel/ediciones/<%= e.id %>" class="btn chico">Abrir</a></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ───── PASAR DE SEMESTRE ─────
+       Este es el botón que hace que la jam se pueda repetir sin tocar nada:
+       cierra la edición que esté abierta y crea una nueva y vacía en el
+       semestre que se elija. Lo del semestre pasado no se borra, se archiva. */%>
+  <section class="jam-sec">
+    <div class="herramienta">
+      <h3>Abrir la edición de un semestre</h3>
+      <p class="sec-lead">
+        Deja cerrada la edición que esté abierta y arranca una nueva, sin
+        equipos y con las inscripciones abiertas. La anterior se queda como
+        está: sus equipos, su tema y sus juegos siguen viéndose.
+      </p>
+
+      <form method="POST" action="/jam/panel/ediciones">
+        <div class="fila">
+          <div class="campo">
+            <label for="periodo_id">Semestre</label>
+            <select name="periodo_id" id="periodo_id">
+              <% periodos.forEach(function (p) { %>
+                <option value="<%= p.id %>" <%= p.activo ? "selected" : "" %>>
+                  <%= p.codigo %><%= p.activo ? " (activo)" : "" %>
+                </option>
+              <% }); %>
+            </select>
+            <p class="ayuda">O escribe uno nuevo al lado y se crea solo.</p>
+          </div>
+          <div class="campo">
+            <label for="periodo_nuevo">Semestre nuevo</label>
+            <input type="text" name="periodo_nuevo" id="periodo_nuevo" maxlength="7"
+                   placeholder="2027-10" pattern="\d{4}-\d{2}" />
+            <p class="ayuda">Año, guion y 10 (primer semestre) o 20 (segundo).</p>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="nombre">Nombre de la edición (opcional)</label>
+          <input type="text" name="nombre" id="nombre" maxlength="80"
+                 placeholder="Jam de Altura · 2027-10" />
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="horas">Cuántas horas dura</label>
+            <input type="number" name="horas" id="horas" min="1" max="240" value="<%= porDefecto.horas %>" />
+          </div>
+          <div class="campo">
+            <label for="max_integrantes">Máximo por equipo</label>
+            <input type="number" name="max_integrantes" id="max_integrantes" min="1" max="8"
+                   value="<%= porDefecto.max_integrantes %>" />
+          </div>
+          <div class="campo">
+            <label for="cupo_equipos">Cupo de equipos</label>
+            <input type="number" name="cupo_equipos" id="cupo_equipos" min="1" max="200"
+                   placeholder="sin tope" />
+          </div>
+        </div>
+
+        <label class="opcion" style="max-width:520px">
+          <input type="checkbox" name="activar_periodo" value="1" checked />
+          <span class="t">Dejarlo como el semestre activo</span>
+          <span class="d">
+            Es el semestre del programa entero: la Expo y el torneo también
+            empiezan a guardar ahí. Es lo normal al empezar un semestre nuevo.
+          </span>
+        </label>
+
+        <div style="margin-top:24px">
+          <button type="submit" class="btn">Abrir la edición</button>
+        </div>
+      </form>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

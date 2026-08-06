@@ -1,0 +1,467 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA SALA DE CONTROL DE UNA EDICIÓN
+
+     Las herramientas van en el orden en que se usan durante un semestre:
+     primero el cronograma (que es lo que echa a andar el reloj público),
+     después el tema, después la revisión de inscripciones y el armado de
+     equipos, y de últimas el tablón, que es lo único que se usa mientras la
+     jam corre.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="jam">
+
+  <%/* ───── AVISOS ───── */%>
+  <%
+    const BUENOS = {
+      ok: "Guardado.",
+      abierta: "Edición abierta. Las inscripciones ya están recibiendo.",
+      revelado: "Tema revelado: ya está en la página pública.",
+      escondido: "Tema escondido otra vez.",
+      revisado: "Inscripción revisada y avisada por correo.",
+      borrado: "Borrado.",
+      liberado: "Esa persona volvió a la lista de quienes esperan equipo.",
+    };
+    const MALOS = {
+      sin_tema: "Primero escribe el tema y guárdalo; después se revela.",
+      sin_revelar: "El tema todavía no está revelado. No se puede mandar por correo antes de que salga en la página.",
+      armar: "Para armar un equipo hacen falta un nombre y al menos dos personas de la lista.",
+      con_gente: "Esa edición ya tiene gente inscrita: no se borra. Ciérrala en los ajustes si ya terminó.",
+    };
+    const bueno = Object.keys(BUENOS).find((k) => aviso[k]);
+    const malo = MALOS[aviso.error];
+  %>
+
+  <% if (bueno) { %>
+    <div class="aviso bueno" style="margin-top:26px"><p style="margin:0"><%= BUENOS[bueno] %></p></div>
+  <% } %>
+  <% if (malo) { %>
+    <div class="aviso malo" style="margin-top:26px"><p style="margin:0"><%= malo %></p></div>
+  <% } %>
+  <% if (aviso.armado) { %>
+    <div class="aviso bueno" style="margin-top:26px">
+      <p style="margin:0">Equipo armado con <%= aviso.armado %> personas. A cada una le llegó un correo.</p>
+    </div>
+  <% } %>
+  <% if (aviso.avisados !== undefined) { %>
+    <div class="aviso bueno" style="margin-top:26px">
+      <p style="margin:0">
+        Se mandó el tema a <%= aviso.avisados %> personas<%= Number(aviso.fallaron) ? ` (${aviso.fallaron} fallaron)` : "" %>.
+      </p>
+    </div>
+  <% } %>
+
+  <%/* ───── CABECERA ───── */%>
+  <section class="jam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow"><%= edicion.periodo || "Sin semestre" %></p>
+        <h2><%= edicion.nombre %></h2>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="chip <%= edicion.estado === 'finalizada' ? 'no' : edicion.estado === 'en_curso' ? 'acento' : 'ok' %>">
+            <%= edicion.estado === "inscripcion" ? "Inscripciones" : edicion.estado === "en_curso" ? "En curso" : "Cerrada" %>
+          </span>
+          <% if (fase.clave === "en_curso") { %><span class="chip vivo">El reloj corre</span><% } %>
+          <% if (fase.clave === "antes") { %><span class="chip cian">Falta para arrancar</span><% } %>
+          <% if (fase.clave === "sin_fecha") { %><span class="chip alerta">Sin fecha</span><% } %>
+          <span class="chip <%= edicion.inscripcion_abierta ? 'ok' : 'no' %>">
+            Inscripciones <%= edicion.inscripcion_abierta ? "abiertas" : "cerradas" %>
+          </span>
+          <span class="chip <%= edicion.entregas_abiertas ? 'ok' : 'no' %>">
+            Entregas <%= edicion.entregas_abiertas ? "abiertas" : "cerradas" %>
+          </span>
+        </div>
+      </div>
+      <a href="/jam-de-altura" class="btn chico">Ver la página pública</a>
+    </div>
+
+    <div class="jam-datos" style="padding-top:16px">
+      <div class="jam-dato"><div class="k">Equipos</div><div class="v"><%= cifras.equipos %></div></div>
+      <div class="jam-dato"><div class="k">Por revisar</div><div class="v"><%= cifras.pendientes %></div></div>
+      <div class="jam-dato"><div class="k">Personas</div><div class="v"><%= cifras.personas %></div></div>
+      <div class="jam-dato"><div class="k">Sin equipo</div><div class="v"><%= cifras.solistas %></div></div>
+      <div class="jam-dato"><div class="k">Entregas</div><div class="v"><%= cifras.entregas %></div></div>
+    </div>
+  </section>
+
+  <%/* ───── 1. CRONOGRAMA ───── */%>
+  <section class="jam-sec" id="cronograma">
+    <div class="herramienta">
+      <h3>1 · Cuándo arranca</h3>
+      <p class="sec-lead">
+        Esto y nada más es lo que mueve el reloj gigante de la página. Con la
+        hora puesta, el contador empieza a bajar solo; cuando llega a cero,
+        arranca la jam y el contador pasa a marcar lo que queda.
+      </p>
+
+      <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/cronograma">
+        <div class="fila">
+          <div class="campo">
+            <label for="inicio">Día y hora del arranque</label>
+            <input type="datetime-local" name="inicio" id="inicio"
+                   value="<%= paraInput(edicion.inicio) %>" />
+          </div>
+          <div class="campo">
+            <label for="horas">Cuántas horas dura</label>
+            <input type="number" name="horas" id="horas" min="1" max="240" value="<%= edicion.horas %>" />
+          </div>
+        </div>
+        <button type="submit" class="btn chico">Guardar el cronograma</button>
+      </form>
+
+      <% if (fase.momento_inicio) { %>
+        <p class="mini" style="margin-top:20px">
+          Arranca el <%= fase.momento_inicio.dia %> a las <%= fase.momento_inicio.hora %>
+          <% if (fase.momento_fin) { %>
+            y se cierra el <%= fase.momento_fin.dia %> a las <%= fase.momento_fin.hora %>.
+          <% } %>
+        </p>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 2. EL TEMA ───── */%>
+  <section class="jam-sec" id="tema">
+    <div class="herramienta">
+      <h3>2 · El tema</h3>
+      <p class="sec-lead">
+        Escribirlo no lo publica. Se puede dejar listo con semanas de
+        anticipación: hasta que no se aprieta <strong>Revelar</strong>, el tema
+        no sale del servidor y no hay forma de adelantarlo mirando el código
+        fuente de la página.
+      </p>
+
+      <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/tema">
+        <div class="campo">
+          <label for="tema">El tema de esta edición</label>
+          <input type="text" name="tema" id="tema" maxlength="160"
+                 value="<%= edicion.tema || '' %>" placeholder="Dos palabras que se puedan leer de lejos" />
+          <p class="ayuda">Corto: va en la página en letra gigante.</p>
+        </div>
+        <button type="submit" class="btn chico">Guardar el tema</button>
+      </form>
+
+      <div style="margin-top:26px;padding-top:22px;border-top:3px solid var(--borde)">
+        <% if (edicion.tema_revelado) { %>
+          <p style="margin:0 0 18px">
+            <span class="chip cian">Revelado</span>
+            El tema ya está en la página pública.
+          </p>
+          <div class="acciones">
+            <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/revelar" style="margin:0">
+              <input type="hidden" name="revelar" value="0" />
+              <button type="submit" class="btn chico">Esconderlo otra vez</button>
+            </form>
+            <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/avisar-tema" style="margin:0">
+              <button type="submit" class="btn chico" <%= correoActivo ? "" : "disabled" %>>
+                Mandarlo por correo a todos
+              </button>
+            </form>
+          </div>
+          <% if (!correoActivo) { %>
+            <p class="mini" style="margin-top:14px">
+              Los correos están apagados en el .env, así que el aviso no saldría.
+            </p>
+          <% } %>
+        <% } else { %>
+          <p style="margin:0 0 18px;color:var(--ink-dim)">
+            <% if (edicion.tema) { %>
+              El tema está guardado y escondido. Este es el botón del segundo cero.
+            <% } else { %>
+              Todavía no hay tema escrito.
+            <% } %>
+          </p>
+          <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/revelar" style="margin:0">
+            <input type="hidden" name="revelar" value="1" />
+            <button type="submit" class="btn mag gigante" <%= edicion.tema ? "" : "disabled" %>>
+              Revelar el tema
+            </button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── 3. INSCRIPCIONES POR REVISAR ───── */%>
+  <section class="jam-sec" id="inscripciones">
+    <div class="herramienta">
+      <h3>3 · Inscripciones por revisar</h3>
+      <p class="sec-lead">
+        Un equipo no sale en la página hasta que se admite. Al aprobar o
+        rechazar, al líder le llega un correo con lo que se decidió.
+      </p>
+
+      <% if (!pendientes.length) { %>
+        <div class="vacio" style="margin:0">No hay inscripciones esperando.</div>
+      <% } else { %>
+        <% pendientes.forEach(function (e) { %>
+          <div class="tarjeta" style="margin:0 4px 20px">
+            <div class="equipo-cab">
+              <span class="escudo gris"><%= e.nombre.slice(0, 3) %></span>
+              <div style="min-width:0">
+                <div class="nom"><%= e.nombre %></div>
+                <div class="mini"><%= e.contacto_nombre %> · <%= e.contacto_email %></div>
+              </div>
+              <span class="chip" style="margin-left:auto"><%= e.codigo %></span>
+            </div>
+
+            <% if (e.lema) { %><p class="mini" style="margin:0 0 10px">“<%= e.lema %>”</p><% } %>
+
+            <ul class="roster">
+              <% e.integrantes.forEach(function (i) { %>
+                <li>
+                  <span class="quien"><%= i.nombre %></span>
+                  <% if (i.lider) { %><span class="lider">LÍDER</span><% } %>
+                  <span class="disc"><%= i.disciplina || "sin disciplina" %> · <%= i.email %></span>
+                </li>
+              <% }); %>
+            </ul>
+
+            <form method="POST" action="/jam/panel/equipos/<%= e.id %>/revisar" class="revision">
+              <div class="campo">
+                <label for="nota-<%= e.id %>">Nota para el equipo (opcional)</label>
+                <input type="text" name="nota_docente" id="nota-<%= e.id %>" maxlength="400"
+                       placeholder="Se ve sobre todo si se rechaza." />
+              </div>
+              <div class="acciones">
+                <button type="submit" name="estado" value="aprobado" class="btn chico">Admitir</button>
+                <button type="submit" name="estado" value="rechazado" class="btn chico">Rechazar</button>
+              </div>
+            </form>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 4. ARMAR EQUIPOS ───── */%>
+  <section class="jam-sec" id="libres">
+    <div class="herramienta">
+      <h3>4 · Quienes esperan equipo</h3>
+      <p class="sec-lead">
+        Se marcan los que van juntos, se le pone nombre al equipo y listo: queda
+        admitido de una y a cada uno le llega un correo con quiénes le tocaron.
+        El primero de la lista queda de líder.
+      </p>
+
+      <% if (mezclaLibres.length) { %>
+        <div class="mezcla" style="margin-bottom:20px">
+          <% mezclaLibres.forEach(function (m) { %>
+            <span class="d"><%= m.disciplina %> · <%= m.n %></span>
+          <% }); %>
+        </div>
+        <p class="mini" style="margin:-10px 0 20px">
+          Eso es lo que hay disponible. Mezclar disciplinas es el punto de la
+          jam: cuatro programadores juntos entregan algo que funciona y que
+          nadie mira.
+        </p>
+      <% } %>
+
+      <% if (!libres.length) { %>
+        <div class="vacio" style="margin:0">Nadie está esperando equipo.</div>
+      <% } else { %>
+        <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/armar">
+          <% libres.forEach(function (i) { %>
+            <label class="libre">
+              <input type="checkbox" name="integrante" value="<%= i.id %>" />
+              <span class="quien"><%= i.nombre %></span>
+              <span class="mini" style="margin-left:auto;white-space:nowrap">
+                <%= i.disciplina || "sin disciplina" %>
+              </span>
+            </label>
+          <% }); %>
+
+          <div class="fila" style="margin-top:20px">
+            <div class="campo">
+              <label for="nombre-equipo">Nombre del equipo</label>
+              <input type="text" name="nombre" id="nombre-equipo" maxlength="40" required
+                     placeholder="El que se les ocurra" />
+              <p class="ayuda">Máximo <%= edicion.max_integrantes %> personas por equipo: si marcas más, se toman las primeras.</p>
+            </div>
+          </div>
+
+          <button type="submit" class="btn chico">Armar el equipo</button>
+        </form>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 5. EQUIPOS ADMITIDOS ───── */%>
+  <section class="jam-sec" id="equipos">
+    <div class="herramienta">
+      <h3>5 · Equipos admitidos</h3>
+
+      <% if (!aprobados.length) { %>
+        <div class="vacio" style="margin:0">Todavía no hay equipos admitidos.</div>
+      <% } else { %>
+        <div style="overflow-x:auto">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Equipo</th>
+                <th>Código</th>
+                <th>Integrantes</th>
+                <th>Mezcla</th>
+                <th>Entrega</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% aprobados.forEach(function (e) { %>
+                <tr>
+                  <td>
+                    <a href="/jam/equipo/<%= e.id %>" style="text-decoration:none"><span class="nom"><%= e.nombre %></span></a>
+                    <div class="mini"><%= e.contacto_email || "" %><%= e.armado ? " · armado por la organización" : "" %></div>
+                  </td>
+                  <td class="mini"><%= e.codigo %></td>
+                  <%/* Cada integrante con su botón de sacar al lado, y no todos
+                       juntos en la columna de acciones: sacar a alguien de un
+                       equipo es una operación sobre esa persona, y hay que ver
+                       a quién se le está apuntando. */%>
+                  <td>
+                    <% e.integrantes.forEach(function (i) { %>
+                      <form method="POST" action="/jam/panel/integrantes/<%= i.id %>/liberar"
+                            style="margin:0 0 6px;display:flex;gap:8px;align-items:center"
+                            onsubmit="return confirm('¿Sacar a <%= i.nombre %> de <%= e.nombre %>? Vuelve a la lista de quienes esperan equipo.')">
+                        <span class="mini" style="flex:1"><%= i.nombre %></span>
+                        <button type="submit" class="btn chico" title="Sacar del equipo">Sacar</button>
+                      </form>
+                    <% }); %>
+                  </td>
+                  <td class="mini"><%= e.mezcla.join(", ") || "—" %></td>
+                  <td>
+                    <% if (e.entregado) { %>
+                      <a href="<%= e.juego_url %>" target="_blank" rel="noopener" style="color:var(--acento)">
+                        <%= e.juego_titulo %>
+                      </a>
+                    <% } else { %><span class="mini">—</span><% } %>
+                  </td>
+                  <td>
+                    <form method="POST" action="/jam/panel/equipos/<%= e.id %>/borrar" style="margin:0"
+                          onsubmit="return confirm('¿Borrar <%= e.nombre %>? Sus integrantes vuelven a la lista de quienes esperan equipo.')">
+                      <button type="submit" class="btn chico">Borrar</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <% if (rechazados.length) { %>
+        <p class="mini" style="margin-top:22px">
+          Rechazados: <%= rechazados.map(function (e) { return e.nombre; }).join(", ") %>.
+        </p>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 6. TABLÓN ───── */%>
+  <section class="jam-sec" id="tablon">
+    <div class="herramienta">
+      <h3>6 · Tablón</h3>
+      <p class="sec-lead">
+        Lo que se escriba aquí sale en la página pública sin que nadie tenga que
+        recargar. Es para lo de las 48 horas: el arranque, un recordatorio a
+        mitad de camino, el cierre de entregas.
+      </p>
+
+      <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/anuncios">
+        <div class="campo">
+          <label for="texto">El aviso</label>
+          <textarea name="texto" id="texto" maxlength="400" required
+                    placeholder="Quedan 12 horas. Vayan cerrando lo que tengan y prueben la entrega antes."></textarea>
+        </div>
+        <div class="fila">
+          <div class="campo">
+            <label for="tipo">Tipo</label>
+            <select name="tipo" id="tipo">
+              <option value="aviso">Aviso</option>
+              <option value="hito">Hito</option>
+              <option value="alerta">Atención</option>
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn chico">Publicar</button>
+      </form>
+
+      <% if (anuncios.length) { %>
+        <div class="tablon" style="margin-top:26px">
+          <% anuncios.forEach(function (a) { %>
+            <div class="anuncio <%= a.tipo %>">
+              <span class="hora"><%= String(a.created_at || "").slice(5, 16) %></span>
+              <div>
+                <p class="txt"><%= a.texto %></p>
+                <form method="POST" action="/jam/panel/anuncios/<%= a.id %>/borrar" style="margin:8px 0 0">
+                  <button type="submit" class="btn chico">Borrar</button>
+                </form>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── AJUSTES ───── */%>
+  <section class="jam-sec" id="ajustes">
+    <div class="herramienta">
+      <h3>Ajustes de la edición</h3>
+      <p class="sec-lead">
+        Los interruptores. Cerrar las entregas es lo último que se hace: el
+        reloj llegando a cero no las cierra solo, justamente porque siempre hay
+        un equipo subiendo el build tres minutos tarde.
+      </p>
+
+      <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/estado">
+        <div class="fila">
+          <div class="campo">
+            <label for="estado">Estado</label>
+            <select name="estado" id="estado">
+              <option value="inscripcion" <%= edicion.estado === "inscripcion" ? "selected" : "" %>>Inscripciones</option>
+              <option value="en_curso" <%= edicion.estado === "en_curso" ? "selected" : "" %>>En curso</option>
+              <option value="finalizada" <%= edicion.estado === "finalizada" ? "selected" : "" %>>Cerrada</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="cupo">Cupo de equipos</label>
+            <input type="number" name="cupo_equipos" id="cupo" min="1" max="200"
+                   value="<%= edicion.cupo_equipos || '' %>" placeholder="sin tope" />
+          </div>
+          <div class="campo">
+            <label for="max">Máximo por equipo</label>
+            <input type="number" name="max_integrantes" id="max" min="1" max="8"
+                   value="<%= edicion.max_integrantes %>" />
+          </div>
+        </div>
+
+        <div class="opciones">
+          <label class="opcion">
+            <input type="checkbox" name="inscripcion_abierta" value="1" <%= edicion.inscripcion_abierta ? "checked" : "" %> />
+            <span class="t">Inscripciones abiertas</span>
+            <span class="d">Con esto apagado, el formulario público deja de recibir.</span>
+          </label>
+          <label class="opcion">
+            <input type="checkbox" name="entregas_abiertas" value="1" <%= edicion.entregas_abiertas ? "checked" : "" %> />
+            <span class="t">Entregas abiertas</span>
+            <span class="d">Los equipos admitidos pueden subir su juego con el código.</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn chico">Guardar los ajustes</button>
+      </form>
+
+      <% if (cifras.personas === 0) { %>
+        <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/borrar" style="margin-top:26px"
+              onsubmit="return confirm('¿Borrar esta edición?')">
+          <button type="submit" class="btn chico">Borrar la edición</button>
+          <p class="mini" style="margin-top:10px">Se puede porque todavía no hay nadie inscrito.</p>
+        </form>
+      <% } %>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

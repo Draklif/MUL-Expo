@@ -81,6 +81,8 @@ Verás (la primera línea es el evento que esté vigente):
   · Jam de Altura            http://localhost:3000/jam-de-altura
   · Multimedia Music Fest    http://localhost:3000/music-fest
   ✓ Acceso docentes:         http://localhost:3000/acceso
+  ✓ Panel Virtual Champions: http://localhost:3000/vc/acceso
+  ✓ Panel Jam de Altura:     http://localhost:3000/jam/acceso
   ✓ Para exponer con ngrok:  ngrok http 3000
 ```
 
@@ -100,6 +102,17 @@ Abre `http://localhost:3000` en el navegador del PC.
 | `/acceso` | Docentes | Login (enlace discreto al pie de la página del evento) |
 | `/panel` | Docentes | Materias, registros por revisar, estudiantes y proyectos |
 | `/tablero` | Docentes | Ranking en vivo |
+| `/jam/inscripcion` | Estudiantes, sin login | Inscripción a la [Jam de Altura](#jam-de-altura) |
+| `/jam/inscripcion/estado` | Estudiantes, sin login | Consulta del código **y entrega del juego** |
+| `/jam/equipos` | Cualquiera, sin login | Los equipos de la edición vigente |
+| `/jam/acceso`, `/jam/panel` | Docentes | Panel de la jam, con **su propia contraseña** |
+| `/vc/acceso`, `/vc/panel` | Docentes | Panel de Virtual Champions, con la suya |
+
+Son **tres herramientas con tres contraseñas**: la de la Expo
+(`PASSWORD_DOCENTES`), la del torneo (`PASSWORD_VC`) y la de la jam
+(`PASSWORD_JAM`). Los docentes son los mismos —la lista de `config.js`— pero
+entrar a una no abre las otras. Si a una le falta su clave en el `.env`, ese
+panel queda cerrado y todo lo demás funciona igual.
 
 ## Los eventos
 
@@ -143,6 +156,83 @@ se le crea su `data/*.json` y su vista, se apuntan en `datos` y `vista`, y la
 dirección sigue siendo la misma. Si quiere identidad visual propia, la vista
 puede pasarle otra hoja al head (`css: '/loquesea.css'`), que reemplaza a
 `styles.css` entera en vez de apilarse encima.
+
+## Jam de Altura
+
+La gamejam de 48 horas, completamente virtual: se anuncia un tema, arranca un
+reloj y los equipos entregan un videojuego antes de que llegue a cero. Vive en
+`/jam-de-altura` y tiene identidad propia —pixel, `public/jam.css`—, su propia
+base (`jam_*`) y su propio panel.
+
+### La edición es la unidad que se repite
+
+Una **edición** es la jam de un semestre: sus equipos, su tema y sus juegos.
+Para el semestre siguiente **no se borra nada**: se abre otra edición y la
+anterior queda archivada tal como quedó.
+
+Eso se hace desde `/jam/panel`, en **Abrir la edición de un semestre**:
+
+- se elige un semestre de la lista o se escribe uno nuevo (`2027-10`) y se crea;
+- con la casilla marcada, ese pasa a ser el **semestre activo del programa** —el
+  mismo que usan la Expo y el torneo—;
+- la edición que estuviera abierta queda cerrada, y la nueva arranca vacía y
+  **con las inscripciones abiertas**.
+
+Después de eso ya no hay nada más que preparar: el sitio público muestra la
+edición nueva y el formulario empieza a recibir. Los enlaces de los equipos
+viejos (`/jam/equipo/12`) siguen funcionando para siempre.
+
+### Las herramientas del panel, en orden de uso
+
+| # | Herramienta | Qué hace |
+|---|---|---|
+| 1 | **Cronograma** | Día, hora y duración. Es lo único que mueve el reloj gigante de la página |
+| 2 | **El tema** | Se escribe y se guarda **escondido**; un botón aparte lo revela |
+| 3 | **Inscripciones** | Admitir o rechazar equipos. Al hacerlo sale un correo al líder |
+| 4 | **Armar equipos** | Con los que se inscribieron solos, viendo la disciplina de cada uno |
+| 5 | **Equipos admitidos** | Quién entregó qué, y sacar a alguien de un equipo si se retiró |
+| 6 | **Tablón** | Avisos que salen en la página pública sin recargar |
+
+### El reloj y el tema
+
+El reloj no tiene interruptor: la fase sale de la hora de arranque y de cuánto
+dura. Antes cuenta hacia el arranque, después cuenta lo que queda, y al llegar a
+cero la página se recarga sola y pasa a la fase siguiente. La hora que manda es
+**la del servidor**: al cargar, el navegador mide su desfase y lo corrige, así
+que un computador con el reloj corrido no cuenta de más.
+
+El tema sí es un botón, y a propósito. Mientras no se revele **no sale del
+servidor**: no está escondido en el HTML ni en la API, así que no hay forma de
+adelantarlo mirando el código fuente. Una vez revelado aparece en la página de
+todo el que la tenga abierta, sin que nadie recargue, y hay un segundo botón
+—aparte— para mandarlo por correo a todos los inscritos.
+
+### Inscripción y entrega
+
+Igual que en el resto del sitio, sin cuentas: se llena el formulario y sale un
+**código de 6 caracteres**. Con ese código se consulta el estado y, cuando la
+jam arranca, **se entrega el juego** (nombre, enlace jugable y una descripción).
+Se puede volver a entregar las veces que haga falta mientras las entregas estén
+abiertas.
+
+Quien no tiene equipo se inscribe solo, dice de qué se encarga y queda en una
+lista; la organización arma los equipos mezclando disciplinas y a cada uno le
+llega un correo con quiénes le tocaron.
+
+**Las entregas no se cierran solas** cuando el reloj llega a cero: eso es un
+interruptor del panel, porque siempre hay un equipo subiendo el build tres
+minutos tarde y esa decisión es de quien organiza.
+
+### Lo que se configura
+
+En `config.js`, el bloque `JAM`:
+
+| Campo | Para qué |
+|---|---|
+| `max_integrantes` | Tope de un equipo (4). Cada edición guarda el suyo y se puede cambiar |
+| `horas` | Cuánto dura (48). Igual: se copia a la edición al abrirla |
+| `cupo_equipos` | Tope de equipos por edición. `null` = sin tope |
+| `disciplinas` | Las opciones de "de qué te encargas". Agregar o quitar una es todo lo que hace falta: el formulario, el panel y las tarjetas salen de esta lista |
 
 ## Registro de expositores
 

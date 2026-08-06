@@ -23,9 +23,12 @@ const certificadosRouter = require("./routes/certificados");
 const periodosRouter = require("./routes/periodos");
 const vcRouter = require("./routes/vc");
 const vcPanelRouter = require("./routes/vc-panel");
+const jamRouter = require("./routes/jam");
+const jamPanelRouter = require("./routes/jam-panel");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
 const { configurado: vcConfigurado } = require("./lib/vc-auth");
+const { configurado: jamConfigurado } = require("./lib/jam-auth");
 
 // Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
 // dejar un login que rechaza a todo el mundo sin explicar por qué.
@@ -77,9 +80,10 @@ app.use((req, res, next) => {
   res.locals.EVENTOS = eventos.EVENTOS.map((e) => ({ ...e, url: eventos.url(e, vigente) }));
 
   res.locals.docente = req.session.docente || null;
-  // La sesión del torneo es otra: sirve para que el pie del sitio público
-  // ofrezca "ir al panel" a quien ya entró y "acceso" al resto.
+  // Cada herramienta tiene su propia sesión: sirve para que el pie de cada
+  // sitio público ofrezca "ir al panel" a quien ya entró y "acceso" al resto.
   res.locals.docenteVC = req.session.docenteVC || null;
+  res.locals.docenteJam = req.session.docenteJam || null;
   res.locals.query = req.query;
   res.locals.DOMINIO = DOMINIO;
   res.locals.PATRON_CORREO = PATRON_HTML;
@@ -146,6 +150,13 @@ app.use("/registro", registroRouter);
 // primero para que el panel, que vive en el mismo /vc, no le pase por encima.
 app.use("/", vcRouter);
 app.use("/vc", vcPanelRouter);
+
+// Jam de Altura. Mismo reparto que el torneo y por la misma razón: su página
+// se arma con la base (la edición, el reloj, el tema, los equipos), así que la
+// sirve un router y no la página automática de eventos. El público va primero
+// para que el panel, que vive en el mismo /jam, no le pase por encima.
+app.use("/", jamRouter);
+app.use("/jam", jamPanelRouter);
 
 // Certificados (públicos: el QR de cada uno apunta a su página)
 app.use("/certificado", certificadosRouter);
@@ -215,6 +226,11 @@ app.listen(PORT, "0.0.0.0", () => {
     vcConfigurado()
       ? `  ✓ Panel Virtual Champions: http://localhost:${PORT}/vc/acceso`
       : "  · Panel Virtual Champions: cerrado (falta PASSWORD_VC en .env)"
+  );
+  console.log(
+    jamConfigurado()
+      ? `  ✓ Panel Jam de Altura:     http://localhost:${PORT}/jam/acceso`
+      : "  · Panel Jam de Altura:     cerrado (falta PASSWORD_JAM en .env)"
   );
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(

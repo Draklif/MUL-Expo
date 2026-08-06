@@ -1,0 +1,18 @@
+<footer class="jam-foot">
+  <div class="jam-foot-in">
+    <div>
+      <strong>Jam de Altura</strong><br />
+      <%= programa %> · <%= institucion %>
+    </div>
+    <div class="der">
+      <a href="/jam/inscripcion">Inscribirse</a>
+      <a href="/jam/inscripcion/estado">Consultar código</a>
+      <%/* El acceso de la organización va discreto y no en el menú: esta
+           página es para quien viene a hacer un juego. */%>
+      <a href="<%= docenteJam ? '/jam/panel' : '/jam/acceso' %>" class="foot-acceso">
+        <%= docenteJam ? 'Ir al panel' : 'Acceso organización' %>
+      </a>
+    </div>
+  </div>
+  <%- include('../../partials/otros-eventos') %>
+</footer>

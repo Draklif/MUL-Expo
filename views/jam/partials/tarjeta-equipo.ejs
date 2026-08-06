@@ -1,0 +1,38 @@
+<%/* La tarjeta de un equipo. Se usa igual en la portada y en la lista de
+     equipos, así que recibe el equipo ya venido con integrantes y mezcla
+     (lib/jam.js los adjunta en conIntegrantes).
+
+     El escudo son las iniciales sobre un bloque de color. Sin imágenes: nadie
+     va a subir un logo en las dos horas que faltan para inscribirse, y una
+     retícula de cuadros de colores se ve mejor que una de espacios vacíos. */%>
+<%
+  const iniciales = e.nombre
+    .split(/\s+/)
+    .map((p) => p[0])
+    .join("")
+    .slice(0, 3);
+  // El color del escudo sale del nombre: siempre el mismo para el mismo
+  // equipo, y con tres opciones no hay dos vecinos iguales muy seguido.
+  const tonos = ["", "cian", "mag"];
+  const tono = tonos[e.nombre.length % tonos.length];
+%>
+<a href="/jam/equipo/<%= e.id %>" class="tarjeta">
+  <div class="equipo-cab">
+    <span class="escudo <%= tono %>"><%= iniciales %></span>
+    <div style="min-width:0">
+      <div class="nom"><%= e.nombre %></div>
+      <div class="mini">
+        <%= e.integrantes.length %> <%= e.integrantes.length === 1 ? "integrante" : "integrantes" %>
+        <% if (e.entregado) { %> · entregó<% } %>
+      </div>
+    </div>
+  </div>
+
+  <% if (e.lema) { %><p class="mini" style="margin:0 0 10px"><%= e.lema %></p><% } %>
+
+  <% if (e.mezcla.length) { %>
+    <div class="mezcla">
+      <% e.mezcla.forEach(function (d) { %><span class="d"><%= d %></span><% }); %>
+    </div>
+  <% } %>
+</a>

@@ -1,0 +1,184 @@
+<%- include('../partials/head', { title: title, descripcion: 'Inscríbete a la gamejam de 48 horas del programa, con tu equipo o solo.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="jam angosto">
+  <section class="jam-sec">
+    <p class="eyebrow">Participar</p>
+    <h2>Inscripción</h2>
+    <p class="sec-lead">
+      Con tu equipo armado o tú solo. Todos los correos tienen que ser
+      institucionales: es lo que identifica a cada quien y lo que impide que
+      alguien quede en dos equipos.
+    </p>
+  </section>
+
+  <% if (errores.length) { %>
+    <div class="aviso malo" style="margin-top:26px">
+      <strong>Revisa esto antes de seguir:</strong>
+      <ul><% errores.forEach(function (e) { %><li><%= e %></li><% }); %></ul>
+    </div>
+  <% } %>
+
+  <% if (!abierta) { %>
+    <div class="vacio" style="margin-top:26px">
+      <% if (!edicion) { %>
+        Todavía no hay una jam abierta. La próxima se anuncia en la página.
+      <% } else { %>
+        Las inscripciones de esta edición están cerradas.
+      <% } %>
+      <div style="margin-top:20px"><a href="/jam-de-altura" class="btn chico">Volver a la jam</a></div>
+    </div>
+  <% } else { %>
+
+  <form method="POST" action="/jam/inscripcion" style="margin-top:26px" id="form">
+
+    <%/* ───── MODALIDAD ─────
+         Dos tarjetas grandes en vez de dos radios: es la decisión más
+         importante del formulario y tiene que verse. */%>
+    <div class="opciones">
+      <label class="opcion">
+        <input type="radio" name="modo" value="equipo" <%= valores.modo !== "solo" ? "checked" : "" %> />
+        <span class="t">Con mi equipo</span>
+        <span class="d">Ya sabemos quiénes somos. Los registro a todos aquí y quedamos inscritos juntos.</span>
+      </label>
+      <label class="opcion">
+        <input type="radio" name="modo" value="solo" <%= valores.modo === "solo" ? "checked" : "" %> />
+        <span class="t">Yo solo</span>
+        <span class="d">No tengo equipo. Digo de qué me encargo y la organización me ubica con gente que haga lo demás.</span>
+      </label>
+    </div>
+
+    <div class="aviso" id="aviso-solo" hidden>
+      <p style="margin:0">
+        Vas a quedar en la lista. <strong>La organización arma los equipos
+        mezclando disciplinas</strong> y te llega un correo con quiénes te
+        tocaron. Por eso importa que digas bien de qué te encargas.
+      </p>
+    </div>
+
+    <%/* ───── DATOS DEL EQUIPO ───── */%>
+    <fieldset id="bloque-equipo">
+      <div class="campo">
+        <label for="equipo">Nombre del equipo</label>
+        <input type="text" name="equipo" id="equipo" maxlength="40"
+               value="<%= valores.equipo || '' %>" placeholder="Los del último minuto" />
+        <p class="ayuda">Es con el que van a salir en la página. Se puede cambiar escribiéndonos.</p>
+      </div>
+      <div class="campo">
+        <label for="lema">Lema (opcional)</label>
+        <input type="text" name="lema" id="lema" maxlength="120"
+               value="<%= valores.lema || '' %>" placeholder="Una línea, si se les ocurre alguna" />
+      </div>
+    </fieldset>
+
+    <%/* ───── QUIEN LLENA EL FORMULARIO ───── */%>
+    <h3 style="margin:34px 0 16px;color:var(--acento)" id="tit-lider">Tú (líder)</h3>
+
+    <div class="integrante">
+      <div>
+        <label for="lider_nombre">Nombre</label>
+        <input type="text" name="lider_nombre" id="lider_nombre" required maxlength="120"
+               value="<%= valores.lider_nombre || '' %>" />
+      </div>
+      <div>
+        <label for="lider_email">Correo institucional</label>
+        <input type="email" name="lider_email" id="lider_email" required maxlength="160"
+               pattern="<%= PATRON_CORREO %>" value="<%= valores.lider_email || '' %>"
+               placeholder="tunombre@<%= DOMINIO %>" />
+      </div>
+      <div>
+        <label for="lider_disciplina">De qué te encargas</label>
+        <select name="lider_disciplina" id="lider_disciplina" required>
+          <option value="">Elige…</option>
+          <% disciplinas.forEach(function (d) { %>
+            <option value="<%= d %>" <%= valores.lider_disciplina === d ? "selected" : "" %>><%= d %></option>
+          <% }); %>
+        </select>
+      </div>
+    </div>
+
+    <%/* ───── COMPAÑEROS ───── */%>
+    <div id="bloque-companeros">
+      <h3 style="margin:34px 0 16px;color:var(--acento)">Tu equipo</h3>
+      <p class="ayuda" style="margin:-8px 0 16px">
+        Hasta <%= max %> personas contándote a ti. Deja en blanco las filas que
+        no uses. Un equipo con disciplinas distintas entrega mejores juegos que
+        uno de cuatro iguales: es la idea de la jam.
+      </p>
+
+      <div id="integrantes">
+        <% const filas = valores.integrantes.length ? valores.integrantes : new Array(Math.max(0, max - 1)).fill({}); %>
+        <% filas.forEach(function (i) { %>
+          <div class="integrante">
+            <div>
+              <label>Nombre</label>
+              <input type="text" name="integrante_nombre" maxlength="120" value="<%= i.nombre || '' %>" />
+            </div>
+            <div>
+              <label>Correo institucional</label>
+              <input type="email" name="integrante_email" maxlength="160"
+                     pattern="<%= PATRON_CORREO %>" value="<%= i.email || '' %>"
+                     placeholder="companero@<%= DOMINIO %>" />
+            </div>
+            <div>
+              <label>De qué se encarga</label>
+              <select name="integrante_disciplina">
+                <option value="">Elige…</option>
+                <% disciplinas.forEach(function (d) { %>
+                  <option value="<%= d %>" <%= i.disciplina === d ? "selected" : "" %>><%= d %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <div style="margin-top:36px;display:flex;gap:18px;flex-wrap:wrap">
+      <button type="submit" class="btn">Inscribirnos</button>
+      <a href="/jam/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+    </div>
+  </form>
+
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+
+<script>
+  // El formulario se acomoda a la modalidad: quien entra solo no tiene que ver
+  // ni el nombre del equipo ni las filas de compañeros. Todo esto es
+  // comodidad: el servidor vuelve a validar lo mismo por su cuenta y quien
+  // tenga el JavaScript apagado puede llenarlo igual.
+  (function () {
+    var form = document.getElementById("form");
+    if (!form) return;
+
+    var bloqueEquipo = document.getElementById("bloque-equipo");
+    var bloqueCompas = document.getElementById("bloque-companeros");
+    var avisoSolo = document.getElementById("aviso-solo");
+    var titLider = document.getElementById("tit-lider");
+    var campoEquipo = document.getElementById("equipo");
+
+    function acomodar() {
+      var elegido = form.querySelector('input[name="modo"]:checked');
+      var solo = elegido && elegido.value === "solo";
+
+      bloqueEquipo.hidden = solo;
+      bloqueCompas.hidden = solo;
+      avisoSolo.hidden = !solo;
+      titLider.textContent = solo ? "Tus datos" : "Tú (líder)";
+
+      // Un campo oculto y obligatorio bloquea el envío sin decir por qué.
+      campoEquipo.required = !solo;
+    }
+
+    form.querySelectorAll('input[name="modo"]').forEach(function (r) {
+      r.addEventListener("change", acomodar);
+    });
+
+    acomodar();
+  })();
+</script>
+
+<%- include('../partials/footer') %>

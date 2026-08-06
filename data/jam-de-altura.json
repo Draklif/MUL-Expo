@@ -1,0 +1,97 @@
+{
+  "programa": "Ingeniería en Multimedia",
+  "institucion": "Universidad de Boyacá",
+
+  "evento": {
+    "name": "Jam de Altura",
+    "tipo": "Gamejam de 48 horas",
+    "estado": "Inscripciones abiertas",
+    "cuando": "Un fin de semana del semestre",
+    "sede": "Completamente virtual",
+    "desc": "Cuarenta y ocho horas para hacer un videojuego desde cero, en equipos de hasta cuatro personas y con un tema que se revela al arrancar."
+  },
+
+  "hero": {
+    "titulo": "Jam de Altura",
+    "lema": "48 horas · 1 tema · 1 videojuego",
+    "entradilla": "Se anuncia el tema, arranca el reloj y no para hasta el domingo. Programación, arte, sonido y narrativa en el mismo equipo: nadie hace un juego solo, y aquí eso es la regla, no un consejo."
+  },
+
+  "formato": {
+    "titulo": "Cómo funciona",
+    "lead": "Tres cosas y ya: un tema, un reloj y un equipo.",
+    "puntos": [
+      {
+        "titulo": "El tema se revela al arrancar",
+        "texto": "Nadie lo sabe antes, ni los equipos ni los docentes que no organizan. Sale en esta página en el segundo cero, junto con el reloj: no hay forma de ir adelantando trabajo."
+      },
+      {
+        "titulo": "Equipos de hasta cuatro",
+        "texto": "Y entre más distintos, mejor. Un equipo de cuatro programadores entrega algo que funciona y nadie mira; uno con arte, sonido y narrativa entrega un juego. También se puede entrar solo: nosotros armamos el equipo."
+      },
+      {
+        "titulo": "Todo en línea",
+        "texto": "No hay que ir a ninguna parte. Se trabaja desde donde cada quien esté, se avisa por esta página lo que haga falta y el juego se entrega con el código del equipo."
+      },
+      {
+        "titulo": "Se entrega lo que haya",
+        "texto": "Terminado o no, jugable o casi. Una jam no se gana con el juego más grande sino con el que se pudo cerrar en dos días, y eso se aprende entregando."
+      }
+    ]
+  },
+
+  "reglamento": {
+    "titulo": "Reglas de la jam",
+    "lead": "Cortas, para que nadie tenga que preguntarlas.",
+    "reglas": [
+      "Todos los integrantes tienen que ser estudiantes activos del programa y usar su correo institucional.",
+      "El juego se hace durante las 48 horas. Reutilizar código propio o librerías está bien; llegar con el juego medio hecho, no.",
+      "Los recursos de terceros (música, sprites, fuentes) se pueden usar si la licencia lo permite y se acreditan en la entrega.",
+      "Una persona en un solo equipo. Inscribirse dos veces invalida las dos inscripciones.",
+      "El equipo es de máximo cuatro. Quien se inscriba solo queda en la lista y la organización lo ubica.",
+      "Se entrega con el código del equipo, desde esta página, antes de que el reloj llegue a cero.",
+      "El juego tiene que abrirse desde un enlace público (itch.io, Drive, GitHub). Si no se puede jugar, no se puede evaluar."
+    ]
+  },
+
+  "premios": {
+    "titulo": "Qué se lleva quien entrega",
+    "lead": "Además de un juego terminado, que ya es bastante.",
+    "puestos": [
+      { "puesto": "Mejor juego", "premio": "Reconocimiento del programa y lugar en la Expo Multimedia" },
+      { "puesto": "Mejor uso del tema", "premio": "Reconocimiento del programa" },
+      { "puesto": "Mejor apartado artístico", "premio": "Reconocimiento del programa" },
+      { "puesto": "Todos los que entregan", "premio": "Certificado de participación" }
+    ]
+  },
+
+  "faq": {
+    "titulo": "Preguntas frecuentes",
+    "preguntas": [
+      {
+        "p": "No tengo equipo. ¿Igual me puedo inscribir?",
+        "r": "Sí, y es lo normal. Te inscribes solo, dices de qué te encargas y quedas en la lista; la organización arma los equipos mezclando disciplinas y te avisa por correo con quiénes te tocó."
+      },
+      {
+        "p": "¿Con qué motor se puede trabajar?",
+        "r": "Con el que quieras: Unity, Unreal, Godot, GameMaker, Construct, web con JavaScript o incluso un juego de mesa digital. Lo único que se pide es que el resultado se pueda abrir desde un enlace."
+      },
+      {
+        "p": "¿Hay que estar despierto las 48 horas?",
+        "r": "No, y es mala idea. El reloj corre de corrido, pero lo que se evalúa es lo que se entrega, no las horas sin dormir. Los equipos que duermen entregan mejores juegos."
+      },
+      {
+        "p": "¿Puedo participar si no sé programar?",
+        "r": "Sí, y hacen falta. Arte, sonido, narrativa, diseño de niveles y producción son la mitad de un videojuego. Al inscribirte dices de qué te encargas y con eso armamos equipos que no queden cojos."
+      },
+      {
+        "p": "Se me pasó la hora de entrega por diez minutos.",
+        "r": "Escríbele a la organización. Las entregas se cierran a mano y no de golpe cuando el reloj llega a cero, justamente porque siempre hay un build subiendo."
+      },
+      {
+        "p": "¿Esto tiene nota?",
+        "r": "Depende de la materia: la jam es del programa, no de una asignatura. Lo que sí da es certificado de participación, y los juegos que salen suelen terminar expuestos en la Expo Multimedia."
+      }
+    ]
+  }
+}

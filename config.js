@@ -53,9 +53,10 @@ const EVENTOS = [
     slug: "jam-de-altura",
     nombre: "Jam de Altura",
     fecha: "",
-    lema: "",
-    datos: "",
-    vista: "",
+    lema: "Cuarenta y ocho horas, un tema y un videojuego. Todo en línea.",
+    datos: "jam-de-altura.json",
+    vista: "jam/landing",
+    ruta: true,
   },
   {
     slug: "music-fest",
@@ -128,11 +129,47 @@ const VC = {
   final_presencial: true,
 };
 
+// ---------------------------------------------------------------------
+//  JAM DE ALTURA
+// ---------------------------------------------------------------------
+// La gamejam de 48 horas, completamente virtual. A diferencia del torneo, aquí
+// no hay varios juegos ni varios torneos a la vez: hay UNA edición por
+// semestre y todo el sitio habla de ella. Lo que se repite cada semestre es la
+// edición entera, y eso se abre con un botón desde el panel.
+//
+//   max_integrantes — el tope de un equipo. Inscribirse solo también vale.
+//   horas           — cuánto dura la jam. Es lo que cuenta el reloj gigante.
+//   cupo_equipos    — tope de equipos por edición. null = sin tope.
+//   disciplinas     — de qué puede encargarse cada quien. Se pide en la
+//                     inscripción y es lo que hace visible si un equipo es
+//                     interdisciplinar o son cuatro programadores juntos.
+//                     Agregar o quitar una de esta lista es todo lo que hace
+//                     falta: el formulario y el panel salen de aquí.
+const JAM = {
+  max_integrantes: 4,
+  horas: 48,
+  cupo_equipos: null,
+  disciplinas: [
+    "Programación",
+    "Arte 2D",
+    "Arte 3D",
+    "Diseño de juego",
+    "Animación",
+    "Audio y música",
+    "Narrativa",
+    "Producción",
+  ],
+};
+
 // Contraseña del panel de Virtual Champions. Es DISTINTA a la de la Expo a
 // propósito: los mismos docentes, pero dos herramientas separadas. Va en el
 // .env (PASSWORD_VC). Sin ella el panel del torneo queda cerrado, pero el
 // resto del sitio funciona igual.
 const PASSWORD_VC = String(process.env.PASSWORD_VC || "").trim();
+
+// Contraseña del panel de la Jam de Altura, por la misma razón: tercera
+// herramienta, tercera clave. Va en el .env (PASSWORD_JAM).
+const PASSWORD_JAM = String(process.env.PASSWORD_JAM || "").trim();
 
 // Contraseña compartida para todos los docentes.
 // El correo identifica a cada quien; esta clave es la segunda barrera.
@@ -194,8 +231,10 @@ module.exports = {
   EVENTOS,
   EVENTO_ACTIVO,
   VC,
+  JAM,
   PASSWORD,
   PASSWORD_VC,
+  PASSWORD_JAM,
   DOCENTES,
   CORREO,
   CRITERIOS,

@@ -1,0 +1,51 @@
+<%- include('../partials/head', { title: title, descripcion: 'Los equipos que están participando en la jam.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="jam">
+  <section class="jam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Quiénes están adentro</p>
+        <h2><%= equipos.length %> <%= equipos.length === 1 ? "equipo" : "equipos" %></h2>
+      </div>
+      <% if (abierta) { %><a href="/jam/inscripcion" class="btn chico">Inscribirme</a><% } %>
+    </div>
+
+    <% if (esperando > 0) { %>
+      <p class="sec-lead">
+        Además hay <strong><%= esperando %></strong>
+        <%= esperando === 1 ? "persona inscrita sola" : "personas inscritas solas" %>
+        esperando equipo. La organización los ubica antes de que arranque.
+      </p>
+    <% } %>
+
+    <%/* La mezcla de disciplinas de toda la edición. Es el dato que dice si
+         esta jam salió interdisciplinar de verdad o si se llenó de una sola
+         cosa —y si falta algo, todavía hay tiempo de invitar gente—. */%>
+    <% if (mezcla.length) { %>
+      <div class="mezcla" style="margin-top:20px">
+        <% mezcla.forEach(function (m) { %>
+          <span class="d"><%= m.disciplina %> · <%= m.n %></span>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <% if (!equipos.length) { %>
+      <div class="vacio">
+        Todavía no hay equipos confirmados.
+        <% if (abierta) { %>
+          <div style="margin-top:20px"><a href="/jam/inscripcion" class="btn chico">Ser el primero</a></div>
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="grid">
+        <% equipos.forEach(function (e) { %>
+          <%- include('partials/tarjeta-equipo', { e: e }) %>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

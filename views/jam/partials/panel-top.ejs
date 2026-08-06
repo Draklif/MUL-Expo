@@ -1,0 +1,18 @@
+<%/* Cabecera del panel. Deliberadamente distinta a la del sitio público: aquí
+     no hay marca grande ni barra de pestañas, solo dónde estás, quién eres y
+     la salida. */%>
+<header class="jam-top panel-top">
+  <div class="jam-top-in panel">
+    <a href="/jam/panel" class="jam-marca">Panel <em>Jam</em></a>
+    <nav class="jam-nav">
+      <a href="/jam/panel">Ediciones</a>
+      <a href="/jam-de-altura">Ver el sitio</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:14px;margin-left:12px">
+      <span class="mini"><%= docenteJam.name %><%= periodoJam ? " · " + periodoJam.codigo : "" %></span>
+      <form method="POST" action="/jam/salir" style="margin:0">
+        <button type="submit" class="btn chico">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

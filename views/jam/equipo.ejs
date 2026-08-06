@@ -1,0 +1,59 @@
+<%- include('../partials/head', { title: title, descripcion: equipo.lema || ('El equipo ' + equipo.nombre + ' en la Jam de Altura.'), css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="jam angosto">
+  <section class="jam-sec">
+    <div class="equipo-cab">
+      <span class="escudo grande"><%= equipo.nombre.split(/\s+/).map(function (p) { return p[0]; }).join("").slice(0, 3) %></span>
+      <div style="min-width:0">
+        <h2 style="font-size:clamp(16px,4vw,26px)"><%= equipo.nombre %></h2>
+        <div class="mini" style="margin-top:8px">
+          <%= equipo.integrantes.length %> integrantes
+          <% if (equipo.armado) { %> · equipo armado por la organización<% } %>
+        </div>
+      </div>
+    </div>
+
+    <% if (equipo.lema) { %><p class="sec-lead" style="margin-top:0"><%= equipo.lema %></p><% } %>
+
+    <% if (equipo.mezcla.length) { %>
+      <div class="mezcla">
+        <% equipo.mezcla.forEach(function (d) { %><span class="d"><%= d %></span><% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ───── EL JUEGO ───── */%>
+  <% if (equipo.entregado) { %>
+  <section class="jam-sec">
+    <p class="eyebrow">Lo que entregaron</p>
+    <div class="tarjeta juego" style="margin-top:16px">
+      <span class="tit"><%= equipo.juego_titulo %></span>
+      <% if (equipo.juego_desc) { %><p class="desc"><%= equipo.juego_desc %></p><% } %>
+      <a href="<%= equipo.juego_url %>" class="btn" target="_blank" rel="noopener">Jugar</a>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── QUIÉNES SON ───── */%>
+  <section class="jam-sec">
+    <p class="eyebrow">El equipo</p>
+    <h2 style="font-size:20px">Quiénes lo hicieron</h2>
+    <ul class="roster">
+      <% equipo.integrantes.forEach(function (i) { %>
+        <li>
+          <span class="quien"><%= i.nombre %></span>
+          <% if (i.lider) { %><span class="lider">LÍDER</span><% } %>
+          <% if (i.disciplina) { %><span class="disc"><%= i.disciplina %></span><% } %>
+        </li>
+      <% }); %>
+    </ul>
+
+    <div style="margin-top:28px">
+      <a href="/jam/equipos" class="btn chico">Ver todos los equipos</a>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

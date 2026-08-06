@@ -1,0 +1,445 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LANDING DE LA JAM DE ALTURA
+
+     Arriba va lo que cambia solo —el reloj, el tema, el tablón— y abajo el
+     texto que no cambia y sale de data/jam-de-altura.json.
+
+     El orden no es decorativo: lo primero que ve quien entra un sábado a las
+     tres de la mañana es cuánto le queda. Todo lo demás —las reglas, los
+     premios, las preguntas— es para antes de que arranque y por eso va
+     después.
+
+     Cada sección está protegida con un if: una edición recién abierta, sin
+     fecha ni equipos, tiene que renderizar una página corta y no un error.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: hero ? hero.entradilla : evento.desc, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="jam">
+
+  <%/* ───── HERO ───── */%>
+  <section class="jam-hero">
+    <p class="eyebrow"><%= programa %> · <%= institucion %></p>
+    <h1>
+      <span class="l1">Jam de</span>
+      <span class="l2">Altura</span>
+    </h1>
+
+    <% if (hero && hero.lema) { %><p class="lema"><%= hero.lema %></p><% } %>
+    <% if (hero && hero.entradilla) { %><p class="entradilla"><%= hero.entradilla %></p><% } %>
+
+    <div class="jam-hero-acciones">
+      <% if (abierta) { %>
+        <a href="/jam/inscripcion" class="btn">Inscribirme</a>
+        <a href="/jam/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+      <% } else { %>
+        <a href="/jam/inscripcion/estado" class="btn ghost">Consultar mi código</a>
+        <% if (fase.clave === "en_curso") { %>
+          <a href="/jam/equipos" class="btn">Ver los equipos</a>
+        <% } %>
+      <% } %>
+    </div>
+
+    <%/* La cordillera. El nombre del evento es "de Altura" y esto es lo que
+         lo dice sin escribirlo: dos filas de montañas dibujadas columna por
+         columna, como un mapa de bits de verdad. Los números son la altura
+         de cada bloque; cambiarlos cambia el paisaje y no rompe nada. */%>
+    <%
+      const fondo = [3,4,5,7,6,8,11,14,12,9,7,10,15,18,16,12,10,8,6,7,9,8,6,5,4,5,7,6,4,3];
+      const frente = [1,2,2,3,5,4,6,9,12,10,7,5,4,6,8,11,9,6,4,3,5,4,3,2,3,4,3,2,1,1];
+      const ALTO = 22;
+    %>
+    <svg class="montanas" viewBox="0 0 120 22" preserveAspectRatio="xMidYMax meet"
+         shape-rendering="crispEdges" role="img" aria-label="Cordillera de píxeles">
+      <g style="color:var(--borde)" fill="currentColor">
+        <% fondo.forEach(function (h, i) { %><rect x="<%= i * 4 %>" y="<%= ALTO - h %>" width="4" height="<%= h %>" /><% }); %>
+      </g>
+      <g style="color:var(--acento)" fill="currentColor">
+        <% frente.forEach(function (h, i) { %><rect x="<%= i * 4 %>" y="<%= ALTO - h %>" width="4" height="<%= h %>" /><% }); %>
+      </g>
+    </svg>
+  </section>
+
+  <%/* ───── EL RELOJ ─────
+       La pieza más grande de la página. Se pinta en el servidor con la
+       diferencia ya calculada para que quien llegue vea una cifra de una,
+       sin esperar a que corra el JavaScript, y de ahí en adelante el
+       navegador la actualiza cada segundo. */%>
+  <section id="reloj-sec">
+    <%
+      const RELOJ = {
+        sin_edicion: { cls: "apagado", rotulo: "La próxima edición", pie: "Todavía no hay fecha. Vuelve por acá." },
+        sin_fecha:   { cls: "apagado", rotulo: "Fecha por confirmar", pie: "Ya se puede uno inscribir: la fecha se anuncia por acá y por correo." },
+        antes:       { cls: "",        rotulo: "Arranca en", pie: "" },
+        en_curso:    { cls: "corriendo", rotulo: "Queda", pie: "" },
+        terminado:   { cls: "apagado", rotulo: "Se acabó", pie: "Se acabaron las 48 horas." },
+      };
+      const r = RELOJ[fase.clave] || RELOJ.sin_edicion;
+      const corriendo = fase.clave === "antes" || fase.clave === "en_curso";
+    %>
+
+    <div class="reloj <%= r.cls %>" id="reloj">
+      <div class="rotulo" id="reloj-rotulo">
+        <%= r.rotulo %>
+        <% if (fase.clave === "en_curso") { %><span class="chip vivo" style="margin-left:10px">En curso</span><% } %>
+      </div>
+
+      <div class="contador" id="contador" <%= corriendo ? '' : 'hidden' %>>
+        <div class="bloque"><span class="num" id="c-dias">00</span><span class="rot">Días</span></div>
+        <span class="sep">:</span>
+        <div class="bloque"><span class="num" id="c-horas">00</span><span class="rot">Horas</span></div>
+        <span class="sep">:</span>
+        <div class="bloque"><span class="num" id="c-min">00</span><span class="rot">Min</span></div>
+        <span class="sep">:</span>
+        <div class="bloque"><span class="num" id="c-seg">00</span><span class="rot">Seg</span></div>
+      </div>
+
+      <% if (fase.clave === "en_curso") { %>
+        <div class="barra"><i id="barra" style="width:<%= fase.avance.toFixed(1) %>%"></i></div>
+      <% } %>
+
+      <p class="pie" id="reloj-pie">
+        <% if (fase.clave === "antes" && fase.momento_inicio) { %>
+          Empieza el <%= fase.momento_inicio.dia %> a las <%= fase.momento_inicio.hora %>
+          y se cierra <%= fase.momento_fin ? fase.momento_fin.dia + " a las " + fase.momento_fin.hora : "" %>.
+        <% } else if (fase.clave === "en_curso" && fase.momento_fin) { %>
+          Se entrega hasta el <%= fase.momento_fin.dia %> a las <%= fase.momento_fin.hora %>.
+        <% } else { %>
+          <%= r.pie %>
+        <% } %>
+      </p>
+    </div>
+  </section>
+
+  <%/* ───── EL TEMA ─────
+       Si no está revelado, el servidor ni siquiera manda el texto: lo que se
+       pinta son unos bloques tapándolo. No hay nada que espiar en el código
+       fuente de esta página. */%>
+  <% if (edicion) { %>
+  <section id="tema-sec">
+    <% if (tema) { %>
+      <div class="tema">
+        <div class="k">El tema de esta edición</div>
+        <div class="v"><%= tema %></div>
+      </div>
+    <% } else { %>
+      <div class="tema oculto">
+        <div class="k">El tema se revela al arrancar</div>
+        <div class="tapado" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+    <% } %>
+  </section>
+  <% } %>
+
+  <%/* ───── TABLÓN ─────
+       Lo reescribe sola la consulta de más abajo. Se pinta primero en el
+       servidor para que quien llegue lo vea sin esperar. */%>
+  <section class="jam-sec" id="tablon-sec" <%= anuncios.length ? '' : 'hidden' %>>
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Desde la organización</p>
+        <h2>Tablón</h2>
+      </div>
+    </div>
+    <div class="tablon" id="tablon">
+      <% anuncios.forEach(function (a) { %>
+        <div class="anuncio <%= a.tipo %>">
+          <span class="hora"><%= String(a.created_at || "").slice(11, 16) %></span>
+          <p class="txt"><%= a.texto %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+
+  <%/* ───── CIFRAS ───── */%>
+  <% if (edicion) { %>
+  <section class="jam-sec">
+    <div class="jam-datos">
+      <div class="jam-dato">
+        <div class="k">Equipos</div>
+        <div class="v"><%= cifras.equipos || "—" %></div>
+      </div>
+      <div class="jam-dato">
+        <div class="k">Participantes</div>
+        <div class="v"><%= cifras.personas || "—" %></div>
+      </div>
+      <div class="jam-dato">
+        <div class="k">Duración</div>
+        <div class="v"><%= edicion.horas %>h</div>
+      </div>
+      <div class="jam-dato">
+        <div class="k">Por equipo</div>
+        <div class="v">Hasta <%= edicion.max_integrantes %></div>
+      </div>
+      <% if (cifras.entregas) { %>
+      <div class="jam-dato">
+        <div class="k">Juegos</div>
+        <div class="v"><%= cifras.entregas %></div>
+      </div>
+      <% } %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── LOS JUEGOS ─────
+       Solo aparece cuando hay algo entregado, que es al final de todo. */%>
+  <% if (entregas.length) { %>
+  <section class="jam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Lo que salió</p>
+        <h2><%= entregas.length %> <%= entregas.length === 1 ? "juego" : "juegos" %></h2>
+      </div>
+    </div>
+    <div class="grid">
+      <% entregas.forEach(function (e) { %>
+        <div class="tarjeta juego">
+          <span class="tit"><%= e.juego_titulo %></span>
+          <p class="de">Por <%= e.nombre %></p>
+          <% if (e.juego_desc) { %><p class="desc"><%= e.juego_desc %></p><% } %>
+          <a href="<%= e.juego_url %>" class="btn chico" target="_blank" rel="noopener">Jugar</a>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── EQUIPOS ───── */%>
+  <% if (equipos.length) { %>
+  <section class="jam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Quiénes están adentro</p>
+        <h2><%= equipos.length %> <%= equipos.length === 1 ? "equipo" : "equipos" %></h2>
+      </div>
+      <a href="/jam/equipos" class="btn chico">Ver todos</a>
+    </div>
+    <div class="grid">
+      <% equipos.slice(0, 6).forEach(function (e) { %>
+        <%- include('partials/tarjeta-equipo', { e: e }) %>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── CÓMO FUNCIONA ───── */%>
+  <% if (formato && formato.puntos && formato.puntos.length) { %>
+  <section class="jam-sec">
+    <p class="eyebrow">El formato</p>
+    <h2><%= formato.titulo %></h2>
+    <% if (formato.lead) { %><p class="sec-lead"><%= formato.lead %></p><% } %>
+    <div class="grid">
+      <% formato.puntos.forEach(function (b) { %>
+        <div class="tarjeta">
+          <h3 style="color:var(--acento);margin-bottom:12px"><%= b.titulo %></h3>
+          <p style="color:var(--ink-dim);margin:0;font-size:14px"><%= b.texto %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── INSCRIPCIÓN ───── */%>
+  <section class="jam-sec">
+    <p class="eyebrow">Participar</p>
+    <h2>Inscríbete</h2>
+    <p class="sec-lead">
+      <% if (abierta) { %>
+        Con tu equipo armado o tú solo. Si entras solo, dinos de qué te encargas
+        y nosotros te ubicamos con gente que haga lo que tú no.
+      <% } else { %>
+        Las inscripciones de esta edición están cerradas. La próxima se anuncia
+        por acá.
+      <% } %>
+    </p>
+    <div class="jam-hero-acciones" style="margin-bottom:0">
+      <% if (abierta) { %>
+        <a href="/jam/inscripcion" class="btn">Inscribirme</a>
+      <% } %>
+      <a href="/jam/inscripcion/estado" class="btn ghost">Consultar mi código</a>
+    </div>
+  </section>
+
+  <%/* ───── REGLAS ───── */%>
+  <% if (reglamento && reglamento.reglas && reglamento.reglas.length) { %>
+  <section class="jam-sec" id="reglas">
+    <p class="eyebrow">Sin letra chica</p>
+    <h2><%= reglamento.titulo %></h2>
+    <% if (reglamento.lead) { %><p class="sec-lead"><%= reglamento.lead %></p><% } %>
+    <ol class="reglas" style="margin-top:24px">
+      <% reglamento.reglas.forEach(function (x) { %><li><%= x %></li><% }); %>
+    </ol>
+  </section>
+  <% } %>
+
+  <%/* ───── PREMIOS ───── */%>
+  <% if (premios && premios.puestos && premios.puestos.length) { %>
+  <section class="jam-sec">
+    <p class="eyebrow">Lo que está en juego</p>
+    <h2><%= premios.titulo %></h2>
+    <% if (premios.lead) { %><p class="sec-lead"><%= premios.lead %></p><% } %>
+    <div class="grid">
+      <% premios.puestos.forEach(function (x) { %>
+        <div class="tarjeta">
+          <div class="eyebrow" style="margin-bottom:10px"><%= x.puesto %></div>
+          <p style="margin:0;color:var(--ink-dim);font-size:14px"><%= x.premio %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── PREGUNTAS ───── */%>
+  <% if (faq && faq.preguntas && faq.preguntas.length) { %>
+  <section class="jam-sec">
+    <p class="eyebrow">Antes de preguntar</p>
+    <h2><%= faq.titulo %></h2>
+    <div style="margin-top:20px">
+      <% faq.preguntas.forEach(function (q) { %>
+        <details class="faq">
+          <summary><%= q.p %></summary>
+          <div class="r"><%= q.r %></div>
+        </details>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+</main>
+
+<%- include('partials/pie') %>
+
+<% if (edicion) { %>
+<script>
+  // =================================================================
+  //  El reloj y lo que cambia solo.
+  //
+  //  Dos relojes distintos, a propósito:
+  //
+  //    · El de cada segundo es puro navegador. Restar dos números no le
+  //      cuesta nada a nadie y no toca el servidor.
+  //
+  //    · La consulta al servidor va cada 20 segundos y trae lo que el
+  //      navegador no puede saber solo: si ya revelaron el tema y qué hay
+  //      en el tablón.
+  //
+  //  La hora que manda es la del SERVIDOR. Un computador con el reloj
+  //  corrido media hora —que en una sala de sistemas es lo normal— contaría
+  //  media hora de más o de menos; con el desfase medido al cargar, todos
+  //  ven la misma cifra.
+  // =================================================================
+  (function () {
+    var EDICION = <%= edicion.id %>;
+    var CADA = 20000;
+
+    var estado = {
+      clave: <%- JSON.stringify(fase.clave) %>,
+      inicio: <%= fase.inicio === null ? "null" : fase.inicio %>,
+      fin: <%= fase.fin === null ? "null" : fase.fin %>,
+      revelado: <%= tema ? "true" : "false" %>
+    };
+
+    // Lo que hay que sumarle al reloj del navegador para llegar al del
+    // servidor. Se vuelve a medir en cada consulta.
+    var desfase = <%= fase.ahora %> - Date.now();
+    var ahora = function () { return Date.now() + desfase; };
+
+    var contador = document.getElementById("contador");
+    var barra = document.getElementById("barra");
+    var celdas = {
+      dias: document.getElementById("c-dias"),
+      horas: document.getElementById("c-horas"),
+      min: document.getElementById("c-min"),
+      seg: document.getElementById("c-seg")
+    };
+
+    function dos(n) { return (n < 10 ? "0" : "") + n; }
+
+    function objetivo() {
+      if (estado.clave === "antes") return estado.inicio;
+      if (estado.clave === "en_curso") return estado.fin;
+      return null;
+    }
+
+    function pintarReloj() {
+      var meta = objetivo();
+      if (meta === null) return;
+
+      var falta = meta - ahora();
+
+      // Llegó a cero: la fase cambió y quien decide cuál es ahora es el
+      // servidor. Se recarga en vez de adivinar aquí.
+      if (falta <= 0) {
+        location.reload();
+        return;
+      }
+
+      var seg = Math.floor(falta / 1000);
+      celdas.dias.textContent = dos(Math.floor(seg / 86400));
+      celdas.horas.textContent = dos(Math.floor(seg / 3600) % 24);
+      celdas.min.textContent = dos(Math.floor(seg / 60) % 60);
+      celdas.seg.textContent = dos(seg % 60);
+
+      if (barra && estado.inicio !== null && estado.fin !== null) {
+        var total = estado.fin - estado.inicio;
+        var corrido = ahora() - estado.inicio;
+        barra.style.width = Math.max(0, Math.min(100, (corrido / total) * 100)).toFixed(1) + "%";
+      }
+    }
+
+    function esc(s) {
+      return String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function pintarTablon(lista) {
+      var sec = document.getElementById("tablon-sec");
+      var caja = document.getElementById("tablon");
+      if (!sec || !caja) return;
+
+      sec.hidden = lista.length === 0;
+      caja.innerHTML = lista.map(function (a) {
+        return '<div class="anuncio ' + esc(a.tipo) + '">' +
+          '<span class="hora">' + esc(String(a.cuando || "").slice(11, 16)) + "</span>" +
+          '<p class="txt">' + esc(a.texto) + "</p></div>";
+      }).join("");
+    }
+
+    function consultar() {
+      fetch("/jam/api/estado?edicion=" + EDICION)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          desfase = d.ahora - Date.now();
+
+          // Que revelen el tema o que la jam cambie de fase son cosas que
+          // reordenan media página: es más honesto recargar que remendar el
+          // DOM sección por sección.
+          if (d.clave !== estado.clave || Boolean(d.tema) !== estado.revelado) {
+            location.reload();
+            return;
+          }
+
+          estado.inicio = d.inicio;
+          estado.fin = d.fin;
+          pintarTablon(d.anuncios || []);
+        })
+        .catch(function () { /* un fallo de red no rompe la página: se reintenta solo */ });
+    }
+
+    if (objetivo() !== null) {
+      pintarReloj();
+      setInterval(pintarReloj, 1000);
+    }
+
+    // La consulta corre siempre que la jam no haya terminado: antes de
+    // arrancar sirve para enterarse del tema en el segundo en que lo
+    // revelan, sin que nadie tenga que recargar.
+    if (estado.clave !== "terminado") setInterval(consultar, CADA);
+  })();
+</script>
+<% } %>
+
+<%- include('../partials/footer') %>

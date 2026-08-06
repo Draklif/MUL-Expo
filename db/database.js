@@ -268,6 +268,109 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_vc_mapas_partida ON vc_mapas(partida_id, orden);
+
+  -- =================================================================
+  --  JAM DE ALTURA
+  --  La gamejam de 48 horas. Tampoco comparte tablas con nadie: todo
+  --  lo suyo lleva el prefijo jam_.
+  -- =================================================================
+
+  -- Una edición es la jam de un semestre. Es la unidad que se repite: al
+  -- empezar el semestre siguiente se abre otra y la anterior queda archivada
+  -- con sus equipos, su tema y sus juegos intactos.
+  --
+  -- El tema se guarda desde el primer día y se revela con un interruptor
+  -- aparte: escribirlo no lo publica, y así se puede dejar listo con
+  -- anticipación sin que se filtre por mirar el código fuente de la página
+  -- —hasta que tema_revelado no vale 1, el tema no sale del servidor—.
+  CREATE TABLE IF NOT EXISTS jam_ediciones (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    periodo_id          INTEGER,
+    nombre              TEXT NOT NULL,
+    estado              TEXT NOT NULL DEFAULT 'inscripcion',
+    inscripcion_abierta INTEGER NOT NULL DEFAULT 1,
+    entregas_abiertas   INTEGER NOT NULL DEFAULT 1,
+    inicio              TEXT,
+    horas               INTEGER NOT NULL DEFAULT 48,
+    tema                TEXT,
+    tema_revelado       INTEGER NOT NULL DEFAULT 0,
+    cupo_equipos        INTEGER,
+    max_integrantes     INTEGER NOT NULL DEFAULT 4,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (periodo_id) REFERENCES periodos(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_jam_ed_periodo ON jam_ediciones(periodo_id);
+
+  -- Equipos inscritos. Mismo invento del código de 6 caracteres: se dicta, se
+  -- teclea, y con él se consulta el estado y se entrega el juego sin cuenta.
+  --
+  -- Las cuatro columnas del final son la entrega: mientras estén vacías, el
+  -- equipo todavía no ha subido nada.
+  CREATE TABLE IF NOT EXISTS jam_equipos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id      INTEGER NOT NULL,
+    codigo          TEXT NOT NULL UNIQUE,
+    nombre          TEXT NOT NULL,
+    lema            TEXT,
+    estado          TEXT NOT NULL DEFAULT 'pendiente',
+    armado          INTEGER NOT NULL DEFAULT 0,
+    contacto_nombre TEXT,
+    contacto_email  TEXT,
+    nota_docente    TEXT,
+    revisado_por    INTEGER,
+    revisado_at     DATETIME,
+    juego_titulo    TEXT,
+    juego_url       TEXT,
+    juego_desc      TEXT,
+    entregado_at    DATETIME,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (edicion_id)   REFERENCES jam_ediciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (revisado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_jam_eq_edicion ON jam_equipos(edicion_id, estado);
+
+  -- Integrantes. equipo_id nulo = se inscribió solo y todavía no tiene
+  -- equipo; esos llevan su propio código. Un correo no se repite dentro de la
+  -- misma edición: es la identidad de la persona y lo que impide que alguien
+  -- esté en dos equipos.
+  CREATE TABLE IF NOT EXISTS jam_integrantes (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id  INTEGER NOT NULL,
+    equipo_id   INTEGER,
+    codigo      TEXT,
+    nombre      TEXT NOT NULL,
+    email       TEXT NOT NULL COLLATE NOCASE,
+    disciplina  TEXT,
+    semestre    TEXT,
+    lider       INTEGER NOT NULL DEFAULT 0,
+    orden       INTEGER NOT NULL DEFAULT 0,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (edicion_id, email),
+    FOREIGN KEY (edicion_id) REFERENCES jam_ediciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (equipo_id)  REFERENCES jam_equipos(id)   ON DELETE SET NULL
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_jam_int_edicion ON jam_integrantes(edicion_id, equipo_id);
+
+  -- El tablón: lo que la organización anuncia durante las 48 horas (el
+  -- arranque, un recordatorio a mitad de camino, el cierre de entregas). Sale
+  -- en la página sin recargar, que es el punto de tenerlo en la base.
+  -- created_at va en hora LOCAL (la escribe la ruta con datetime('now',
+  -- 'localtime')) y no en UTC como el resto de la base: la del tablón es la
+  -- única fecha que se muestra tal cual, y un aviso publicado a la una de la
+  -- tarde no puede salir diciendo que son las seis.
+  CREATE TABLE IF NOT EXISTS jam_anuncios (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id INTEGER NOT NULL,
+    texto      TEXT NOT NULL,
+    tipo       TEXT NOT NULL DEFAULT 'aviso',
+    created_at DATETIME DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (edicion_id) REFERENCES jam_ediciones(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_jam_anun_edicion ON jam_anuncios(edicion_id, created_at);
 `);
 
 // ---------- Migraciones suaves ----------

@@ -1,0 +1,178 @@
+<%- include('../partials/head', { title: title, descripcion: 'Consulta tu inscripción y entrega tu juego con el código del equipo.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="jam angosto">
+  <section class="jam-sec">
+    <p class="eyebrow">Tu inscripción</p>
+    <h2><%= recienEnviada ? "Listo" : "Consultar" %></h2>
+  </section>
+
+  <% if (recienEnviada) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Quedaron inscritos.
+        <% if (correoActivo) { %>
+          Mandamos el código al correo, pero anótalo también: es lo que sirve
+          para consultar y para entregar el juego.
+        <% } else { %>
+          <strong>Anota este código</strong>: es lo que sirve para consultar y
+          para entregar el juego.
+        <% } %>
+      </p>
+    </div>
+    <div class="codigo-grande"><%= codigo %></div>
+  <% } %>
+
+  <%/* ───── BUSCADOR ───── */%>
+  <form method="GET" action="/jam/inscripcion/estado" style="margin:26px 0">
+    <div class="campo">
+      <label for="codigo">Tu código</label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <input type="text" name="codigo" id="codigo" maxlength="6" required
+               value="<%= codigo %>" placeholder="ABC234"
+               style="flex:1;min-width:170px;font-family:var(--display);font-size:16px;letter-spacing:.14em;text-transform:uppercase" />
+        <button type="submit" class="btn">Consultar</button>
+      </div>
+    </div>
+  </form>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <% if (ok) { %>
+    <div class="aviso bueno"><p style="margin:0"><%= ok %></p></div>
+  <% } %>
+
+  <%/* ───── RESULTADO: EQUIPO ───── */%>
+  <% if (encontrado && encontrado.tipo === "equipo") { %>
+    <% const e = encontrado.equipo; %>
+    <div class="tarjeta" style="margin-top:10px">
+      <div class="equipo-cab">
+        <span class="escudo"><%= e.nombre.split(/\s+/).map(function (p) { return p[0]; }).join("").slice(0, 3) %></span>
+        <div style="min-width:0">
+          <div class="nom"><%= e.nombre %></div>
+          <div class="mini"><%= e.integrantes.length %> integrantes</div>
+        </div>
+        <span class="chip <%= e.estado_info.cls %>" style="margin-left:auto"><%= e.estado_info.label %></span>
+      </div>
+
+      <% if (e.estado === "pendiente") { %>
+        <p style="color:var(--ink-dim)">
+          La organización todavía no ha revisado la inscripción. Cuando lo haga
+          les llega un correo<% if (e.contacto_email) { %> a <%= e.contacto_email %><% } %>.
+        </p>
+      <% } else if (e.estado === "rechazado") { %>
+        <p style="color:var(--ink-dim)">
+          <% if (e.nota_docente) { %>
+            <strong>Lo que dice la organización:</strong><br /><%= e.nota_docente %>
+          <% } else { %>
+            No quedó admitida y no dejaron un motivo. Escríbeles para saber qué ajustar.
+          <% } %>
+        </p>
+      <% } else { %>
+        <p style="color:var(--ink-dim)">Están dentro de la jam.</p>
+        <a href="/jam/equipo/<%= e.id %>" class="btn chico">Ver el equipo</a>
+      <% } %>
+
+      <ul class="roster">
+        <% e.integrantes.forEach(function (i) { %>
+          <li>
+            <span class="quien"><%= i.nombre %></span>
+            <% if (i.lider) { %><span class="lider">LÍDER</span><% } %>
+            <% if (i.disciplina) { %><span class="disc"><%= i.disciplina %></span><% } %>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+
+    <%/* ───── LA ENTREGA ─────
+         Solo para equipos admitidos y solo desde que arranca la jam. Se puede
+         reenviar cuantas veces haga falta: a las cuatro de la mañana de un
+         domingo siempre hay un enlace mal pegado. */%>
+    <% if (e.estado === "aprobado") { %>
+      <section class="jam-sec">
+        <p class="eyebrow">La entrega</p>
+        <h2 style="font-size:20px">Su juego</h2>
+
+        <% if (e.entregado) { %>
+          <div class="aviso bueno" style="margin-top:18px">
+            <p style="margin:0">
+              Ya entregaron <strong><%= e.juego_titulo %></strong>.
+              <% if (puedeEntregar) { %>
+                Se puede corregir el enlace mandando el formulario otra vez.
+              <% } %>
+            </p>
+          </div>
+        <% } %>
+
+        <% if (puedeEntregar) { %>
+          <form method="POST" action="/jam/entrega/<%= e.codigo %>" style="margin-top:18px">
+            <div class="campo">
+              <label for="juego_titulo">Nombre del juego</label>
+              <input type="text" name="juego_titulo" id="juego_titulo" required maxlength="80"
+                     value="<%= e.juego_titulo || '' %>" />
+            </div>
+            <div class="campo">
+              <label for="juego_url">Enlace para jugarlo</label>
+              <input type="url" name="juego_url" id="juego_url" required maxlength="300"
+                     value="<%= e.juego_url || '' %>" placeholder="https://tuequipo.itch.io/tujuego" />
+              <p class="ayuda">
+                itch.io, Drive, GitHub… lo que sea, mientras se abra sin pedir permiso.
+                Si no se puede jugar, no se puede evaluar.
+              </p>
+            </div>
+            <div class="campo">
+              <label for="juego_desc">De qué se trata (opcional)</label>
+              <textarea name="juego_desc" id="juego_desc" maxlength="500"
+                        placeholder="Dos líneas: qué es y cómo se juega."><%= e.juego_desc || '' %></textarea>
+            </div>
+            <button type="submit" class="btn"><%= e.entregado ? "Actualizar la entrega" : "Entregar" %></button>
+          </form>
+        <% } else { %>
+          <div class="vacio" style="margin-top:18px">
+            <% if (fase.clave === "antes" || fase.clave === "sin_fecha") { %>
+              La entrega se abre cuando arranque la jam.
+            <% } else { %>
+              Las entregas están cerradas.
+            <% } %>
+          </div>
+        <% } %>
+      </section>
+    <% } %>
+  <% } %>
+
+  <%/* ───── RESULTADO: INSCRIPCIÓN INDIVIDUAL ───── */%>
+  <% if (encontrado && encontrado.tipo === "solista") { %>
+    <% const p = encontrado.persona; %>
+    <div class="tarjeta" style="margin-top:10px">
+      <div class="eyebrow" style="margin-bottom:12px">Inscripción individual</div>
+      <div class="nom" style="font-family:var(--display);font-size:14px;text-transform:uppercase"><%= p.nombre %></div>
+      <div class="mini" style="margin:8px 0 16px"><%= p.disciplina || "Sin disciplina" %></div>
+
+      <% if (p.equipo) { %>
+        <p style="color:var(--ink-dim)">
+          Ya tienes equipo: <strong style="color:var(--acento)"><%= p.equipo.nombre %></strong>.
+          El código del equipo es <strong><%= p.equipo.codigo %></strong> y es con ese
+          con el que se entrega el juego.
+        </p>
+        <a href="/jam/equipo/<%= p.equipo.id %>" class="btn chico">Ver el equipo</a>
+      <% } else { %>
+        <p style="color:var(--ink-dim)">
+          Estás en la lista y todavía no tienes equipo.
+          <% if (p.esperando > 1) { %>
+            Van <strong><%= p.esperando %></strong> esperando: apenas se pueda armar
+            un equipo que no quede cojo, lo armamos.
+          <% } %>
+        </p>
+        <p class="mini" style="margin:0">
+          Cuando pase te llega un correo con el nombre del equipo, con quiénes te
+          tocaron y con el código para entregar.
+        </p>
+      <% } %>
+    </div>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

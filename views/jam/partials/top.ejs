@@ -1,0 +1,48 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     Cabecera del sitio de la jam.
+
+     El menú es UNO SOLO para las dos pantallas, igual que en el torneo: los
+     mismos enlaces en el mismo orden. En escritorio se pintan a la derecha
+     de la marca y en celular bajan a una barra fija abajo, al alcance del
+     pulgar. Lo único que cambia es el CSS, así que no hay dos menús que
+     mantener sincronizados.
+
+     Los íconos van dibujados a mano con rectángulos y no con trazos
+     redondeados: son de píxeles, como todo lo demás de esta página. Solo se
+     ven en la barra de abajo; arriba el CSS los esconde.
+     ───────────────────────────────────────────────────────────────── */%>
+<%
+  const ICONOS = {
+    inicio:      '<path d="M2 8L8 2l6 6v6H10v-4H6v4H2z"/>',
+    equipos:     '<path d="M2 4h4v4H2zM10 4h4v4h-4zM6 10h4v4H6z"/>',
+    inscripcion: '<path d="M2 2h12v2H2zM2 6h12v2H2zM2 10h8v2H2z"/>',
+    reglas:      '<path d="M3 2h10v12H3zM5 5h6v1H5zM5 8h6v1H5zM5 11h4v1H5z"/>',
+  };
+  const icono = (k) =>
+    `<svg class="ic" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"
+          shape-rendering="crispEdges">${ICONOS[k]}</svg>`;
+%>
+
+<header class="jam-top">
+  <div class="jam-top-in publica">
+    <a href="/jam-de-altura" class="jam-marca">Jam de <em>Altura</em></a>
+
+    <nav class="jam-nav tabs" aria-label="Secciones de la jam">
+      <a href="/jam-de-altura" class="<%= activa === 'inicio' ? 'on' : '' %>"
+         <%- activa === 'inicio' ? 'aria-current="page"' : '' %>>
+        <%- icono('inicio') %><span>Inicio</span>
+      </a>
+      <a href="/jam/equipos" class="<%= activa === 'equipos' ? 'on' : '' %>"
+         <%- activa === 'equipos' ? 'aria-current="page"' : '' %>>
+        <%- icono('equipos') %><span>Equipos</span>
+      </a>
+      <a href="/jam/inscripcion" class="<%= activa === 'inscripcion' ? 'on' : '' %>"
+         <%- activa === 'inscripcion' ? 'aria-current="page"' : '' %>>
+        <%- icono('inscripcion') %><span>Inscripción</span>
+      </a>
+      <a href="/jam-de-altura#reglas" class="<%= activa === 'reglas' ? 'on' : '' %>">
+        <%- icono('reglas') %><span>Reglas</span>
+      </a>
+    </nav>
+  </div>
+</header>

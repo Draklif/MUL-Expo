@@ -1,0 +1,1106 @@
+/* =====================================================================
+   JAM DE ALTURA
+   Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
+
+   Las tres caras del sitio tienen que distinguirse a un metro de la
+   pantalla, sin leer una palabra:
+
+     Expo Multimedia   — editorial, serif, papel.
+     Virtual Champions — negro, condensada en mayúsculas, esquinas cortadas
+                         en diagonal, un color por juego.
+     Jam de Altura     — esto: PIXEL. Nada de curvas y nada de degradados
+                         suaves. Todo se dibuja en una retícula de 4 píxeles:
+                         los marcos son cuadrados con las esquinas mordidas,
+                         las sombras son bloques negros sin difuminar y los
+                         botones se hunden cuando se aprietan, como los de
+                         una máquina de arcade.
+
+   LA PIEZA CLAVE es .px: el marco de píxel. No es un border —un borde
+   normal dobla las esquinas y eso es exactamente lo que no queremos—, son
+   cuatro sombras planas, una por lado. Al no llegar a las esquinas, quedan
+   mordidas solas. La sombra dura de abajo se compone aparte con una
+   variable, porque box-shadow no se puede "sumar" desde otra clase.
+
+   El color no cambia por sección (aquí no hay juegos como en el torneo):
+   verde de consola sobre violeta de madrugada, con magenta y cian para lo
+   que tiene que gritar.
+   ===================================================================== */
+
+:root {
+  --bg: #10091f;
+  --bg-elev: #1a1033;
+  --bg-card: #221546;
+  --bg-hover: #2b1b58;
+
+  --borde: #4a2f9e;
+  --borde-fuerte: #7d5ce0;
+  --sombra: #05020d;
+
+  --ink: #f4f0ff;
+  --ink-dim: #b9a9e8;
+  --ink-mute: #7f6fb8;
+
+  --acento: #7cf74a;   /* verde consola: lo principal */
+  --magenta: #ff5fd2;  /* lo que urge */
+  --cian: #4ee6ff;     /* los datos */
+  --alerta: #ffd83d;
+  --malo: #ff4f6a;
+
+  --display: "Press Start 2P", "Courier New", monospace;
+  --body: "Space Mono", "Courier New", monospace;
+  --mono: "Space Mono", Consolas, monospace;
+
+  /* La retícula. Todo lo de aquí es múltiplo de esto. */
+  --px: 4px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.65;
+  /* Papel cuadriculado: una retícula tenue de 32px que se ve apenas y le da
+     al fondo la sensación de estar dibujado sobre una grilla. */
+  background-image:
+    linear-gradient(rgba(125, 92, 224, .07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125, 92, 224, .07) 1px, transparent 1px);
+  background-size: 32px 32px, 32px 32px;
+}
+
+/* Líneas de barrido, como las de un monitor viejo. Muy tenues a propósito:
+   la idea es que se sienta, no que se lea. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, .16) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* Quien prefiere menos movimiento no tiene por qué aguantarse un cursor que
+   parpadea ni un letrero latiendo. */
+@media (prefers-reduced-motion: reduce) {
+  body::after { display: none; }
+  *, *::before, *::after { animation: none !important; }
+}
+
+a { color: inherit; }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 1.35;
+  letter-spacing: 0;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+h1 { font-size: clamp(22px, 5.4vw, 46px); }
+h2 { font-size: clamp(17px, 3vw, 26px); }
+h3 { font-size: 14px; }
+
+p { margin: 0 0 1em; }
+img { max-width: 100%; image-rendering: pixelated; }
+
+/* ---------------------------------------------------------------------
+   .px — el marco de píxel
+   --------------------------------------------------------------------- */
+.px {
+  --marco: var(--borde);
+  --dura: 0 0 0 0 transparent;
+  background: var(--bg-card);
+  box-shadow:
+    0 calc(var(--px) * -1) 0 0 var(--marco),
+    0 var(--px) 0 0 var(--marco),
+    calc(var(--px) * -1) 0 0 0 var(--marco),
+    var(--px) 0 0 0 var(--marco),
+    var(--dura);
+}
+
+/* Levantada del papel: bloque negro detrás, sin difuminar. */
+.px.alta { --dura: calc(var(--px) * 2) calc(var(--px) * 2) 0 0 var(--sombra); }
+.px.acento { --marco: var(--acento); }
+
+/* El marco se pinta por fuera del elemento, así que necesita aire alrededor
+   o se le mete debajo al vecino. */
+.px, .btn { margin-left: var(--px); margin-right: var(--px); }
+
+/* ---------------------------------------------------------------------
+   Piezas base
+   --------------------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--display);
+  font-size: 9px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--acento);
+  margin: 0 0 14px;
+  line-height: 1.7;
+}
+
+.sec-lead {
+  color: var(--ink-dim);
+  max-width: 62ch;
+  margin: 14px 0 0;
+}
+
+.mini { font-size: 12px; color: var(--ink-mute); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 8px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 7px 9px;
+  color: var(--ink-dim);
+  background: var(--bg-elev);
+  box-shadow: 0 -2px 0 0 var(--borde), 0 2px 0 0 var(--borde), -2px 0 0 0 var(--borde), 2px 0 0 0 var(--borde);
+  margin: 0 2px;
+  white-space: nowrap;
+}
+
+.chip.acento { color: var(--acento); box-shadow: 0 -2px 0 0 var(--acento), 0 2px 0 0 var(--acento), -2px 0 0 0 var(--acento), 2px 0 0 0 var(--acento); }
+.chip.ok     { color: var(--acento); box-shadow: 0 -2px 0 0 var(--acento), 0 2px 0 0 var(--acento), -2px 0 0 0 var(--acento), 2px 0 0 0 var(--acento); }
+.chip.alerta { color: var(--alerta); box-shadow: 0 -2px 0 0 var(--alerta), 0 2px 0 0 var(--alerta), -2px 0 0 0 var(--alerta), 2px 0 0 0 var(--alerta); }
+.chip.pend   { color: var(--alerta); box-shadow: 0 -2px 0 0 var(--alerta), 0 2px 0 0 var(--alerta), -2px 0 0 0 var(--alerta), 2px 0 0 0 var(--alerta); }
+.chip.no     { color: var(--ink-mute); }
+.chip.mag    { color: var(--magenta); box-shadow: 0 -2px 0 0 var(--magenta), 0 2px 0 0 var(--magenta), -2px 0 0 0 var(--magenta), 2px 0 0 0 var(--magenta); }
+.chip.cian   { color: var(--cian); box-shadow: 0 -2px 0 0 var(--cian), 0 2px 0 0 var(--cian), -2px 0 0 0 var(--cian), 2px 0 0 0 var(--cian); }
+
+/* El cuadrito que late del "EN CURSO". Cuadrado, no redondo: aquí no hay
+   círculos. */
+.chip.vivo { color: var(--magenta); box-shadow: 0 -2px 0 0 var(--magenta), 0 2px 0 0 var(--magenta), -2px 0 0 0 var(--magenta), 2px 0 0 0 var(--magenta); }
+
+.chip.vivo::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: var(--magenta);
+  animation: latido 1s steps(2, end) infinite;
+}
+
+/* steps() y no ease: un parpadeo de píxel se prende y se apaga, no se
+   desvanece. */
+@keyframes latido {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ---------------------------------------------------------------------
+   Botones: se hunden al apretarlos
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  padding: 14px 22px;
+  background: var(--acento);
+  color: #0a0616;
+  border: 0;
+  border-radius: 0;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  box-shadow:
+    0 -4px 0 0 var(--acento), 0 4px 0 0 var(--acento),
+    -4px 0 0 0 var(--acento), 4px 0 0 0 var(--acento),
+    8px 8px 0 0 var(--sombra);
+  /* Nada de transiciones: el píxel no interpola. */
+  transition: none;
+}
+
+.btn:hover { background: #96ff69; box-shadow: 0 -4px 0 0 #96ff69, 0 4px 0 0 #96ff69, -4px 0 0 0 #96ff69, 4px 0 0 0 #96ff69, 8px 8px 0 0 var(--sombra); }
+
+/* La pulsación: el botón baja hasta donde estaba su sombra y la sombra
+   desaparece. Es el gesto de un botón de arcade. */
+.btn:active {
+  transform: translate(8px, 8px);
+  box-shadow: 0 -4px 0 0 var(--acento), 0 4px 0 0 var(--acento), -4px 0 0 0 var(--acento), 4px 0 0 0 var(--acento);
+}
+
+.btn.ghost {
+  background: var(--bg-elev);
+  color: var(--ink);
+  box-shadow: 0 -4px 0 0 var(--borde-fuerte), 0 4px 0 0 var(--borde-fuerte), -4px 0 0 0 var(--borde-fuerte), 4px 0 0 0 var(--borde-fuerte), 8px 8px 0 0 var(--sombra);
+}
+
+.btn.ghost:hover { background: var(--bg-hover); color: var(--acento); box-shadow: 0 -4px 0 0 var(--acento), 0 4px 0 0 var(--acento), -4px 0 0 0 var(--acento), 4px 0 0 0 var(--acento), 8px 8px 0 0 var(--sombra); }
+.btn.ghost:active { box-shadow: 0 -4px 0 0 var(--borde-fuerte), 0 4px 0 0 var(--borde-fuerte), -4px 0 0 0 var(--borde-fuerte), 4px 0 0 0 var(--borde-fuerte); }
+
+.btn.mag { background: var(--magenta); box-shadow: 0 -4px 0 0 var(--magenta), 0 4px 0 0 var(--magenta), -4px 0 0 0 var(--magenta), 4px 0 0 0 var(--magenta), 8px 8px 0 0 var(--sombra); }
+.btn.mag:hover { background: #ff86de; box-shadow: 0 -4px 0 0 #ff86de, 0 4px 0 0 #ff86de, -4px 0 0 0 #ff86de, 4px 0 0 0 #ff86de, 8px 8px 0 0 var(--sombra); }
+
+.btn.peligro { background: var(--malo); color: #150207; box-shadow: 0 -4px 0 0 var(--malo), 0 4px 0 0 var(--malo), -4px 0 0 0 var(--malo), 4px 0 0 0 var(--malo), 8px 8px 0 0 var(--sombra); }
+
+.btn.chico { font-size: 9px; padding: 9px 13px; box-shadow: 0 -3px 0 0 var(--borde-fuerte), 0 3px 0 0 var(--borde-fuerte), -3px 0 0 0 var(--borde-fuerte), 3px 0 0 0 var(--borde-fuerte), 5px 5px 0 0 var(--sombra); background: var(--bg-elev); color: var(--ink); }
+.btn.chico:hover { background: var(--bg-hover); color: var(--acento); box-shadow: 0 -3px 0 0 var(--acento), 0 3px 0 0 var(--acento), -3px 0 0 0 var(--acento), 3px 0 0 0 var(--acento), 5px 5px 0 0 var(--sombra); }
+.btn.chico:active { transform: translate(5px, 5px); box-shadow: 0 -3px 0 0 var(--borde-fuerte), 0 3px 0 0 var(--borde-fuerte), -3px 0 0 0 var(--borde-fuerte), 3px 0 0 0 var(--borde-fuerte); }
+
+.btn.block { width: calc(100% - 8px); }
+.btn[disabled] { opacity: .35; pointer-events: none; }
+
+/* El botón grande de la jam: el que revela el tema. */
+.btn.gigante { font-size: clamp(12px, 2.4vw, 18px); padding: 22px 30px; }
+
+/* ---------------------------------------------------------------------
+   Estructura
+   --------------------------------------------------------------------- */
+.jam {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px 70px;
+}
+
+.jam.angosto { max-width: 780px; }
+
+.jam-sec { padding: 46px 0 0; }
+
+.sec-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  margin-top: 20px;
+}
+
+.tarjeta {
+  --marco: var(--borde);
+  --dura: 0 0 0 0 transparent;
+  background: var(--bg-card);
+  box-shadow:
+    0 -4px 0 0 var(--marco), 0 4px 0 0 var(--marco),
+    -4px 0 0 0 var(--marco), 4px 0 0 0 var(--marco),
+    var(--dura);
+  padding: 18px;
+  margin: 0 4px;
+}
+
+a.tarjeta { text-decoration: none; color: inherit; display: block; }
+a.tarjeta:hover { --marco: var(--acento); background: var(--bg-hover); }
+
+/* ---------------------------------------------------------------------
+   Cabecera
+   --------------------------------------------------------------------- */
+.jam-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--bg);
+  border-bottom: 4px solid var(--borde);
+}
+
+.jam-top-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 64px;
+  flex-wrap: wrap;
+}
+
+.jam-marca {
+  font-family: var(--display);
+  font-size: 13px;
+  line-height: 1.5;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.jam-marca em { font-style: normal; color: var(--acento); }
+
+/* El cursor que parpadea al lado de la marca. Es un bloque, como el de una
+   terminal. */
+.jam-marca::after {
+  content: "";
+  width: 8px;
+  height: 14px;
+  background: var(--acento);
+  animation: latido 1.1s steps(2, end) infinite;
+}
+
+.jam-nav {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.jam-nav a {
+  font-family: var(--display);
+  font-size: 9px;
+  line-height: 1.6;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-decoration: none;
+  padding: 11px 12px;
+  border-bottom: 4px solid transparent;
+}
+
+.jam-nav a:hover { color: var(--ink); }
+.jam-nav a.on { color: var(--acento); border-bottom-color: var(--acento); }
+
+/* Los íconos son solo para la barra de abajo del celular. */
+.jam-nav .ic { display: none; }
+
+/* ---------------------------------------------------------------------
+   Hero
+   --------------------------------------------------------------------- */
+.jam-hero { padding: 52px 0 0; }
+
+.jam-hero h1 {
+  font-size: clamp(24px, 6.4vw, 58px);
+  line-height: 1.25;
+}
+
+/* El título con sombra dura en dos colores: el truco de sprite mal
+   registrado de las portadas de 8 bits. */
+.jam-hero h1 .l1 { display: block; color: var(--ink); text-shadow: 4px 4px 0 var(--magenta); }
+.jam-hero h1 .l2 { display: block; color: var(--acento); text-shadow: 4px 4px 0 var(--sombra); margin-top: 10px; }
+
+.jam-hero .lema {
+  font-family: var(--display);
+  font-size: clamp(10px, 1.7vw, 13px);
+  line-height: 2;
+  color: var(--cian);
+  margin: 26px 0 0;
+  text-transform: uppercase;
+}
+
+.jam-hero .entradilla {
+  max-width: 58ch;
+  color: var(--ink-dim);
+  margin: 18px 0 0;
+}
+
+.jam-hero-acciones {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 34px 0 10px;
+}
+
+/* La cordillera de píxeles: dibujada con la fuente, no con imágenes. */
+.montanas {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 30px 0 0;
+  image-rendering: pixelated;
+}
+
+.jam-datos {
+  display: flex;
+  gap: 34px;
+  flex-wrap: wrap;
+  padding: 30px 0 0;
+}
+
+.jam-dato .k {
+  font-family: var(--display);
+  font-size: 8px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  line-height: 1.8;
+}
+
+.jam-dato .v {
+  font-family: var(--display);
+  font-size: 20px;
+  color: var(--cian);
+  margin-top: 8px;
+}
+
+/* ---------------------------------------------------------------------
+   EL CONTADOR — la pieza más grande de la página
+   --------------------------------------------------------------------- */
+.reloj {
+  margin: 34px 4px 0;
+  padding: 26px 20px 22px;
+  background: var(--bg-elev);
+  box-shadow:
+    0 -4px 0 0 var(--acento), 0 4px 0 0 var(--acento),
+    -4px 0 0 0 var(--acento), 4px 0 0 0 var(--acento),
+    8px 8px 0 0 var(--sombra);
+  text-align: center;
+}
+
+/* Cuando ya está corriendo, el marco se pone magenta: se ve desde la otra
+   punta del salón que la jam está viva. */
+.reloj.corriendo {
+  box-shadow:
+    0 -4px 0 0 var(--magenta), 0 4px 0 0 var(--magenta),
+    -4px 0 0 0 var(--magenta), 4px 0 0 0 var(--magenta),
+    8px 8px 0 0 var(--sombra);
+}
+
+.reloj.apagado {
+  box-shadow:
+    0 -4px 0 0 var(--borde), 0 4px 0 0 var(--borde),
+    -4px 0 0 0 var(--borde), 4px 0 0 0 var(--borde),
+    8px 8px 0 0 var(--sombra);
+}
+
+.reloj .rotulo {
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin-bottom: 20px;
+  line-height: 1.8;
+}
+
+.contador {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(8px, 2.5vw, 26px);
+  flex-wrap: nowrap;
+}
+
+.contador .bloque { min-width: 0; }
+
+.contador .num {
+  font-family: var(--display);
+  font-size: clamp(26px, 9vw, 72px);
+  line-height: 1;
+  color: var(--acento);
+  text-shadow: 4px 4px 0 var(--sombra);
+  font-variant-numeric: tabular-nums;
+  /* Sin esto, cada cambio de cifra mueve el bloque un pelo y el reloj
+     "tiembla" un segundo sí y otro también. */
+  display: block;
+}
+
+.reloj.corriendo .contador .num { color: var(--magenta); }
+.reloj.apagado .contador .num { color: var(--ink-mute); }
+
+.contador .rot {
+  font-family: var(--display);
+  font-size: clamp(7px, 1.4vw, 9px);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-top: 14px;
+  display: block;
+  line-height: 1.6;
+}
+
+.contador .sep {
+  font-family: var(--display);
+  font-size: clamp(20px, 6vw, 48px);
+  color: var(--ink-mute);
+  line-height: 1;
+}
+
+.reloj .pie {
+  margin: 22px 0 0;
+  color: var(--ink-dim);
+  font-size: 13px;
+}
+
+/* La barra de avance de las 48 horas: bloques, no una línea continua. */
+.barra {
+  height: 20px;
+  margin: 22px 0 0;
+  background: var(--bg);
+  box-shadow: 0 -3px 0 0 var(--borde), 0 3px 0 0 var(--borde), -3px 0 0 0 var(--borde), 3px 0 0 0 var(--borde);
+  overflow: hidden;
+}
+
+.barra i {
+  display: block;
+  height: 100%;
+  background: var(--magenta);
+  background-image: repeating-linear-gradient(90deg, transparent 0 8px, rgba(0, 0, 0, .35) 8px 12px);
+}
+
+/* ---------------------------------------------------------------------
+   EL TEMA
+   --------------------------------------------------------------------- */
+.tema {
+  margin: 30px 4px 0;
+  padding: 34px 24px;
+  text-align: center;
+  background: var(--bg-card);
+  box-shadow:
+    0 -4px 0 0 var(--cian), 0 4px 0 0 var(--cian),
+    -4px 0 0 0 var(--cian), 4px 0 0 0 var(--cian),
+    8px 8px 0 0 var(--sombra);
+}
+
+.tema .k {
+  font-family: var(--display);
+  font-size: 9px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--cian);
+  line-height: 1.8;
+}
+
+.tema .v {
+  font-family: var(--display);
+  font-size: clamp(18px, 4.6vw, 40px);
+  line-height: 1.4;
+  color: var(--ink);
+  text-shadow: 4px 4px 0 var(--sombra);
+  margin: 22px 0 0;
+  text-transform: uppercase;
+}
+
+/* Sin revelar: una fila de bloques tapando el texto que todavía no existe. */
+.tema.oculto {
+  box-shadow:
+    0 -4px 0 0 var(--borde), 0 4px 0 0 var(--borde),
+    -4px 0 0 0 var(--borde), 4px 0 0 0 var(--borde),
+    8px 8px 0 0 var(--sombra);
+}
+
+.tema.oculto .k { color: var(--ink-mute); }
+
+.tema .tapado {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 24px 0 0;
+  flex-wrap: wrap;
+}
+
+.tema .tapado i {
+  width: clamp(18px, 4vw, 34px);
+  height: clamp(24px, 5.4vw, 46px);
+  background: var(--borde);
+  animation: respira 2.4s steps(2, end) infinite;
+}
+
+.tema .tapado i:nth-child(2n) { animation-delay: .3s; }
+.tema .tapado i:nth-child(3n) { animation-delay: .6s; }
+
+@keyframes respira {
+  0%, 100% { background: var(--borde); }
+  50% { background: var(--bg-hover); }
+}
+
+/* ---------------------------------------------------------------------
+   Tablón de anuncios
+   --------------------------------------------------------------------- */
+.tablon { margin-top: 20px; display: grid; gap: 12px; }
+
+.anuncio {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 14px 16px;
+  background: var(--bg-elev);
+  margin: 0 4px;
+  box-shadow: -4px 0 0 0 var(--acento), 0 -1px 0 0 var(--borde), 0 1px 0 0 var(--borde);
+}
+
+.anuncio.alerta { box-shadow: -4px 0 0 0 var(--alerta), 0 -1px 0 0 var(--borde), 0 1px 0 0 var(--borde); }
+.anuncio.hito { box-shadow: -4px 0 0 0 var(--cian), 0 -1px 0 0 var(--borde), 0 1px 0 0 var(--borde); }
+
+.anuncio .hora {
+  font-family: var(--display);
+  font-size: 8px;
+  color: var(--ink-mute);
+  white-space: nowrap;
+  padding-top: 4px;
+  line-height: 1.8;
+}
+
+.anuncio .txt { margin: 0; }
+
+/* ---------------------------------------------------------------------
+   Equipos
+   --------------------------------------------------------------------- */
+/* El escudo es un cuadro con las iniciales. Cuadrado y con marco de píxel:
+   ni círculos ni escudos en diagonal, que son del torneo. */
+.escudo {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 46px;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-size: 13px;
+  color: #0a0616;
+  background: var(--acento);
+  text-transform: uppercase;
+}
+
+.escudo.grande { width: 74px; height: 74px; flex-basis: 74px; font-size: 20px; }
+.escudo.chico { width: 32px; height: 32px; flex-basis: 32px; font-size: 9px; }
+.escudo.cian { background: var(--cian); }
+.escudo.mag { background: var(--magenta); }
+.escudo.gris { background: var(--borde); color: var(--ink-dim); }
+
+.equipo-cab {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.equipo-cab .nom {
+  font-family: var(--display);
+  font-size: 13px;
+  line-height: 1.5;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Las disciplinas de un equipo: la mezcla de un vistazo. */
+.mezcla { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+
+.mezcla .d {
+  font-family: var(--display);
+  font-size: 7px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 5px 7px;
+  color: var(--cian);
+  background: rgba(78, 230, 255, .1);
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.roster { list-style: none; margin: 14px 0 0; padding: 0; }
+
+.roster li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  border-bottom: 2px solid var(--borde);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.roster .quien { overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.roster .lider { font-family: var(--display); font-size: 7px; color: var(--acento); }
+.roster .disc { margin-left: auto; color: var(--ink-mute); font-size: 11px; padding-left: 8px; flex: 0 0 auto; }
+
+/* ---------------------------------------------------------------------
+   Juegos entregados
+   --------------------------------------------------------------------- */
+.juego .tit {
+  font-family: var(--display);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--acento);
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.juego .desc { color: var(--ink-dim); font-size: 13px; margin: 0 0 14px; }
+.juego .de { font-size: 12px; color: var(--ink-mute); margin: 0 0 14px; }
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+label {
+  display: block;
+  font-family: var(--display);
+  font-size: 8px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 9px;
+  line-height: 1.8;
+}
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="datetime-local"], input[type="url"],
+select, textarea {
+  width: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15px;
+  padding: 12px 13px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: 0 -3px 0 0 var(--borde-fuerte), 0 3px 0 0 var(--borde-fuerte), -3px 0 0 0 var(--borde-fuerte), 3px 0 0 0 var(--borde-fuerte);
+  /* Como el marco se pinta por fuera, el campo necesita su propio aire. */
+  margin: 3px;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  box-shadow: 0 -3px 0 0 var(--acento), 0 3px 0 0 var(--acento), -3px 0 0 0 var(--acento), 3px 0 0 0 var(--acento);
+}
+
+input::placeholder, textarea::placeholder { color: var(--ink-mute); }
+textarea { min-height: 90px; resize: vertical; }
+
+.campo { margin-bottom: 22px; }
+.campo .ayuda { font-size: 12px; color: var(--ink-mute); margin: 8px 0 0; }
+
+.fila {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+fieldset { border: 0; margin: 0; padding: 0; }
+
+/* Elegir modalidad: dos tarjetas grandes, no dos radios chiquitos. */
+.opciones {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin-bottom: 26px;
+}
+
+.opcion {
+  display: block;
+  position: relative;
+  background: var(--bg-card);
+  padding: 18px;
+  margin: 4px;
+  cursor: pointer;
+  box-shadow: 0 -4px 0 0 var(--borde), 0 4px 0 0 var(--borde), -4px 0 0 0 var(--borde), 4px 0 0 0 var(--borde);
+}
+
+.opcion input { position: absolute; opacity: 0; pointer-events: none; }
+
+.opcion .t {
+  font-family: var(--display);
+  font-size: 12px;
+  line-height: 1.5;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.opcion .d { font-size: 13px; color: var(--ink-dim); line-height: 1.55; }
+
+.opcion:has(input:checked) {
+  background: var(--bg-hover);
+  box-shadow: 0 -4px 0 0 var(--acento), 0 4px 0 0 var(--acento), -4px 0 0 0 var(--acento), 4px 0 0 0 var(--acento);
+}
+
+.opcion:has(input:checked) .t { color: var(--acento); }
+
+/* Fila de integrante en el formulario */
+.integrante {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1.2fr 1.5fr 1fr;
+  align-items: end;
+  padding: 14px;
+  margin: 0 4px 14px;
+  background: var(--bg-elev);
+  box-shadow: 0 -3px 0 0 var(--borde), 0 3px 0 0 var(--borde), -3px 0 0 0 var(--borde), 3px 0 0 0 var(--borde);
+}
+
+@media (max-width: 720px) {
+  .integrante { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------------------
+   Avisos
+   --------------------------------------------------------------------- */
+.aviso {
+  background: var(--bg-card);
+  padding: 16px 18px;
+  margin: 0 4px 24px;
+  box-shadow: -5px 0 0 0 var(--acento), 0 -3px 0 0 var(--borde), 0 3px 0 0 var(--borde), 3px 0 0 0 var(--borde);
+}
+
+.aviso.malo { box-shadow: -5px 0 0 0 var(--malo), 0 -3px 0 0 var(--borde), 0 3px 0 0 var(--borde), 3px 0 0 0 var(--borde); }
+.aviso.bueno { box-shadow: -5px 0 0 0 var(--acento), 0 -3px 0 0 var(--borde), 0 3px 0 0 var(--borde), 3px 0 0 0 var(--borde); }
+.aviso ul { margin: 8px 0 0; padding-left: 20px; }
+.aviso li { margin-bottom: 4px; }
+.aviso p:last-child { margin-bottom: 0; }
+
+.codigo-grande {
+  font-family: var(--display);
+  font-size: clamp(22px, 6vw, 38px);
+  letter-spacing: .06em;
+  color: var(--acento);
+  text-align: center;
+  padding: 26px 16px;
+  margin: 22px 4px;
+  background: var(--bg-elev);
+  text-shadow: 4px 4px 0 var(--sombra);
+  box-shadow: 0 -4px 0 0 var(--acento), 0 4px 0 0 var(--acento), -4px 0 0 0 var(--acento), 4px 0 0 0 var(--acento);
+}
+
+.vacio {
+  text-align: center;
+  color: var(--ink-mute);
+  padding: 44px 20px;
+  margin: 20px 4px;
+  background: var(--bg-elev);
+  box-shadow: 0 -3px 0 0 var(--borde), 0 3px 0 0 var(--borde), -3px 0 0 0 var(--borde), 3px 0 0 0 var(--borde);
+}
+
+/* ---------------------------------------------------------------------
+   Reglas y preguntas
+   --------------------------------------------------------------------- */
+.reglas { list-style: none; margin: 0; padding: 0; counter-reset: r; }
+
+.reglas li {
+  counter-increment: r;
+  display: grid;
+  grid-template-columns: 44px 1fr;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 2px solid var(--borde);
+  color: var(--ink-dim);
+}
+
+.reglas li::before {
+  content: counter(r, decimal-leading-zero);
+  font-family: var(--display);
+  color: var(--acento);
+  font-size: 11px;
+  line-height: 1.7;
+}
+
+details.faq { border-bottom: 2px solid var(--borde); padding: 6px 0; }
+
+details.faq summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 0;
+  font-family: var(--display);
+  font-size: 11px;
+  line-height: 1.7;
+  text-transform: uppercase;
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+details.faq summary::-webkit-details-marker { display: none; }
+details.faq summary::before { content: "▸"; color: var(--acento); }
+details.faq[open] summary::before { content: "▾"; }
+details.faq .r { color: var(--ink-dim); padding: 0 0 16px 24px; max-width: 68ch; }
+
+/* ---------------------------------------------------------------------
+   Pie
+   --------------------------------------------------------------------- */
+.jam-foot {
+  border-top: 4px solid var(--borde);
+  padding: 34px 20px 44px;
+  color: var(--ink-mute);
+  font-size: 13px;
+}
+
+.jam-foot-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.jam-foot a { color: var(--ink-dim); }
+.jam-foot .der { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+.jam-foot strong { font-family: var(--display); font-size: 11px; line-height: 2; }
+
+/* El acceso de la organización va discreto: esta página es para quien viene
+   a jugar. */
+.foot-acceso { color: var(--ink-mute); text-decoration: none; font-size: 12px; }
+.foot-acceso:hover { color: var(--acento); }
+
+.foot-eventos {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 20px 0;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--ink-mute);
+}
+
+.foot-eventos a { color: var(--ink-dim); }
+
+/* ---------------------------------------------------------------------
+   Panel de la organización
+   --------------------------------------------------------------------- */
+.panel-top { background: var(--bg-elev); }
+
+.tabla { width: 100%; border-collapse: collapse; margin-top: 8px; }
+
+.tabla th {
+  font-family: var(--display);
+  font-size: 8px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 3px solid var(--borde);
+  line-height: 1.8;
+}
+
+.tabla td {
+  padding: 13px 10px;
+  border-bottom: 2px solid var(--borde);
+  vertical-align: top;
+}
+
+.tabla tr:hover td { background: var(--bg-elev); }
+.tabla .nom { font-family: var(--display); font-size: 11px; line-height: 1.6; text-transform: uppercase; }
+
+.acciones { display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+
+/* Cada herramienta del panel en su caja, con su título. */
+.herramienta {
+  margin: 0 4px 26px;
+  padding: 22px;
+  background: var(--bg-card);
+  box-shadow: 0 -4px 0 0 var(--borde), 0 4px 0 0 var(--borde), -4px 0 0 0 var(--borde), 4px 0 0 0 var(--borde);
+}
+
+.herramienta > h3 {
+  font-size: 12px;
+  color: var(--acento);
+  margin-bottom: 8px;
+  line-height: 1.7;
+}
+
+.herramienta .sec-lead { margin-bottom: 20px; font-size: 13px; }
+
+/* La revisión de una inscripción: la ficha con sus dos botones. */
+.revision { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-top: 16px; }
+.revision .campo { flex: 1; min-width: 220px; margin-bottom: 0; }
+
+/* Lista de quienes esperan equipo, con casilla para armarlo. */
+.libre {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  margin-bottom: 8px;
+  background: var(--bg-elev);
+  box-shadow: 0 -2px 0 0 var(--borde), 0 2px 0 0 var(--borde), -2px 0 0 0 var(--borde), 2px 0 0 0 var(--borde);
+}
+
+.libre input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--acento);
+  flex: 0 0 auto;
+  box-shadow: none;
+}
+
+.libre .quien { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---------------------------------------------------------------------
+   CELULAR — el menú se va abajo
+   Mismo criterio que en el sitio del torneo: cinco enlaces no caben al lado
+   de la marca y se van al borde inferior, donde llega el pulgar.
+   --------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .jam { padding: 0 14px 60px; }
+  .jam-top-in.publica { flex-wrap: nowrap; min-height: 56px; gap: 10px; padding: 0 14px; }
+  .jam-marca { font-size: 11px; }
+
+  .jam-nav.tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    gap: 0;
+    flex-wrap: nowrap;
+    background: var(--bg-elev);
+    border-top: 4px solid var(--borde);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .jam-nav.tabs a {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 9px 2px 8px;
+    font-size: 7px;
+    letter-spacing: 0;
+    border-bottom: 0;
+    border-top: 4px solid transparent;
+  }
+
+  .jam-nav.tabs a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .jam-nav.tabs .ic { display: block; width: 20px; height: 20px; flex: 0 0 auto; }
+  .jam-nav.tabs a.on { color: var(--acento); border-top-color: var(--acento); background: rgba(124, 247, 74, .1); }
+
+  /* Sin esto la barra tapa el pie. Solo en las páginas que la tienen: el
+     panel no la lleva y no tiene por qué quedar con un hueco. */
+  body:has(.jam-nav.tabs) { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
+
+  /* El panel es otra historia: dos enlaces y el botón de salir. Se le quita
+     el nombre del docente, que es lo único prescindible. */
+  .panel-top .jam-top-in { gap: 10px; padding: 0 12px; min-height: 56px; }
+  .panel-top .mini { display: none; }
+  .panel-top .jam-nav a { padding: 9px 8px; }
+
+  .reloj { padding: 20px 12px 18px; }
+  .contador { gap: 6px; }
+  .tabla th, .tabla td { padding: 10px 6px; }
+}
+
+/* En pantallas muy angostas el reloj de cuatro bloques es lo último que
+   puede encogerse: se le quitan los separadores antes que las cifras. */
+@media (max-width: 420px) {
+  .contador .sep { display: none; }
+  .jam-hero h1 .l1 { text-shadow: 3px 3px 0 var(--magenta); }
+}
