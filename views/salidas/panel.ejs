@@ -1,0 +1,63 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="sal">
+  <% if (aviso.borrado) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se borró el registro.</p></div>
+  <% } %>
+
+  <section class="sal-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %></p>
+        <h2>Salidas</h2>
+      </div>
+      <a href="/salidas" class="btn ghost chico">Ver el sitio público</a>
+    </div>
+
+    <p class="sec-lead">
+      Las salidas no se crean desde aquí: se escriben en <code>config.SALIDAS</code>
+      —a dónde, cuándo, cuánto cuesta y quién cobra— y con eso se arma sola la
+      página pública. Este panel es para una sola cosa: marcar quién pagó.
+    </p>
+
+    <% if (!salidas.length) { %>
+      <div class="vacio" style="margin-top:22px">
+        No hay ninguna salida en <code>config.SALIDAS</code>.
+      </div>
+    <% } else { %>
+      <div class="grid">
+        <% salidas.forEach(function (s) { %>
+          <a href="/salidas/panel/<%= s.id %>" class="tarjeta">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <h3 style="margin:0"><%= s.nombre %></h3>
+              <span class="chip <%= s.abierta ? 'ok' : 'no' %>" style="margin-left:auto">
+                <%= s.abierta ? "Abierta" : s.cerrada === "lleno" ? "Cupo lleno" : s.cerrada === "pasada" ? "Ya pasó" : "Cerrada" %>
+              </span>
+            </div>
+            <p class="mini" style="margin:8px 0 16px">
+              <%= s.lugar %><%= s.sale ? ` · ${s.sale.dia}` : "" %>
+            </p>
+
+            <div class="datos">
+              <div class="dato">
+                <div class="k">Registrados</div>
+                <div class="v grande"><%= s.cifras.total %><% if (s.cupo) { %><span class="mini"> / <%= s.cupo %></span><% } %></div>
+              </div>
+              <div class="dato">
+                <div class="k">Confirmados</div>
+                <div class="v grande" style="color:var(--monte)"><%= s.cifras.confirmados %></div>
+              </div>
+              <div class="dato">
+                <div class="k">Faltan por pagar</div>
+                <div class="v grande" style="color:<%= s.cifras.faltan ? 'var(--ambar)' : 'var(--tinta-mute)' %>"><%= s.cifras.faltan %></div>
+              </div>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

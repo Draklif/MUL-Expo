@@ -24,10 +24,13 @@ const vcRouter = require("./routes/vc");
 const vcPanelRouter = require("./routes/vc-panel");
 const jamRouter = require("./routes/jam");
 const jamPanelRouter = require("./routes/jam-panel");
+const salidasRouter = require("./routes/salidas");
+const salidasPanelRouter = require("./routes/salidas-panel");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
 const { configurado: vcConfigurado } = require("./lib/vc-auth");
 const { configurado: jamConfigurado } = require("./lib/jam-auth");
+const { configurado: salidasConfigurado } = require("./lib/salidas-auth");
 
 // Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
 // dejar un login que rechaza a todo el mundo sin explicar por qué.
@@ -83,6 +86,7 @@ app.use((req, res, next) => {
   // sitio público ofrezca "ir al panel" a quien ya entró y "acceso" al resto.
   res.locals.docenteVC = req.session.docenteVC || null;
   res.locals.docenteJam = req.session.docenteJam || null;
+  res.locals.docenteSalidas = req.session.docenteSalidas || null;
   res.locals.query = req.query;
   res.locals.DOMINIO = DOMINIO;
   res.locals.PATRON_CORREO = PATRON_HTML;
@@ -163,6 +167,14 @@ app.use("/vc", vcPanelRouter);
 // para que el panel, que vive en el mismo /jam, no le pase por encima.
 app.use("/", jamRouter);
 app.use("/jam", jamPanelRouter);
+
+// Salidas pedagógicas. No es un evento del programa —no está en config.EVENTOS
+// ni le pelea la raíz a nadie—: es un trámite con una fecha, y vive siempre en
+// /salidas. Mismo reparto que los eventos con router propio: el público va
+// primero, y una dirección que no corresponda a ninguna salida del config
+// sigue de largo hasta el panel, que vive en ese mismo /salidas.
+app.use("/", salidasRouter);
+app.use("/salidas", salidasPanelRouter);
 
 // Certificados (públicos: el QR de cada uno apunta a su página)
 app.use("/certificado", certificadosRouter);
@@ -247,6 +259,12 @@ app.listen(PORT, "0.0.0.0", () => {
       ? `  ✓ Panel Jam de Altura:     http://localhost:${PORT}/jam/acceso`
       : "  · Panel Jam de Altura:     cerrado (falta PASSWORD_JAM en .env)"
   );
+  console.log(
+    salidasConfigurado()
+      ? `  ✓ Panel salidas:           http://localhost:${PORT}/salidas/acceso`
+      : "  · Panel salidas:           cerrado (falta PASSWORD_SALIDAS en .env)"
+  );
+  console.log(`  · Salidas pedagógicas:     http://localhost:${PORT}/salidas`);
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(
     envios.activo()

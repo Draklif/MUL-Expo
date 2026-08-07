@@ -377,6 +377,50 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_jam_anun_edicion ON jam_anuncios(edicion_id, created_at);
+
+  -- =================================================================
+  --  SALIDAS PEDAGÓGICAS
+  --  Una salida no es un evento del programa y no tiene tabla propia:
+  --  vive entera en config.SALIDAS —a dónde se va, cuándo, cuánto
+  --  cuesta y quién cobra— y aquí solo queda quién se apuntó.
+  --
+  --  Por eso la columna 'salida' es el id de texto del config y no una llave a otra
+  --  tabla: no hay dos verdades que puedan contradecirse, y una salida
+  --  que se quite del config se lleva su página pero no borra a nadie.
+  -- =================================================================
+  CREATE TABLE IF NOT EXISTS salida_registros (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    salida            TEXT NOT NULL,
+    periodo_id        INTEGER,
+    codigo            TEXT NOT NULL UNIQUE,
+    nombre            TEXT NOT NULL,
+    codigo_estudiante TEXT NOT NULL,
+    tipo_id           TEXT NOT NULL,
+    num_id            TEXT NOT NULL,
+    telefono          TEXT NOT NULL,
+    email             TEXT NOT NULL COLLATE NOCASE,
+    -- Los dos pagos. Se marcan por separado porque se pagan por separado, y
+    -- el estudiante no queda confirmado hasta que estén los dos.
+    pago_transporte   INTEGER NOT NULL DEFAULT 0,
+    pago_poliza       INTEGER NOT NULL DEFAULT 0,
+    transporte_at     DATETIME,
+    poliza_at         DATETIME,
+    -- Cuándo quedaron los dos pagos y cuándo se le avisó. Van separados: el
+    -- correo puede fallar, y avisado_at nulo es lo que permite reintentarlo
+    -- sin volver a mandárselo a los cuarenta que ya lo recibieron.
+    confirmado_at     DATETIME,
+    avisado_at        DATETIME,
+    cobrado_por       INTEGER,
+    nota              TEXT,
+    created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- Una persona, un cupo. El correo institucional es la identidad, igual
+    -- que en el resto del sitio.
+    UNIQUE (salida, email),
+    FOREIGN KEY (periodo_id) REFERENCES periodos(id),
+    FOREIGN KEY (cobrado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sal_reg ON salida_registros(salida, created_at);
 `);
 
 // ---------- Migraciones suaves ----------

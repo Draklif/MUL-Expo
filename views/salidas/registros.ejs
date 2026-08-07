@@ -1,0 +1,240 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA LISTA DE UNA SALIDA
+
+     Esta pantalla se usa de pie, con el celular en una mano y la plata en la
+     otra, mientras hay cola. Por eso los que faltan van primero y por eso las
+     dos casillas de pago son lo más grande de cada fila: es lo único que se
+     viene a tocar aquí.
+
+     Todo lo demás —el documento, el teléfono, el correo— es dato de apoyo y
+     se esconde en pantalla angosta antes que dejar la tabla desbordarse. Lo
+     completo está en el CSV.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="sal">
+  <%/* ───── AVISOS ───── */%>
+  <%
+    const MALOS = {
+      pagado: "Ese registro ya tiene un pago marcado: no se borra. Si la persona se retiró, desmárcale los pagos y queda la constancia de que los tuvo.",
+      sin_pagos: "Ese registro todavía no tiene los dos pagos: no hay confirmación que reenviar.",
+    };
+    const malo = MALOS[aviso.error];
+  %>
+
+  <% if (aviso.ok) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Guardado.</p></div>
+  <% } %>
+  <% if (aviso.confirmado === "1") { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">Quedó confirmado y le salió el correo con las normas.</p>
+    </div>
+  <% } %>
+  <% if (aviso.confirmado === "0") { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0">
+        Los pagos quedaron guardados, pero el correo de confirmación no salió.
+        <% if (!correoActivo) { %>
+          Los correos están apagados en el <code>.env</code>.
+        <% } else { %>
+          Puedes reintentarlo con «Reenviar confirmación».
+        <% } %>
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.reenviado === "1") { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Confirmación reenviada.</p></div>
+  <% } %>
+  <% if (aviso.reenviado === "0") { %>
+    <div class="aviso malo" style="margin-top:24px"><p style="margin:0">No se pudo enviar el correo.</p></div>
+  <% } %>
+  <% if (malo) { %>
+    <div class="aviso malo" style="margin-top:24px"><p style="margin:0"><%= malo %></p></div>
+  <% } %>
+
+  <%/* ───── CABECERA ───── */%>
+  <section class="sal-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow"><%= salida.lugar %></p>
+        <h2><%= salida.nombre %></h2>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="chip <%= abierta ? 'ok' : 'no' %>">
+            <%= abierta ? "Registros abiertos" : cerrada === "lleno" ? "Cupo lleno" : cerrada === "pasada" ? "Ya pasó" : "Registros cerrados" %>
+          </span>
+          <% if (salida.sale) { %>
+            <span class="chip">Sale el <%= salida.sale.dia %>, <%= salida.sale.hora %></span>
+          <% } %>
+        </div>
+      </div>
+      <div class="acciones">
+        <a href="/salidas/panel/<%= salida.id %>/lista.csv" class="btn ghost chico">Descargar la lista (CSV)</a>
+        <a href="/salidas/<%= salida.id %>" class="btn ghost chico">Ver la página pública</a>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="datos">
+        <div class="dato">
+          <div class="k">Registrados</div>
+          <div class="v grande"><%= cifras.total %><% if (cifras.cupo) { %><span class="mini"> / <%= cifras.cupo %></span><% } %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Confirmados</div>
+          <div class="v grande" style="color:var(--monte)"><%= cifras.confirmados %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Faltan por pagar</div>
+          <div class="v grande" style="color:<%= cifras.faltan ? 'var(--ambar)' : 'var(--tinta-mute)' %>"><%= cifras.faltan %></div>
+        </div>
+        <% if (cifras.libres !== null) { %>
+          <div class="dato">
+            <div class="k">Cupos libres</div>
+            <div class="v grande"><%= cifras.libres %></div>
+          </div>
+        <% } %>
+        <div class="dato">
+          <div class="k">Recaudo transporte</div>
+          <div class="v plata"><%= pesos(cifras.recaudo_transporte) || "—" %></div>
+          <div class="mini"><%= cifras.transporte %> <%= cifras.transporte === 1 ? "pago" : "pagos" %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Recaudo póliza</div>
+          <div class="v plata"><%= pesos(cifras.recaudo_poliza) || "—" %></div>
+          <div class="mini"><%= cifras.poliza %> <%= cifras.poliza === 1 ? "pago" : "pagos" %></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── LA TABLA ─────
+       Un solo bloque de marcado para las dos listas: cambia el título y la
+       gente, no la fila. Duplicarla sería garantizar que dentro de un mes las
+       dos tengan columnas distintas. */%>
+  <%
+    const bloques = [
+      {
+        id: "faltan",
+        eyebrow: "Por cobrar",
+        titulo: pendientes.length === 1 ? "Falta 1 persona" : `Faltan ${pendientes.length} personas`,
+        lead: "Marcar un pago es afirmar que recibiste el dinero y que viste el consentimiento firmado: las dos cosas pasan en el mismo escritorio. Cuando queden las dos casillas, al estudiante le sale el correo que lo confirma.",
+        lista: pendientes,
+        vacio: "Nadie pendiente. Todos los registrados ya pagaron.",
+      },
+      {
+        id: "confirmados",
+        eyebrow: "Con todo pago",
+        titulo: `Confirmados (${confirmados.length})`,
+        lead: "Estos ya recibieron su correo. Son los que suben al bus.",
+        lista: confirmados,
+        vacio: "Todavía nadie ha pagado las dos cosas.",
+      },
+    ];
+  %>
+
+  <% bloques.forEach(function (b) { %>
+    <section class="sal-sec" id="<%= b.id %>">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow"><%= b.eyebrow %></p>
+          <h2 style="font-size:24px"><%= b.titulo %></h2>
+        </div>
+      </div>
+      <p class="sec-lead" style="margin:0 0 18px"><%= b.lead %></p>
+
+      <% if (!b.lista.length) { %>
+        <div class="vacio"><%= b.vacio %></div>
+      <% } else { %>
+        <div class="herramienta">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Estudiante</th>
+                <th class="col-op">Documento</th>
+                <th class="col-op">Contacto</th>
+                <th>Pagos</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% b.lista.forEach(function (r) { %>
+                <tr id="r<%= r.id %>">
+                  <td>
+                    <div class="nom"><%= r.nombre %></div>
+                    <div class="sub"><%= r.codigo_estudiante %> · código <%= r.codigo %></div>
+                    <div style="margin-top:8px"><span class="chip <%= r.estado.cls %>"><%= r.estado.label %></span></div>
+                    <% if (r.nota) { %>
+                      <div class="sub" style="margin-top:8px">✎ <%= r.nota %></div>
+                    <% } %>
+                  </td>
+
+                  <td class="col-op">
+                    <div><%= r.tipo_id %></div>
+                    <div class="sub"><%= r.num_id %></div>
+                  </td>
+
+                  <td class="col-op">
+                    <div><a href="tel:<%= r.telefono.replace(/\s/g, '') %>"><%= r.telefono %></a></div>
+                    <div class="sub"><%= r.email %></div>
+                  </td>
+
+                  <td>
+                    <%/* El formulario manda el estado completo de las dos
+                         casillas, no un "sumar uno": así se ve lo mismo que se
+                         guarda y un clic equivocado se deshace desmarcando. */%>
+                    <form method="POST" action="/salidas/panel/registros/<%= r.id %>/pagos" class="pagos">
+                      <label class="pago">
+                        <input type="checkbox" name="pago_transporte" value="1" <%= r.pago_transporte ? "checked" : "" %> />
+                        Transporte
+                      </label>
+                      <label class="pago">
+                        <input type="checkbox" name="pago_poliza" value="1" <%= r.pago_poliza ? "checked" : "" %> />
+                        Póliza
+                      </label>
+                      <button type="submit" class="btn chico">Guardar</button>
+                    </form>
+
+                    <details style="margin-top:12px">
+                      <summary class="mini" style="cursor:pointer">Más</summary>
+
+                      <form method="POST" action="/salidas/panel/registros/<%= r.id %>/nota" style="margin-top:12px">
+                        <div class="campo" style="margin-bottom:10px">
+                          <label for="nota<%= r.id %>">Nota (solo la ves tú)</label>
+                          <input type="text" name="nota" id="nota<%= r.id %>" maxlength="300"
+                                 value="<%= r.nota || '' %>" placeholder="Paga el viernes, alérgico al maní…" />
+                        </div>
+                        <button type="submit" class="btn ghost chico">Guardar la nota</button>
+                      </form>
+
+                      <div class="acciones" style="margin-top:12px">
+                        <% if (r.confirmado) { %>
+                          <form method="POST" action="/salidas/panel/registros/<%= r.id %>/reenviar" style="margin:0">
+                            <button type="submit" class="btn ghost chico" <%= correoActivo ? "" : "disabled" %>>
+                              Reenviar confirmación
+                            </button>
+                          </form>
+                          <% if (r.avisado_at) { %>
+                            <span class="mini">Avisado</span>
+                          <% } else { %>
+                            <span class="mini">Sin avisar</span>
+                          <% } %>
+                        <% } else { %>
+                          <form method="POST" action="/salidas/panel/registros/<%= r.id %>/borrar" style="margin:0"
+                                onsubmit="return confirm('¿Sacar a <%= r.nombre %> de la lista? Su cupo vuelve al bus.')">
+                            <button type="submit" class="btn peligro chico">Sacar de la lista</button>
+                          </form>
+                        <% } %>
+                      </div>
+                    </details>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    </section>
+  <% }); %>
+</main>
+
+<%- include('../partials/footer') %>

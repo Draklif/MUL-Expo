@@ -1,0 +1,96 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     TODAS LAS SALIDAS
+
+     Esta página solo aparece cuando de verdad hay más de una cosa que mirar:
+     con una sola salida, /salidas es directamente su página y esto no se ve.
+     Es a propósito —un índice de un solo elemento es un clic de más—.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: 'Las salidas pedagógicas del programa de Ingeniería en Multimedia.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="sal">
+  <section class="sal-sec">
+    <p class="eyebrow"><%= programa %></p>
+    <h1>Salidas pedagógicas</h1>
+    <p class="sec-lead">
+      Ferias, museos, estudios y todo lo que no se puede ver desde un salón.
+      Cada salida se registra aquí; el consentimiento firmado y el pago se
+      entregan en persona.
+    </p>
+  </section>
+
+  <% if (abiertas.length) { %>
+    <section class="sal-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Recibiendo registros</p>
+          <h2>Lo que viene</h2>
+        </div>
+      </div>
+
+      <div class="grid">
+        <% abiertas.forEach(function (s) { %>
+          <a href="/salidas/<%= s.id %>" class="tarjeta">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <h3 style="margin:0"><%= s.nombre %></h3>
+              <span class="chip ok" style="margin-left:auto">Abierta</span>
+            </div>
+            <p class="mini" style="margin:8px 0 16px"><%= s.lugar %></p>
+            <div class="ficha">
+              <div class="f">
+                <div class="k">Salida</div>
+                <div class="v"><%= s.sale ? `${s.sale.dia}, ${s.sale.hora}` : "Por confirmar" %></div>
+              </div>
+              <% if (s.total) { %>
+                <div class="f">
+                  <div class="k">Total</div>
+                  <div class="v"><strong><%= pesos(s.total) %></strong></div>
+                </div>
+              <% } %>
+            </div>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+  <% } else { %>
+    <div class="vacio" style="margin-top:26px">
+      Ahora mismo no hay ninguna salida recibiendo registros.
+    </div>
+  <% } %>
+
+  <% if (cerradas.length) { %>
+    <section class="sal-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Archivo</p>
+          <h2>Cerradas</h2>
+        </div>
+      </div>
+
+      <div class="grid">
+        <% cerradas.forEach(function (s) { %>
+          <a href="/salidas/<%= s.id %>" class="tarjeta">
+            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <h3 style="margin:0"><%= s.nombre %></h3>
+              <span class="chip no" style="margin-left:auto">
+                <%= porQue(s) === "lleno" ? "Cupo lleno" : porQue(s) === "pasada" ? "Ya pasó" : "Cerrada" %>
+              </span>
+            </div>
+            <p class="mini" style="margin:8px 0 0">
+              <%= s.lugar %><%= s.sale ? ` · ${s.sale.dia}` : "" %>
+            </p>
+          </a>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="sal-sec">
+    <p class="mini">
+      ¿Ya te registraste en alguna? <a href="/salidas/estado">Consulta tu código</a>.
+    </p>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

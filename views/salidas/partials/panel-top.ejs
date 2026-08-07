@@ -1,0 +1,18 @@
+<%/* Cabecera del panel. Deliberadamente distinta a la del sitio público: aquí
+     no hay marca grande ni barra de pestañas, solo dónde estás, quién eres y
+     la salida. */%>
+<header class="sal-top panel-top">
+  <div class="sal-top-in">
+    <a href="/salidas/panel" class="sal-marca">Panel <em>salidas</em></a>
+    <nav class="sal-nav">
+      <a href="/salidas/panel">Salidas</a>
+      <a href="/salidas">Ver el sitio</a>
+    </nav>
+    <div class="panel-quien">
+      <span class="mini"><%= docenteSalidas.name %><%= periodoSalidas ? " · " + periodoSalidas.codigo : "" %></span>
+      <form method="POST" action="/salidas/salir">
+        <button type="submit" class="btn ghost chico">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

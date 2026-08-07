@@ -112,12 +112,17 @@ Abre `http://localhost:3000` en el navegador del PC.
 | `/jam/equipos` | Cualquiera, sin login | Los equipos de la edición vigente |
 | `/jam/acceso`, `/jam/panel` | Docentes | Panel de la jam, con **su propia contraseña** |
 | `/vc/acceso`, `/vc/panel` | Docentes | Panel de Virtual Champions, con la suya |
+| `/salidas`, `/salidas/:id` | Estudiantes, sin login | Las [salidas pedagógicas](#salidas-pedagógicas): a dónde, cuándo, qué cuesta y las normas |
+| `/salidas/:id/registro` | Estudiantes, sin login | Registro para una salida |
+| `/salidas/estado` | Estudiantes, sin login | Consulta del código: en qué va el trámite y qué pago falta |
+| `/salidas/acceso`, `/salidas/panel` | Docentes | Panel de salidas: confirmar pagos, con la suya |
 
-Son **tres herramientas con tres contraseñas**: la de la Expo
-(`PASSWORD_DOCENTES`), la del torneo (`PASSWORD_VC`) y la de la jam
-(`PASSWORD_JAM`). Los docentes son los mismos —la lista de `config.js`— pero
-entrar a una no abre las otras. Si a una le falta su clave en el `.env`, ese
-panel queda cerrado y todo lo demás funciona igual.
+Son **cuatro herramientas con cuatro contraseñas**: la de la Expo
+(`PASSWORD_DOCENTES`), la del torneo (`PASSWORD_VC`), la de la jam
+(`PASSWORD_JAM`) y la de las salidas (`PASSWORD_SALIDAS`). Los docentes son los
+mismos —la lista de `config.js`— pero entrar a una no abre las otras. Si a una le
+falta su clave en el `.env`, ese panel queda cerrado y todo lo demás funciona
+igual.
 
 ## Los eventos
 
@@ -321,6 +326,98 @@ En `config.js`, el bloque `JAM`:
 | `horas` | Cuánto dura (48). Igual: se copia a la edición al abrirla |
 | `cupo_equipos` | Tope de equipos por edición. `null` = sin tope |
 | `disciplinas` | Las opciones de "de qué te encargas". Agregar o quitar una es todo lo que hace falta: el formulario, el panel y las tarjetas salen de esta lista |
+
+## Salidas pedagógicas
+
+Esto **no es un evento del programa**: es una salida académica —SOFA, una feria,
+un museo, una visita a un estudio— y por eso no está en `config.EVENTOS` ni le
+pelea la raíz `/` a nadie. Vive siempre en `/salidas` y se comparte por enlace.
+
+La página es **una sola y sirve para todas**. Lo que cambia de una salida a otra
+está en `config.js`, en el bloque `SALIDAS`, y en ningún otro lado: montar la
+salida del semestre siguiente es escribir un objeto en esa lista. No hay pantalla
+de "crear salida" en ningún panel.
+
+### El trámite, que es el punto entero
+
+Registrarse **no aparta cupo**, y la página lo dice cuatro veces porque es lo que
+más se malentiende:
+
+1. **El estudiante se registra** en `/salidas/<id>/registro`: nombre, código
+   estudiantil, tipo y número de documento, teléfono y correo institucional. Le
+   queda un código de seis caracteres —el mismo invento del resto del sitio— y le
+   llega un correo con él.
+2. **Descarga el consentimiento** (está en `public/documents/`) y lo firman sus
+   padres o acudientes.
+3. **Lo lleva firmado y paga**, en persona, al docente encargado: transporte y
+   póliza. La firma se revisa ahí mismo, en ese escritorio.
+4. **El docente marca los dos pagos** en el panel. Cuando quedan los dos, al
+   estudiante le sale el correo que lo confirma, con las normas y las dos
+   advertencias.
+
+> **El consentimiento no tiene casilla propia**, y es a propósito. Se revisa en
+> el mismo momento en que se recibe la plata, así que marcar el pago del
+> transporte *es* haber visto el papel firmado. Una casilla aparte solo serviría
+> para marcarla sin haberlo visto.
+
+### Lo que el estudiante ve
+
+`/salidas/estado` con su código: en qué va (falta pagar / pago incompleto /
+confirmado), cuál de los dos pagos falta, a quién pagarle y dónde, la boleta con
+la hora de salida y de regreso, sus propios datos —para que alcance a corregir un
+documento mal escrito antes de que lo rechace la aseguradora— y las normas.
+
+Las dos advertencias van en la página, en el formulario, en la consulta y en los
+dos correos, porque hay que decirlas antes de que alguien pague:
+
+- una vez realizado el pago, la inasistencia **no es causal de reembolso**;
+- incumplir cualquier norma es causal de **llamado de atención**, informado a
+  dirección del programa y a decanatura.
+
+### El panel
+
+`/salidas/acceso`, con **su propia contraseña** (`PASSWORD_SALIDAS` en el `.env`).
+Cuarta herramienta, cuarta clave: quien entra aquí está confirmando pagos en
+efectivo, y eso no se abre con la misma clave con la que se califica un proyecto.
+
+Hace una sola cosa —marcar quién pagó— y está pensado para usarse de pie, con el
+celular en una mano y la plata en la otra:
+
+- **los que faltan van primero**, que son a los que hay que perseguir;
+- dos casillas por persona, transporte y póliza, y el botón de guardar;
+- **el recaudo va separado por concepto**: son dos cuentas distintas, la del bus
+  y la de la aseguradora, y sumarlas no le sirve a ninguna de las dos;
+- **la lista en CSV**, que es la que se imprime y sube al bus (con documento y
+  teléfono de todos: es lo que pide la aseguradora y lo que hay que tener a mano
+  si pasa algo en la carretera);
+- una **nota** por estudiante, solo para el docente.
+
+Dos reglas que el panel no deja saltarse:
+
+- **el correo de confirmación sale una sola vez.** Desmarcar y volver a marcar no
+  se lo repite al estudiante. Si de verdad hizo falta —Gmail rechazó, lo borró—,
+  hay un **Reenviar confirmación** explícito.
+- **a quien ya pagó no se le borra el registro.** Es el comprobante de que
+  entregó un dinero. Si se retiró, se le desmarcan los pagos y queda la
+  constancia de que los tuvo.
+
+### Lo que se configura
+
+En `config.js`, el bloque `SALIDAS`. Fuera de la lista de salidas hay tres cosas
+comunes: `tipos_id` (los documentos del selector), `normas` (las mismas para
+todas: son de la universidad, no de la feria) y `advertencias`.
+
+| Campo de una salida | Para qué |
+|---|---|
+| `id` | La dirección (`/salidas/sofa-2026`) y lo que queda en cada registro. No se cambia una vez repartida |
+| `inscripciones` | `true` mientras el formulario reciba gente. Aquí **no** hay bandera `activo`: puede haber dos salidas abiertas a la vez, porque son de asignaturas distintas |
+| `salida` / `regreso` | `AAAA-MM-DD HH:MM`. Una fecha de salida ya pasada cierra los registros sola |
+| `punto` | De dónde sale y a dónde vuelve el bus |
+| `lugar`, `objetivo`, `asignaturas` | Lo que se cuenta en la página |
+| `cupo` | Cuántos caben. `null` = sin tope. El cupo se aparta al **registrarse**, no al pagar |
+| `costos` | `transporte` y `poliza`, en pesos. Vacío = "consultar con el docente" |
+| `docente` | `nombre`, `email`, `telefono`, `donde`. Es el dato más importante de la página: sin eso nadie puede pagar |
+| `consentimiento` | Ruta del archivo servido desde `public/` |
 
 ## Registro de expositores
 

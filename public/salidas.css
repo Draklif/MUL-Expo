@@ -1,0 +1,835 @@
+/* =====================================================================
+   SALIDAS PEDAGÓGICAS
+   Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
+
+   Las otras tres caras del sitio son oscuras porque son eventos: se ven
+   de noche, en un salón a media luz, desde el celular en una fila.
+
+     Expo Multimedia   — editorial, serif, papel.
+     Virtual Champions — negro, condensada, esports.
+     Jam de Altura     — píxel, verde consola sobre violeta.
+     Salidas           — esto: PAPEL. Claro, a plena luz.
+
+   Y es a propósito. Esta página no se mira: se llena, se imprime y se
+   lee en el celular a las cinco de la mañana en una portería. Es un
+   formulario institucional —un permiso, dos pagos, unas normas que
+   pueden terminar en un llamado de atención—, así que tiene que
+   parecerse a un documento y no a un afiche.
+
+   De ahí las decisiones:
+
+     · fondo crema con líneas de pauta muy tenues, como un formato;
+     · reglas punteadas en vez de bordes gruesos: separan sin gritar;
+     · el verde monte para lo confirmado y el ámbar para lo que falta,
+       que son los dos únicos estados que le importan a alguien;
+     · nada de sombras difusas ni degradados. Una sombra plana y corta,
+       la de un papel encima de otro.
+
+   LA PIEZA CLAVE es .boleta: la tarjeta con la muesca a los lados, que
+   es lo único que se permite parecer un tiquete. Se usa una sola vez
+   por página —para la salida— y por eso funciona.
+   ===================================================================== */
+
+:root {
+  --papel: #f6f2e9;
+  --papel-hondo: #efe9dc;
+  --papel-alto: #fffdf8;
+  --linea: #ddd4c2;
+  --linea-fuerte: #c3b79e;
+
+  --tinta: #201d16;
+  --tinta-dim: #56503f;
+  --tinta-mute: #8a8271;
+
+  --monte: #1f6b4a;      /* lo confirmado, lo que está bien */
+  --monte-claro: #e4f0e8;
+  --ambar: #b8730d;      /* lo que falta por hacer */
+  --ambar-claro: #fbf1de;
+  --ladrillo: #a3271c;   /* lo que salió mal */
+  --ladrillo-claro: #fbe9e7;
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --sombra: 0 2px 0 rgba(32, 29, 22, .06), 0 1px 3px rgba(32, 29, 22, .07);
+  --radio: 5px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--body);
+  font-size: 15.5px;
+  line-height: 1.65;
+  /* Pauta de formato: una línea horizontal cada 34px, tan tenue que solo se
+     nota como textura. Es lo que hace que la página se lea como un papel
+     preimpreso y no como una web clara cualquiera. El color va en rgba y no
+     con --linea: esa variable se usa a plena opacidad en los bordes, y aquí
+     hace falta una cuarta parte de eso. */
+  background-image: linear-gradient(rgba(195, 183, 158, .22) 1px, transparent 1px);
+  background-size: 100% 34px;
+  background-attachment: fixed;
+}
+
+a { color: var(--monte); }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+
+h1 { font-size: clamp(30px, 6vw, 52px); }
+h2 { font-size: clamp(21px, 3.2vw, 30px); }
+h3 { font-size: 17px; }
+
+p { margin: 0 0 1em; }
+img { max-width: 100%; }
+
+/* ---------------------------------------------------------------------
+   Piezas base
+   --------------------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  margin: 0 0 10px;
+}
+
+.sec-lead {
+  color: var(--tinta-dim);
+  max-width: 64ch;
+  margin: 12px 0 0;
+}
+
+.mini { font-size: 12.5px; color: var(--tinta-mute); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  color: var(--tinta-dim);
+  white-space: nowrap;
+}
+
+.chip.ok     { color: var(--monte);    border-color: var(--monte);    background: var(--monte-claro); }
+.chip.pend   { color: var(--ambar);    border-color: var(--ambar);    background: var(--ambar-claro); }
+.chip.alerta { color: var(--ambar);    border-color: var(--ambar);    background: var(--ambar-claro); }
+.chip.malo   { color: var(--ladrillo); border-color: var(--ladrillo); background: var(--ladrillo-claro); }
+.chip.no     { color: var(--tinta-mute); }
+
+/* ---------------------------------------------------------------------
+   Botones
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  line-height: 1.2;
+  padding: 13px 22px;
+  border: 1px solid var(--monte);
+  border-radius: var(--radio);
+  background: var(--monte);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+  transition: background .12s ease, border-color .12s ease, transform .06s ease;
+}
+
+.btn:hover { background: #17573b; border-color: #17573b; }
+.btn:active { transform: translateY(1px); }
+
+.btn.ghost {
+  background: var(--papel-alto);
+  color: var(--tinta);
+  border-color: var(--linea-fuerte);
+}
+
+.btn.ghost:hover { background: var(--papel-hondo); border-color: var(--tinta-mute); }
+
+.btn.ambar { background: var(--ambar); border-color: var(--ambar); }
+.btn.ambar:hover { background: #9d6209; border-color: #9d6209; }
+
+.btn.peligro { background: var(--papel-alto); color: var(--ladrillo); border-color: #e0bdb8; }
+.btn.peligro:hover { background: var(--ladrillo-claro); border-color: var(--ladrillo); }
+
+.btn.chico { font-size: 12.5px; padding: 8px 13px; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+
+/* ---------------------------------------------------------------------
+   Estructura
+   --------------------------------------------------------------------- */
+.sal {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px 80px;
+}
+
+.sal.angosto { max-width: 760px; }
+
+.sal-sec { padding: 44px 0 0; }
+
+.sec-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  margin-top: 20px;
+}
+
+.tarjeta {
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 20px;
+  box-shadow: var(--sombra);
+}
+
+a.tarjeta { text-decoration: none; color: inherit; display: block; }
+a.tarjeta:hover { border-color: var(--monte); }
+
+/* ---------------------------------------------------------------------
+   Cabecera
+   --------------------------------------------------------------------- */
+.sal-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--papel-alto);
+  border-bottom: 1px solid var(--linea-fuerte);
+}
+
+/* Un renglón y punto. Envolver es lo peor que le puede pasar a una barra
+   pegajosa: crece a dos y tres renglones y se come media pantalla en cada
+   scroll. Lo que cede cuando no cabe se decide abajo. */
+.sal-top-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 62px;
+  flex-wrap: nowrap;
+}
+
+.sal-marca {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -.01em;
+  text-decoration: none;
+  color: var(--tinta);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sal-marca em { font-style: normal; color: var(--monte); }
+
+/* El sello de la marca: un rombo, que es la forma de las señales de vía. */
+.sal-marca::before {
+  content: "";
+  width: 13px;
+  height: 13px;
+  background: var(--ambar);
+  transform: rotate(45deg);
+  flex: 0 0 auto;
+}
+
+.sal-nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.sal-nav a {
+  font-family: var(--display);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--tinta-dim);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: var(--radio);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sal-nav a:hover { background: var(--papel-hondo); color: var(--tinta); }
+.sal-nav a.on { background: var(--monte-claro); color: var(--monte); }
+.sal-nav .ic { display: none; }
+
+/* ---------------------------------------------------------------------
+   La boleta: la tarjeta de la salida
+   Es lo único de la hoja que se permite parecer un tiquete, y por eso
+   funciona. Las muescas son dos círculos del color del fondo pegados a
+   los lados, justo donde va la línea punteada.
+   --------------------------------------------------------------------- */
+.boleta {
+  position: relative;
+  background: var(--papel-alto);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 9px;
+  box-shadow: var(--sombra);
+  margin-top: 26px;
+  /* Nada de overflow:hidden aquí: las muescas del talón se salen a propósito
+     por los dos lados, y recortarlas es quedarse sin el gesto entero. Las
+     esquinas de abajo las redondea el propio talón. */
+}
+
+.boleta .cabeza {
+  padding: 26px 26px 22px;
+  border-bottom: 2px dashed var(--linea-fuerte);
+}
+
+.boleta .cabeza h1,
+.boleta .cabeza h2 { margin-bottom: 8px; }
+
+.boleta .lema { color: var(--tinta-dim); margin: 0; }
+
+.boleta .talon {
+  padding: 22px 26px 24px;
+  background: var(--papel-hondo);
+  border-radius: 0 0 8px 8px;
+  position: relative;
+}
+
+/* Las dos muescas, a la altura de la línea punteada. */
+.boleta .talon::before,
+.boleta .talon::after {
+  content: "";
+  position: absolute;
+  top: -13px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--papel);
+  border: 1px solid var(--linea-fuerte);
+}
+
+.boleta .talon::before { left: -13px; }
+.boleta .talon::after { right: -13px; }
+
+/* ---------------------------------------------------------------------
+   Datos: la rejilla de rótulo + valor
+   --------------------------------------------------------------------- */
+.datos {
+  display: grid;
+  gap: 18px 26px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.dato .k {
+  font-family: var(--display);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  margin-bottom: 5px;
+}
+
+.dato .v { font-size: 15.5px; line-height: 1.45; }
+.dato .v strong { font-weight: 700; }
+.dato .v.grande { font-family: var(--display); font-size: 20px; font-weight: 700; }
+.dato .v.plata { font-family: var(--display); font-size: 20px; font-weight: 700; color: var(--monte); }
+
+/* Una lista de rótulo y valor en columna, para las fichas angostas. */
+.ficha { margin: 0; }
+
+.ficha .f {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px dotted var(--linea-fuerte);
+}
+
+.ficha .f:last-child { border-bottom: 0; }
+
+.ficha .f .k {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  flex: 0 0 34%;
+  max-width: 180px;
+}
+
+.ficha .f .v { flex: 1; min-width: 0; word-break: break-word; }
+
+/* ---------------------------------------------------------------------
+   Los pasos del trámite
+   Cuatro casillas en fila con una línea que las une. Es el mapa entero
+   de la salida y va arriba del todo: quien llega tiene que saber en el
+   primer vistazo que registrarse no lo confirma.
+   --------------------------------------------------------------------- */
+.pasos {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  counter-reset: p;
+}
+
+.paso {
+  counter-increment: p;
+  position: relative;
+  padding: 16px 15px 15px;
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+}
+
+.paso::before {
+  content: counter(p);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--papel-hondo);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta-mute);
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 11px;
+}
+
+.paso .t {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  display: block;
+  margin-bottom: 5px;
+}
+
+.paso .d { font-size: 13px; color: var(--tinta-dim); line-height: 1.5; }
+
+/* El paso que ya pasó y el que toca ahora. El resto queda en gris: si todo
+   se colorea, nada indica dónde está uno. */
+.paso.hecho { border-color: var(--monte); background: var(--monte-claro); }
+.paso.hecho::before { content: "✓"; background: var(--monte); border-color: var(--monte); color: #fff; }
+.paso.ahora { border-color: var(--ambar); background: var(--ambar-claro); }
+.paso.ahora::before { background: var(--ambar); border-color: var(--ambar); color: #fff; }
+
+@media (max-width: 860px) {
+  .pasos { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 440px) {
+  .pasos { grid-template-columns: 1fr; }
+}
+
+/* ---------------------------------------------------------------------
+   Normas y advertencias
+   --------------------------------------------------------------------- */
+.normas { list-style: none; margin: 0; padding: 0; counter-reset: n; }
+
+.normas li {
+  counter-increment: n;
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 14px;
+  padding: 13px 0;
+  border-bottom: 1px dotted var(--linea-fuerte);
+  color: var(--tinta-dim);
+}
+
+.normas li:last-child { border-bottom: 0; }
+
+.normas li::before {
+  content: counter(n, decimal-leading-zero);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--ambar);
+}
+
+/* Lo que hay que leer aunque se lea la página en diagonal: no hay reembolso y
+   las normas tienen consecuencias. Va en ámbar y con la barra a la izquierda,
+   que es el único elemento de la hoja que se sale del tono. */
+.advertencia {
+  background: var(--ambar-claro);
+  border: 1px solid #eacf9d;
+  border-left: 4px solid var(--ambar);
+  border-radius: 0 var(--radio) var(--radio) 0;
+  padding: 16px 18px;
+  margin: 22px 0;
+}
+
+.advertencia p { margin: 0 0 9px; color: #5c4413; }
+.advertencia p:last-child { margin: 0; }
+
+.advertencia .t {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ambar);
+  margin-bottom: 10px;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+label {
+  display: block;
+  font-family: var(--display);
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tinta-dim);
+  margin: 0 0 7px;
+}
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="tel"], input[type="number"], input[type="datetime-local"],
+select, textarea {
+  width: 100%;
+  background: var(--papel-alto);
+  color: var(--tinta);
+  font-family: var(--body);
+  font-size: 15.5px;
+  padding: 11px 13px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--monte);
+  box-shadow: 0 0 0 3px rgba(31, 107, 74, .13);
+}
+
+input::placeholder, textarea::placeholder { color: var(--tinta-mute); }
+textarea { min-height: 80px; resize: vertical; }
+
+.campo { margin-bottom: 20px; }
+.campo .ayuda { font-size: 12.5px; color: var(--tinta-mute); margin: 7px 0 0; }
+
+.fila {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+fieldset { border: 0; margin: 0; padding: 0; }
+
+/* ---------------------------------------------------------------------
+   Avisos
+   --------------------------------------------------------------------- */
+.aviso {
+  background: var(--papel-alto);
+  border: 1px solid var(--linea-fuerte);
+  border-left: 4px solid var(--tinta-mute);
+  border-radius: 0 var(--radio) var(--radio) 0;
+  padding: 15px 18px;
+  margin: 0 0 22px;
+}
+
+.aviso.bueno { border-left-color: var(--monte); background: var(--monte-claro); border-color: #bcdcc8; }
+.aviso.malo  { border-left-color: var(--ladrillo); background: var(--ladrillo-claro); border-color: #e8c4c0; }
+.aviso ul { margin: 8px 0 0; padding-left: 20px; }
+.aviso li { margin-bottom: 4px; }
+.aviso p:last-child { margin-bottom: 0; }
+
+.codigo-grande {
+  font-family: var(--mono);
+  font-size: clamp(30px, 8vw, 46px);
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-indent: .22em;
+  color: var(--tinta);
+  text-align: center;
+  padding: 24px 16px;
+  margin: 20px 0;
+  background: var(--papel-alto);
+  border: 2px dashed var(--linea-fuerte);
+  border-radius: 9px;
+}
+
+.vacio {
+  text-align: center;
+  color: var(--tinta-mute);
+  padding: 42px 20px;
+  margin: 18px 0;
+  background: var(--papel-alto);
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: var(--radio);
+}
+
+/* ---------------------------------------------------------------------
+   Pie
+   --------------------------------------------------------------------- */
+.sal-foot {
+  border-top: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  padding: 32px 22px 42px;
+  color: var(--tinta-mute);
+  font-size: 13.5px;
+}
+
+.sal-foot-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.sal-foot a { color: var(--tinta-dim); }
+.sal-foot strong { font-family: var(--display); color: var(--tinta); }
+.sal-foot .der { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+
+.foot-acceso { color: var(--tinta-mute); text-decoration: none; font-size: 12.5px; }
+.foot-acceso:hover { color: var(--monte); }
+
+.foot-eventos {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 18px 0 0;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--tinta-mute);
+}
+
+.foot-eventos a { color: var(--tinta-dim); }
+
+/* ---------------------------------------------------------------------
+   Panel del docente
+   --------------------------------------------------------------------- */
+.panel-top { background: var(--papel-hondo); }
+
+/* Quién eres y el semestre, a la derecha. El nombre se recorta antes de
+   empujar el botón de salir fuera de la pantalla. */
+.panel-quien {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 12px;
+  min-width: 0;
+}
+
+.panel-quien .mini { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-quien form { margin: 0; flex: 0 0 auto; }
+
+/* Cada herramienta del panel en su caja. */
+.herramienta {
+  padding: 22px;
+  margin-bottom: 24px;
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.herramienta > h3 { margin-bottom: 6px; }
+.herramienta .sec-lead { margin-bottom: 18px; font-size: 14px; }
+
+.acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+.tabla { width: 100%; border-collapse: collapse; margin-top: 6px; }
+
+/* Tablas del panel en pantalla angosta.
+
+   Una tabla de siete columnas no cabe en un teléfono, y las dos salidas
+   habituales son malas: dejarla desbordar arrastra la página entera a lo
+   ancho, y meterla en un contenedor con scroll esconde media tabla detrás de
+   un gesto que nadie hace porque nada indica que esté ahí.
+
+   La salida es decidir qué sobra. Las columnas .col-op son las prescindibles
+   —el documento, el correo, el teléfono— y se van; lo que queda es el nombre
+   y las dos casillas de pago, que es a lo que se viene. El dato escondido
+   sigue estando en el CSV. */
+@media (max-width: 820px) {
+  .tabla .col-op { display: none; }
+}
+
+.tabla th {
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  text-align: left;
+  padding: 11px 10px;
+  border-bottom: 2px solid var(--linea-fuerte);
+}
+
+.tabla td {
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: top;
+}
+
+.tabla tr:hover td { background: var(--papel-hondo); }
+.tabla .nom { font-family: var(--display); font-weight: 700; }
+.tabla .sub { font-size: 12.5px; color: var(--tinta-mute); }
+.tabla td.der, .tabla th.der { text-align: right; }
+
+/* La fila que se acaba de tocar, para volver del redirect y encontrarla. */
+.tabla tr:target td { background: var(--ambar-claro); }
+
+/* ---------------------------------------------------------------------
+   Las dos casillas de pago
+   Son el panel entero, así que no van como dos checkbox sueltos: son dos
+   interruptores anchos, con el rótulo dentro y el color del estado. Se
+   marcan de pie, con el celular en una mano y la plata en la otra.
+   --------------------------------------------------------------------- */
+.pagos { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 0; }
+
+.pago {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  background: var(--papel-alto);
+  cursor: pointer;
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tinta-dim);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.pago input {
+  width: 17px;
+  height: 17px;
+  margin: 0;
+  accent-color: var(--monte);
+  flex: 0 0 auto;
+}
+
+.pago:has(input:checked) {
+  border-color: var(--monte);
+  background: var(--monte-claro);
+  color: var(--monte);
+}
+
+/* ---------------------------------------------------------------------
+   CELULAR — el menú se va abajo
+   Mismo criterio que en el torneo y en la jam: tres enlaces no caben al
+   lado de la marca y se van al borde inferior, donde llega el pulgar.
+   --------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .sal { padding: 0 16px 60px; }
+  .sal-top-in { gap: 10px; padding: 0 16px; min-height: 56px; }
+  .sal-marca { font-size: 14px; }
+
+  .sal-nav.tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    gap: 0;
+    flex-wrap: nowrap;
+    background: var(--papel-alto);
+    border-top: 1px solid var(--linea-fuerte);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .sal-nav.tabs a {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 9px 3px 8px;
+    font-size: 11px;
+    border-radius: 0;
+    border-top: 3px solid transparent;
+  }
+
+  .sal-nav.tabs a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .sal-nav.tabs .ic { display: block; width: 20px; height: 20px; flex: 0 0 auto; }
+  .sal-nav.tabs a.on { background: var(--monte-claro); border-top-color: var(--monte); }
+
+  /* Sin esto la barra tapa el pie. Solo en las páginas que la llevan: el panel
+     no la tiene y no tiene por qué quedar con un hueco. */
+  body:has(.sal-nav.tabs) { padding-bottom: calc(58px + env(safe-area-inset-bottom, 0px)); }
+
+  /* El panel es otra historia: dos enlaces y el botón de salir. Se le quita el
+     nombre del docente, que es lo único prescindible, y con eso entra en un
+     renglón sin envolver. */
+  .panel-top .panel-quien .mini { display: none; }
+  .panel-top .panel-quien { margin-left: auto; }
+
+  .boleta .cabeza, .boleta .talon { padding-left: 18px; padding-right: 18px; }
+  .tabla th, .tabla td { padding: 10px 7px; }
+}
+
+/* La boleta con muesca necesita que el fondo de al lado sea el del papel. En
+   pantallas muy angostas la tarjeta llega casi al borde y las muescas quedan
+   cortadas a la mitad: se quitan antes que dejarlas a medias. */
+@media (max-width: 400px) {
+  .boleta .talon::before, .boleta .talon::after { display: none; }
+}

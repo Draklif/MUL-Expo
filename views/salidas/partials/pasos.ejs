@@ -1,0 +1,30 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     El trámite entero en cuatro casillas.
+
+     Va arriba del todo en las dos páginas que importan, y con la misma
+     redacción en las dos, porque es lo que más se malentiende: registrarse
+     NO es tener cupo. El cupo se tiene cuando el docente recibe el
+     consentimiento firmado y el pago, y eso pasa en persona.
+
+     `hechos` es cuántas casillas ya están cumplidas. La siguiente se pinta
+     en ámbar: es donde está parado quien mira. Las demás quedan en gris —si
+     todo se colorea, nada indica dónde está uno—.
+     ───────────────────────────────────────────────────────────────── */%>
+<%
+  const quien = salida.docente && salida.docente.nombre ? salida.docente.nombre : "el docente encargado";
+  const PASOS = [
+    { t: "Te registras", d: "Llenas tus datos aquí y te queda un código. Todavía no tienes cupo." },
+    { t: "Firman el consentimiento", d: "Lo descargas de esta página y lo firman tus padres o acudientes." },
+    { t: "Pagas en persona", d: `Llevas el consentimiento firmado y le pagas el transporte y la póliza a ${quien}.` },
+    { t: "Quedas confirmado", d: "Te llega el correo con las normas y tienes tu puesto en el bus." },
+  ];
+%>
+
+<ol class="pasos">
+  <% PASOS.forEach(function (p, i) { %>
+    <li class="paso <%= i < hechos ? 'hecho' : i === hechos ? 'ahora' : '' %>">
+      <span class="t"><%= p.t %></span>
+      <span class="d"><%= p.d %></span>
+    </li>
+  <% }); %>
+</ol>

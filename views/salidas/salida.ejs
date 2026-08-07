@@ -1,0 +1,193 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA PÁGINA DE UNA SALIDA
+
+     El orden no es decorativo: es el orden en que alguien necesita las
+     cosas. Primero a dónde y cuándo (la boleta), después qué hay que hacer
+     para ir (los cuatro pasos), después con quién y cuánto (que es lo que
+     más se pregunta por WhatsApp), y de últimas lo que hay que leer aunque
+     nadie lo lea: las normas y las dos advertencias.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: salida.lema || `Salida pedagógica a ${salida.lugar}.`, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="sal">
+  <section class="sal-sec">
+    <%- include('partials/boleta') %>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:20px">
+      <% if (abierta) { %>
+        <a href="/salidas/<%= salida.id %>/registro" class="btn">Registrarme para la salida</a>
+        <span class="chip ok">Registros abiertos</span>
+      <% } else { %>
+        <span class="chip malo">
+          <%= cerrada === "lleno" ? "Cupo lleno" : cerrada === "pasada" ? "Ya pasó" : "Registros cerrados" %>
+        </span>
+      <% } %>
+
+      <% if (salida.cupo) { %>
+        <span class="mini">
+          <%= inscritos %> de <%= salida.cupo %> cupos
+          <%= inscritos === 1 ? "tomado" : "tomados" %>
+        </span>
+      <% } %>
+
+      <a href="/salidas/estado" class="foot-acceso" style="margin-left:auto">Ya me registré, consultar mi código</a>
+    </div>
+
+    <% if (!abierta && cerrada === "lleno") { %>
+      <div class="aviso malo" style="margin-top:20px">
+        <p style="margin:0">
+          Se llenaron los <%= salida.cupo %> cupos del bus. Habla con
+          <%= salida.docente && salida.docente.nombre ? salida.docente.nombre : "el docente encargado" %>
+          por si alguien se retira antes de la fecha.
+        </p>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ───── EL TRÁMITE ───── */%>
+  <section class="sal-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Cómo se va</p>
+        <h2>Cuatro pasos</h2>
+      </div>
+    </div>
+    <p class="sec-lead" style="margin-top:0">
+      Registrarse aquí no aparta el cupo. El cupo queda cuando entregas el
+      consentimiento firmado y pagas, y eso se hace en persona.
+    </p>
+    <%- include('partials/pasos', { hechos: 0 }) %>
+  </section>
+
+  <%/* ───── OBJETIVO ───── */%>
+  <% if (salida.objetivo) { %>
+    <section class="sal-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Para qué se va</p>
+          <h2>El objetivo</h2>
+        </div>
+      </div>
+      <div class="tarjeta">
+        <p style="margin:0 0 18px;font-size:16.5px;line-height:1.6"><%= salida.objetivo %></p>
+        <% if (salida.asignaturas && salida.asignaturas.length) { %>
+          <div class="dato">
+            <div class="k">Asignaturas participantes</div>
+            <div class="v"><%= salida.asignaturas.join(" · ") %></div>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  <% } %>
+
+  <%/* ───── PAGO Y CONSENTIMIENTO ─────
+       Las dos cosas que hay que hacer, una al lado de la otra. Son lo que la
+       gente viene a buscar a esta página. */%>
+  <section class="sal-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Lo que hay que hacer</p>
+        <h2>El permiso y el pago</h2>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="tarjeta">
+        <h3>El consentimiento</h3>
+        <p style="color:var(--tinta-dim);margin-top:10px">
+          Lo descargas, lo imprimes y lo firman tus padres o acudientes. Lo
+          llevas firmado el día que vayas a pagar: ahí mismo se revisa.
+          <strong>Sin el consentimiento firmado no se te recibe el pago.</strong>
+        </p>
+        <% if (salida.consentimiento) { %>
+          <a href="<%= salida.consentimiento %>" class="btn ambar" download>Descargar el consentimiento</a>
+        <% } else { %>
+          <p class="mini" style="margin:0">
+            Pídeselo al docente encargado: todavía no está publicado aquí.
+          </p>
+        <% } %>
+      </div>
+
+      <div class="tarjeta">
+        <h3>Qué se paga</h3>
+        <div class="ficha" style="margin-top:12px">
+          <div class="f">
+            <div class="k">Transporte</div>
+            <div class="v"><strong><%= pesos(salida.costos && salida.costos.transporte) || "Consultar" %></strong></div>
+          </div>
+          <div class="f">
+            <div class="k">Póliza</div>
+            <div class="v"><strong><%= pesos(salida.costos && salida.costos.poliza) || "Consultar" %></strong></div>
+          </div>
+          <% if (salida.total) { %>
+            <div class="f">
+              <div class="k">Total</div>
+              <div class="v" style="font-family:var(--display);font-size:20px;font-weight:700;color:var(--monte)">
+                <%= pesos(salida.total) %>
+              </div>
+            </div>
+          <% } %>
+        </div>
+        <p class="mini" style="margin:14px 0 0">
+          Se pagan las dos cosas, en persona y con el docente encargado. La
+          póliza es el seguro del día de la salida y no es opcional.
+        </p>
+      </div>
+
+      <% if (salida.docente) { %>
+        <div class="tarjeta">
+          <h3>A quién se le paga</h3>
+          <div class="ficha" style="margin-top:12px">
+            <div class="f"><div class="k">Docente</div><div class="v"><strong><%= salida.docente.nombre %></strong></div></div>
+            <% if (salida.docente.email) { %>
+              <div class="f"><div class="k">Correo</div><div class="v"><a href="mailto:<%= salida.docente.email %>"><%= salida.docente.email %></a></div></div>
+            <% } %>
+            <% if (salida.docente.telefono) { %>
+              <div class="f"><div class="k">Teléfono</div><div class="v"><%= salida.docente.telefono %></div></div>
+            <% } %>
+            <% if (salida.docente.donde) { %>
+              <div class="f"><div class="k">Dónde</div><div class="v"><%= salida.docente.donde %></div></div>
+            <% } %>
+          </div>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── NORMAS ───── */%>
+  <section class="sal-sec" id="normas">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Durante la salida</p>
+        <h2>Las normas</h2>
+      </div>
+    </div>
+
+    <div class="advertencia">
+      <div class="t">Léelo antes de pagar</div>
+      <% salida.advertencias.forEach(function (a) { %>
+        <p><%= a %></p>
+      <% }); %>
+    </div>
+
+    <ol class="normas">
+      <% salida.normas.forEach(function (n) { %>
+        <li><span><%= n %></span></li>
+      <% }); %>
+    </ol>
+
+    <p style="margin-top:26px;color:var(--tinta-dim)">
+      Evita sanciones y disfruta la salida.
+    </p>
+
+    <% if (abierta) { %>
+      <p style="margin-top:22px">
+        <a href="/salidas/<%= salida.id %>/registro" class="btn">Registrarme para la salida</a>
+      </p>
+    <% } %>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

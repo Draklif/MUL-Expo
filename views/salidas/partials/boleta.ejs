@@ -1,0 +1,62 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     La boleta: el tiquete de la salida.
+
+     Sale igual en las tres páginas públicas —la salida, el formulario y la
+     consulta del código— porque es lo que alguien vuelve a mirar: a dónde,
+     qué día y a qué hora hay que estar en la portería. Lo demás cambia de
+     una página a otra; esto no.
+     ───────────────────────────────────────────────────────────────── */%>
+<div class="boleta">
+  <div class="cabeza">
+    <p class="eyebrow">Salida pedagógica</p>
+    <h2><%= salida.nombre %></h2>
+    <% if (salida.lema) { %><p class="lema"><%= salida.lema %></p><% } %>
+
+    <% if (salida.asignaturas && salida.asignaturas.length) { %>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:14px">
+        <% salida.asignaturas.forEach(function (a) { %>
+          <span class="chip"><%= a %></span>
+        <% }); %>
+      </div>
+    <% } %>
+  </div>
+
+  <div class="talon">
+    <div class="datos">
+      <div class="dato">
+        <div class="k">Destino</div>
+        <div class="v"><strong><%= salida.lugar %></strong></div>
+      </div>
+
+      <div class="dato">
+        <div class="k">Salida</div>
+        <div class="v">
+          <% if (salida.sale) { %>
+            <strong><%= salida.sale.hora %></strong><br /><%= salida.sale.dia %>
+          <% } else { %>
+            Por confirmar
+          <% } %>
+        </div>
+      </div>
+
+      <div class="dato">
+        <div class="k">Regreso</div>
+        <div class="v">
+          <% if (salida.vuelve) { %>
+            <strong><%= salida.vuelve.hora %></strong><br />
+            <%= salida.mismo_dia ? "el mismo día" : salida.vuelve.dia %>
+          <% } else { %>
+            Por confirmar
+          <% } %>
+        </div>
+      </div>
+
+      <% if (salida.punto) { %>
+        <div class="dato">
+          <div class="k">Punto de encuentro</div>
+          <div class="v"><%= salida.punto %></div>
+        </div>
+      <% } %>
+    </div>
+  </div>
+</div>

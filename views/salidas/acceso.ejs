@@ -1,0 +1,43 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+
+<main class="sal angosto" style="max-width:430px;padding-top:64px">
+  <p class="eyebrow">Salidas pedagógicas</p>
+  <h2>Acceso docentes</h2>
+  <p class="sec-lead" style="margin-bottom:28px">
+    Este panel va con su propia contraseña: no es la de la Expo, ni la del
+    torneo, ni la de la jam. Aquí se confirman pagos.
+  </p>
+
+  <% if (!configurado) { %>
+    <div class="aviso malo">
+      <p style="margin:0">
+        El panel todavía no está habilitado. Falta <code>PASSWORD_SALIDAS</code>
+        en el archivo <code>.env</code> del servidor.
+      </p>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <form method="POST" action="/salidas/acceso">
+    <div class="campo">
+      <label for="email">Correo institucional</label>
+      <input type="email" name="email" id="email" required autofocus
+             pattern="<%= PATRON_CORREO %>" value="<%= email %>"
+             placeholder="tunombre@<%= DOMINIO %>" />
+    </div>
+    <div class="campo">
+      <label for="password">Contraseña de salidas</label>
+      <input type="password" name="password" id="password" required />
+    </div>
+    <button type="submit" class="btn block">Entrar</button>
+  </form>
+
+  <p style="margin-top:28px;text-align:center">
+    <a href="/salidas" class="foot-acceso">Volver a las salidas</a>
+  </p>
+</main>
+
+<%- include('../partials/footer') %>

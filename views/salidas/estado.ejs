@@ -1,0 +1,217 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     TU REGISTRO
+
+     La misma página sirve para tres momentos: el "listo" de recién
+     registrarse, la consulta a mitad de trámite y la de quien ya está
+     confirmado. Cambia lo que se dice arriba; lo de abajo —la boleta, las
+     normas— es igual, porque es lo que se vuelve a mirar.
+
+     Lo que nunca se dice a la ligera es "confirmado": esa palabra solo sale
+     cuando están los dos pagos marcados.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: 'Consulta tu registro para la salida pedagógica con tu código.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="sal angosto">
+  <section class="sal-sec">
+    <p class="eyebrow">Tu registro</p>
+    <h1 style="font-size:clamp(26px,5vw,40px)"><%= recienHecho ? "Listo" : "Consultar" %></h1>
+  </section>
+
+  <% if (recienHecho) { %>
+    <div class="aviso bueno" style="margin-top:22px">
+      <p style="margin:0">
+        Quedaste registrado.
+        <% if (correoActivo) { %>
+          Te mandamos el código al correo, pero anótalo también: es con lo que
+          consultas si ya te marcaron los pagos.
+        <% } else { %>
+          <strong>Anota este código</strong>: es con lo que consultas si ya te
+          marcaron los pagos.
+        <% } %>
+      </p>
+    </div>
+    <div class="codigo-grande"><%= codigo %></div>
+  <% } %>
+
+  <%/* ───── BUSCADOR ───── */%>
+  <form method="GET" action="/salidas/estado" style="margin:24px 0">
+    <div class="campo">
+      <label for="codigo">Tu código</label>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <input type="text" name="codigo" id="codigo" maxlength="6" required
+               value="<%= codigo %>" placeholder="ABC234"
+               style="flex:1;min-width:170px;font-family:var(--mono);font-size:17px;letter-spacing:.16em;text-transform:uppercase" />
+        <button type="submit" class="btn">Consultar</button>
+      </div>
+    </div>
+  </form>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <% if (registro) { %>
+    <%
+      // Cuántas casillas del trámite van cumplidas. Quien pagó algo ya entregó
+      // el consentimiento —se revisa en el mismo mostrador—, así que ese paso
+      // se da por hecho en cuanto aparece el primer pago.
+      const hechos = registro.confirmado
+        ? 4
+        : registro.pago_transporte || registro.pago_poliza
+          ? 2
+          : 1;
+      const doc = (salida && salida.docente) || {};
+    %>
+
+    <%/* ───── EN QUÉ VA ───── */%>
+    <div class="tarjeta" style="margin-bottom:6px">
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="min-width:0">
+          <div style="font-family:var(--display);font-weight:700;font-size:18px"><%= registro.nombre %></div>
+          <div class="mini"><%= salida ? salida.nombre : registro.salida %> · código <%= registro.codigo %></div>
+        </div>
+        <span class="chip <%= registro.estado.cls %>" style="margin-left:auto"><%= registro.estado.label %></span>
+      </div>
+
+      <div class="pagos" style="margin-top:18px">
+        <span class="chip <%= registro.pago_transporte ? 'ok' : 'pend' %>">
+          Transporte · <%= registro.pago_transporte ? "pagado" : "pendiente" %>
+        </span>
+        <span class="chip <%= registro.pago_poliza ? 'ok' : 'pend' %>">
+          Póliza · <%= registro.pago_poliza ? "pagada" : "pendiente" %>
+        </span>
+      </div>
+
+      <% if (registro.confirmado) { %>
+        <p style="margin:18px 0 0;color:var(--monte)">
+          <strong>Estás confirmado.</strong> Tienes tu puesto en el bus. Llega al
+          punto de encuentro quince minutos antes: el bus no espera.
+        </p>
+      <% } else { %>
+        <p style="margin:18px 0 0;color:var(--tinta-dim)">
+          Todavía no estás confirmado.
+          <% if (!registro.pago_transporte && !registro.pago_poliza) { %>
+            Falta que lleves el consentimiento firmado y pagues el transporte y
+            la póliza.
+          <% } else { %>
+            Falta el pago de <%= registro.pago_transporte ? "la póliza" : "el transporte" %>.
+          <% } %>
+          <% if (doc.nombre) { %>
+            Eso se hace en persona con <strong><%= doc.nombre %></strong><% if (doc.telefono) { %>
+            (<%= doc.telefono %>)<% } %>.
+          <% } %>
+        </p>
+      <% } %>
+    </div>
+
+    <% if (salida) { %>
+      <%- include('partials/pasos', { hechos: hechos }) %>
+    <% } %>
+
+    <%/* ───── LO QUE FALTA ───── */%>
+    <% if (!registro.confirmado && salida) { %>
+      <section class="sal-sec">
+        <div class="sec-top">
+          <div>
+            <p class="eyebrow">Lo que te falta</p>
+            <h2 style="font-size:22px">El permiso y el pago</h2>
+          </div>
+        </div>
+
+        <div class="tarjeta">
+          <% if (salida.consentimiento) { %>
+            <p style="margin-top:0;color:var(--tinta-dim)">
+              Descarga el consentimiento, hazlo firmar de tus padres o acudientes
+              y llévalo el día que vayas a pagar.
+            </p>
+            <a href="<%= salida.consentimiento %>" class="btn ambar" download>Descargar el consentimiento</a>
+          <% } %>
+
+          <div class="ficha" style="margin-top:18px">
+            <% if (doc.nombre) { %>
+              <div class="f"><div class="k">Le pagas a</div><div class="v"><strong><%= doc.nombre %></strong></div></div>
+            <% } %>
+            <% if (doc.email) { %>
+              <div class="f"><div class="k">Correo</div><div class="v"><a href="mailto:<%= doc.email %>"><%= doc.email %></a></div></div>
+            <% } %>
+            <% if (doc.telefono) { %>
+              <div class="f"><div class="k">Teléfono</div><div class="v"><%= doc.telefono %></div></div>
+            <% } %>
+            <% if (doc.donde) { %>
+              <div class="f"><div class="k">Dónde y cuándo</div><div class="v"><%= doc.donde %></div></div>
+            <% } %>
+            <div class="f">
+              <div class="k">Transporte</div>
+              <div class="v"><%= pesos(salida.costos && salida.costos.transporte) || "Consultar" %></div>
+            </div>
+            <div class="f">
+              <div class="k">Póliza</div>
+              <div class="v"><%= pesos(salida.costos && salida.costos.poliza) || "Consultar" %></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    <% } %>
+
+    <%/* ───── LA SALIDA ───── */%>
+    <% if (salida) { %>
+      <section class="sal-sec">
+        <%- include('partials/boleta') %>
+      </section>
+
+      <%/* ───── TUS DATOS ─────
+           Para que alguien pueda ver que el documento quedó bien escrito antes
+           de que la aseguradora lo rechace el día de la salida. */%>
+      <section class="sal-sec">
+        <div class="sec-top">
+          <div>
+            <p class="eyebrow">Lo que quedó registrado</p>
+            <h2 style="font-size:22px">Tus datos</h2>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <div class="ficha">
+            <div class="f"><div class="k">Nombre</div><div class="v"><%= registro.nombre %></div></div>
+            <div class="f"><div class="k">Código</div><div class="v"><%= registro.codigo_estudiante %></div></div>
+            <div class="f"><div class="k">Documento</div><div class="v"><%= registro.tipo_id %> <%= registro.num_id %></div></div>
+            <div class="f"><div class="k">Teléfono</div><div class="v"><%= registro.telefono %></div></div>
+            <div class="f"><div class="k">Correo</div><div class="v"><%= registro.email %></div></div>
+          </div>
+          <p class="mini" style="margin:16px 0 0">
+            ¿Algo mal escrito? Dile al docente encargado antes de la salida: eso
+            es lo que va en la póliza.
+          </p>
+        </div>
+      </section>
+
+      <%/* ───── NORMAS ───── */%>
+      <section class="sal-sec">
+        <div class="sec-top">
+          <div>
+            <p class="eyebrow">Durante la salida</p>
+            <h2 style="font-size:22px">Las normas</h2>
+          </div>
+        </div>
+
+        <div class="advertencia">
+          <div class="t">Ten esto claro</div>
+          <% salida.advertencias.forEach(function (a) { %>
+            <p><%= a %></p>
+          <% }); %>
+        </div>
+
+        <ol class="normas">
+          <% salida.normas.forEach(function (n) { %>
+            <li><span><%= n %></span></li>
+          <% }); %>
+        </ol>
+
+        <p style="margin-top:24px;color:var(--tinta-dim)">Evita sanciones y disfruta la salida.</p>
+      </section>
+    <% } %>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

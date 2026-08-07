@@ -188,6 +188,100 @@ const JAM = {
   ],
 };
 
+// ---------------------------------------------------------------------
+//  SALIDAS PEDAGÓGICAS
+// ---------------------------------------------------------------------
+// Esto NO es un evento del programa: es una salida académica —SOFA, una feria,
+// un museo, una visita a un estudio— y por eso no está en EVENTOS ni le pelea
+// la raíz "/" a nadie. Vive siempre en /salidas y se comparte por enlace.
+//
+// La página es UNA sola y sirve para todas: lo que cambia de una salida a otra
+// —a dónde se va, cuándo, para qué, qué asignaturas van y quién cobra— está
+// aquí abajo y en ningún otro lado. Agregar una salida es agregar un objeto a
+// la lista; el sitio y el panel salen de eso.
+//
+// El trámite es siempre el mismo y por eso está escrito en el código y no aquí:
+//
+//   1. el estudiante se registra y le queda un código;
+//   2. descarga el consentimiento y lo hace firmar de sus padres o acudientes;
+//   3. lleva el consentimiento firmado y le paga al docente el transporte y la
+//      póliza —el consentimiento se revisa ahí, en persona—;
+//   4. el docente marca los dos pagos en el panel y al estudiante le llega el
+//      correo que lo deja confirmado para la salida.
+//
+// Los campos de cada salida:
+//
+//   id            — la dirección (/salidas/sofa-2026) y lo que queda guardado
+//                   en cada registro. No se cambia una vez repartida.
+//   inscripciones — true mientras el formulario reciba gente. A diferencia de
+//                   los eventos, aquí no hay bandera "activo": puede haber dos
+//                   salidas abiertas a la vez, porque son de asignaturas
+//                   distintas y no compiten por el semestre.
+//   salida        — AAAA-MM-DD HH:MM de cuándo arranca el bus.
+//   regreso       — lo mismo, para la hora de recogida.
+//   punto         — de dónde sale y a dónde vuelve.
+//   costos        — lo que se paga, en pesos. null = "consultar con el docente".
+//   cupo          — cuántos caben en el bus. null = sin tope.
+//   docente       — quién cobra y cómo ubicarlo. Es el dato más importante de
+//                   la página: sin eso nadie puede pagar.
+//   consentimiento— el archivo que se descarga, servido desde public/.
+const SALIDAS = {
+  // Los documentos que puede tener un estudiante. Lo que no esté en esta lista
+  // no se guarda: el selector la ofrece, pero el formulario lo manda cualquiera.
+  tipos_id: [
+    "Cédula de ciudadanía",
+    "Tarjeta de identidad",
+    "Cédula de extranjería",
+    "Pasaporte",
+  ],
+
+  // Las normas de la salida. Son las mismas para todas —es un tema de la
+  // universidad, no de la feria a la que se vaya—, así que se escriben una vez
+  // y salen en la página, en la consulta del código y en los dos correos.
+  normas: [
+    "El estudiante viaja en el transporte contratado, de ida y de regreso. Irse por cuenta propia sin avisar al docente encargado deja al grupo buscando a alguien que no está.",
+    "Se respetan las horas de salida y de recogida. El bus no espera: quien no esté a la hora de regreso se devuelve por sus propios medios y bajo su propia responsabilidad.",
+    "Durante toda la salida se representa a la Universidad de Boyacá y al programa. Lo que se haga allá se responde aquí.",
+    "Prohibido el consumo de alcohol y de sustancias psicoactivas antes y durante la salida.",
+    "Se acatan las indicaciones del docente encargado y las normas del lugar que se visita.",
+    "Quien tenga una condición médica, un tratamiento o una alergia se lo informa al docente encargado ANTES de la salida.",
+    "El estudiante responde por sus objetos personales y por cualquier daño que cause en el transporte o en el lugar visitado.",
+  ],
+
+  // Las dos advertencias que hay que decir de frente y antes de que alguien
+  // pague, no en letra chica después. Van juntas en la página, en la consulta
+  // y en los correos.
+  advertencias: [
+    "Una vez realizado el pago, la inasistencia no es causal de reembolso del valor pagado.",
+    "El incumplimiento de cualquiera de las normas durante la salida es causal de llamado de atención, informado a la dirección del programa y a decanatura.",
+  ],
+
+  salidas: [
+    {
+      id: "sofa-2026",
+      nombre: "SOFA 2026",
+      lema: "El Salón del Ocio y la Fantasía, en Bogotá.",
+      lugar: "Corferias · Bogotá",
+      objetivo:
+        "Recorrer la feria de industrias creativas más grande del país: videojuegos nacionales, animación, cómic, cosplay y las empresas que contratan multimedia. Se va a ver qué se está produciendo y quién lo produce.",
+      asignaturas: ["Diseño de Videojuegos", "Animación 3D", "Producción Multimedia"],
+      inscripciones: true,
+      salida: "2026-10-16 05:00",
+      regreso: "2026-10-16 23:00",
+      punto: "Portería principal · Universidad de Boyacá, sede Tunja",
+      cupo: 40,
+      costos: { transporte: 55000, poliza: 9000 },
+      consentimiento: "/documents/CONSENTIMIENTO.docx",
+      docente: {
+        nombre: "Jose Rentería",
+        email: "jmrenteria@uniboyaca.edu.co",
+        telefono: "320 000 0000",
+        donde: "Oficina de Multimedia · lunes a viernes, 8:00 a. m. a 12:00 m.",
+      },
+    },
+  ],
+};
+
 // Contraseña del panel de Virtual Champions. Es DISTINTA a la de la Expo a
 // propósito: los mismos docentes, pero dos herramientas separadas. Va en el
 // .env (PASSWORD_VC). Sin ella el panel del torneo queda cerrado, pero el
@@ -197,6 +291,12 @@ const PASSWORD_VC = String(process.env.PASSWORD_VC || "").trim();
 // Contraseña del panel de la Jam de Altura, por la misma razón: tercera
 // herramienta, tercera clave. Va en el .env (PASSWORD_JAM).
 const PASSWORD_JAM = String(process.env.PASSWORD_JAM || "").trim();
+
+// Contraseña del panel de las salidas pedagógicas (PASSWORD_SALIDAS en el
+// .env). Aquí la separación importa más que en las otras: quien opera este
+// panel está confirmando pagos en efectivo, y eso no tiene por qué abrirse con
+// la misma clave con la que se califica un proyecto.
+const PASSWORD_SALIDAS = String(process.env.PASSWORD_SALIDAS || "").trim();
 
 // Contraseña compartida para todos los docentes.
 // El correo identifica a cada quien; esta clave es la segunda barrera.
@@ -258,9 +358,11 @@ module.exports = {
   EVENTOS,
   VC,
   JAM,
+  SALIDAS,
   PASSWORD,
   PASSWORD_VC,
   PASSWORD_JAM,
+  PASSWORD_SALIDAS,
   DOCENTES,
   CORREO,
   CRITERIOS,

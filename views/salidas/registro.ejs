@@ -1,0 +1,125 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL FORMULARIO
+
+     Seis campos y ni uno más. Todo lo que se pide aquí tiene una razón que
+     se puede decir en una línea, y la que no la tenga sobra:
+
+       nombre y código  — quién eres, para la lista que sube al bus;
+       tipo y número    — lo que pide la aseguradora para la póliza;
+       teléfono         — el único canal para ubicarte el día de la salida;
+       correo           — a dónde llega el código y la confirmación.
+
+     Lo que NO se pide aquí es el consentimiento: eso se firma en papel y se
+     entrega en persona. Subir un archivo escaneado daría la sensación de que
+     el trámite quedó hecho, y no es así.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: `Registro para ${salida.nombre}.`, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="sal angosto">
+  <section class="sal-sec">
+    <p class="eyebrow"><%= salida.nombre %></p>
+    <h1 style="font-size:clamp(26px,5vw,40px)">Registro</h1>
+    <p class="sec-lead">
+      Esto te aparta el cupo mientras haces el resto. No te confirma:
+      confirmarte es entregar el consentimiento firmado y pagar.
+    </p>
+  </section>
+
+  <% if (errores.length) { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0"><strong>Falta algo:</strong></p>
+      <ul>
+        <% errores.forEach(function (e) { %><li><%= e %></li><% }); %>
+      </ul>
+    </div>
+  <% } %>
+
+  <% if (!abierta) { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0">
+        <% if (cerrada === "lleno") { %>
+          Se llenaron los <%= salida.cupo %> cupos de esta salida.
+        <% } else if (cerrada === "pasada") { %>
+          Esta salida ya pasó.
+        <% } else { %>
+          Los registros de esta salida están cerrados.
+        <% } %>
+        <a href="/salidas/<%= salida.id %>">Volver a la salida</a>.
+      </p>
+    </div>
+  <% } else { %>
+
+    <form method="POST" action="/salidas/<%= salida.id %>/registro" style="margin-top:26px">
+      <div class="campo">
+        <label for="nombre">Nombre completo</label>
+        <input type="text" name="nombre" id="nombre" required maxlength="120" autofocus
+               value="<%= valores.nombre %>" placeholder="Como aparece en tu documento" />
+        <p class="ayuda">Va tal cual a la póliza, así que sin apodos.</p>
+      </div>
+
+      <div class="campo">
+        <label for="codigo_estudiante">Código estudiantil</label>
+        <input type="text" name="codigo_estudiante" id="codigo_estudiante" required maxlength="20"
+               inputmode="numeric" value="<%= valores.codigo_estudiante %>" />
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="tipo_id">Tipo de documento</label>
+          <select name="tipo_id" id="tipo_id" required>
+            <option value="">Elige…</option>
+            <% tipos.forEach(function (t) { %>
+              <option value="<%= t %>" <%= valores.tipo_id === t ? "selected" : "" %>><%= t %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="num_id">Número de documento</label>
+          <input type="text" name="num_id" id="num_id" required maxlength="20"
+                 inputmode="numeric" value="<%= valores.num_id %>" />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="telefono">Teléfono</label>
+        <input type="tel" name="telefono" id="telefono" required maxlength="25"
+               value="<%= valores.telefono %>" placeholder="300 000 0000" />
+        <p class="ayuda">
+          El tuyo, no el de tu casa: es al que se llama si el bus está por salir
+          y no apareces.
+        </p>
+      </div>
+
+      <div class="campo">
+        <label for="email">Correo institucional</label>
+        <input type="email" name="email" id="email" required maxlength="160"
+               pattern="<%= PATRON_CORREO %>" value="<%= valores.email %>"
+               placeholder="tunombre@<%= DOMINIO %>" />
+        <p class="ayuda">Ahí te llega el código y, cuando pagues, la confirmación.</p>
+      </div>
+
+      <div class="advertencia">
+        <div class="t">Al registrarte aceptas</div>
+        <% salida.advertencias.forEach(function (a) { %>
+          <p><%= a %></p>
+        <% }); %>
+        <p>
+          Las normas completas están en
+          <a href="/salidas/<%= salida.id %>#normas">la página de la salida</a>
+          y te llegan por correo.
+        </p>
+      </div>
+
+      <button type="submit" class="btn block">Registrarme</button>
+    </form>
+
+    <p class="mini" style="margin-top:22px;text-align:center">
+      ¿Ya te registraste? <a href="/salidas/estado">Consulta tu código</a>.
+    </p>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>
