@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const path = require("path");
 
 const db = require("./db/database");
-const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD } = require("./config");
+const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD, PERIODO } = require("./config");
 const { contenidoEvento } = require("./lib/contenido");
 const eventos = require("./lib/eventos");
 const { DOMINIO, PATRON_HTML } = require("./lib/correos");
@@ -20,7 +20,6 @@ const proyectosRouter = require("./routes/proyectos");
 const apiRouter = require("./routes/api");
 const registroRouter = require("./routes/registro");
 const certificadosRouter = require("./routes/certificados");
-const periodosRouter = require("./routes/periodos");
 const vcRouter = require("./routes/vc");
 const vcPanelRouter = require("./routes/vc-panel");
 const jamRouter = require("./routes/jam");
@@ -104,14 +103,21 @@ app.use("/", authRouter);
 app.use("/materias", requireAuth, conPeriodo, materiasRouter);
 app.use("/proyectos", requireAuth, conPeriodo, proyectosRouter);
 app.use("/api", requireAuth, conPeriodo, apiRouter);
-app.use("/periodos", requireAuth, periodosRouter);
 
 // Página pública de un evento. La raíz la usa para el que esté vigente y cada
 // slug para el suyo; 'base' es la dirección desde la que se está viendo, para
 // que los enlaces de la página vuelvan a donde estaba el visitante.
 function renderEvento(res, evento, base) {
   if (evento.vista) {
-    return res.render(evento.vista, { ...contenidoEvento(evento.datos), base, slug: evento.slug });
+    const contenido = contenidoEvento(evento.datos);
+    // Si el registro recibe o no lo dice config, no el JSON: el archivo de
+    // datos pone los textos. Así el botón de la landing y el formulario de
+    // /registro no pueden contradecirse.
+    const registro = contenido.registro
+      ? { ...contenido.registro, abierto: eventos.inscripcionesAbiertas(evento.slug) }
+      : null;
+
+    return res.render(evento.vista, { ...contenido, registro, base, slug: evento.slug });
   }
   // Sin plantilla propia todavía: la página de aviso se arma con el config.
   res.render("evento-proximo", {
@@ -217,7 +223,16 @@ eventos.EVENTOS.forEach((evento) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   const vigente = eventos.activo();
+  const abierto = eventos.inscripcionesAbiertas(vigente.slug);
+
+  // Las dos líneas que hay que leer al arrancar: qué evento manda y si está
+  // recibiendo gente. Las dos salen de config.js y de ningún otro lado.
   console.log(`\n  ✓ ${vigente.nombre} en http://localhost:${PORT}`);
+  console.log(`    Semestre ${PERIODO} · inscripciones ${abierto ? "ABIERTAS" : "cerradas"}`);
+  if (!abierto) {
+    console.log(`    Para abrirlas: inscripciones: true en "${vigente.slug}", en config.js.`);
+  }
+  console.log("");
   eventos.EVENTOS.filter((e) => e.slug !== vigente.slug).forEach((e) => {
     console.log(`  · ${e.nombre.padEnd(24)} http://localhost:${PORT}/${e.slug}`);
   });

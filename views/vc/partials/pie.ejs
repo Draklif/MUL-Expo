@@ -5,8 +5,8 @@
       <%= programa %> · <%= institucion %>
     </div>
     <div class="der">
-      <a href="/vc/inscripcion">Inscribirse</a>
-      <a href="/vc/inscripcion/estado">Consultar código</a>
+      <a href="/vc/inscripcion<%= qJuego %>">Inscribirse</a>
+      <a href="/vc/inscripcion/estado<%= qJuego %>">Consultar código</a>
       <%/* El acceso de la organización va discreto y no en el menú: esta
            página es para quien viene a jugar o a mirar. */%>
       <a href="<%= docenteVC ? '/vc/panel' : '/vc/acceso' %>" class="foot-acceso">

@@ -17,7 +17,9 @@
   <% if (!equipos.length) { %>
     <div class="vacio" style="margin-top:26px">
       Todavía no hay equipos confirmados.
-      <div style="margin-top:14px"><a href="/vc/inscripcion" class="btn chico">Inscribir el mío</a></div>
+      <% if (abierta) { %>
+        <div style="margin-top:14px"><a href="/vc/inscripcion<%= qJuego %>" class="btn chico">Inscribir el mío</a></div>
+      <% } %>
     </div>
   <% } else { %>
     <div class="grid" style="margin-top:8px">

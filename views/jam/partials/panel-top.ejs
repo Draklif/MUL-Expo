@@ -8,9 +8,9 @@
       <a href="/jam/panel">Ediciones</a>
       <a href="/jam-de-altura">Ver el sitio</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:14px;margin-left:12px">
+    <div class="panel-quien">
       <span class="mini"><%= docenteJam.name %><%= periodoJam ? " · " + periodoJam.codigo : "" %></span>
-      <form method="POST" action="/jam/salir" style="margin:0">
+      <form method="POST" action="/jam/salir">
         <button type="submit" class="btn chico">Salir</button>
       </form>
     </div>

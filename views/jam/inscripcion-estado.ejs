@@ -52,7 +52,14 @@
         <span class="escudo"><%= e.nombre.split(/\s+/).map(function (p) { return p[0]; }).join("").slice(0, 3) %></span>
         <div style="min-width:0">
           <div class="nom"><%= e.nombre %></div>
-          <div class="mini"><%= e.integrantes.length %> integrantes</div>
+          <div class="mini">
+            <% if (e.solitario) { %>
+              En solitario
+            <% } else { %>
+              <%= e.integrantes.length %>
+              <%= e.integrantes.length === 1 ? "integrante" : "integrantes" %>
+            <% } %>
+          </div>
         </div>
         <span class="chip <%= e.estado_info.cls %>" style="margin-left:auto"><%= e.estado_info.label %></span>
       </div>
@@ -71,8 +78,8 @@
           <% } %>
         </p>
       <% } else { %>
-        <p style="color:var(--ink-dim)">Están dentro de la jam.</p>
-        <a href="/jam/equipo/<%= e.id %>" class="btn chico">Ver el equipo</a>
+        <p style="color:var(--ink-dim)"><%= e.solitario ? "Estás dentro de la jam." : "Están dentro de la jam." %></p>
+        <a href="/jam/equipo/<%= e.id %>" class="btn chico"><%= e.solitario ? "Ver mi ficha" : "Ver el equipo" %></a>
       <% } %>
 
       <ul class="roster">
@@ -146,7 +153,7 @@
   <% if (encontrado && encontrado.tipo === "solista") { %>
     <% const p = encontrado.persona; %>
     <div class="tarjeta" style="margin-top:10px">
-      <div class="eyebrow" style="margin-bottom:12px">Inscripción individual</div>
+      <div class="eyebrow" style="margin-bottom:12px">Buscando equipo</div>
       <div class="nom" style="font-family:var(--display);font-size:14px;text-transform:uppercase"><%= p.nombre %></div>
       <div class="mini" style="margin:8px 0 16px"><%= p.disciplina || "Sin disciplina" %></div>
 
@@ -161,13 +168,15 @@
         <p style="color:var(--ink-dim)">
           Estás en la lista y todavía no tienes equipo.
           <% if (p.esperando > 1) { %>
-            Van <strong><%= p.esperando %></strong> esperando: apenas se pueda armar
+            Van <strong><%= p.esperando %></strong> buscando: apenas se pueda armar
             un equipo que no quede cojo, lo armamos.
           <% } %>
         </p>
         <p class="mini" style="margin:0">
           Cuando pase te llega un correo con el nombre del equipo, con quiénes te
-          tocaron y con el código para entregar.
+          tocaron y con el código para entregar. Si al final no se junta ninguno,
+          la organización te pregunta si prefieres entrar en solitario antes de
+          que arranque.
         </p>
       <% } %>
     </div>

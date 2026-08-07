@@ -1,0 +1,60 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     La tabla de torneos del panel, para el semestre en curso y para el
+     archivo.
+
+     Son TRES columnas y no siete a propósito. Antes había una para el
+     semestre, otra para los equipos, otra para los que faltan por revisar y
+     otra para los que esperan equipo: en un portátil se veía bien y en un
+     teléfono la tabla se salía de la pantalla y arrastraba la página entera
+     con ella.
+
+     La salida no es una barra de scroll: es que sobraban columnas. El
+     semestre baja a la línea chica del nombre, los tres conteos son chips en
+     una sola celda —que era lo que ya eran— y el botón "Abrir" se va porque
+     el nombre del torneo ya es el enlace. Con eso la tabla entra completa en
+     un teléfono y no se esconde ni un dato.
+
+       lista      — los torneos a pintar.
+       historial  — true en los semestres pasados: ahí no importa cuántos
+                    quedaron por revisar, eso ya no lo va a hacer nadie.
+     ───────────────────────────────────────────────────────────────── */%>
+<table class="tabla">
+  <thead>
+    <tr>
+      <th>Torneo</th>
+      <th>Estado</th>
+      <th>Equipos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% lista.forEach(function (t) { %>
+      <tr>
+        <td>
+          <a href="/vc/panel/torneos/<%= t.id %>" style="text-decoration:none">
+            <strong style="font-family:var(--display);text-transform:uppercase"><%= t.nombre %></strong>
+          </a>
+          <div class="mini">
+            <%= t.juego_info ? t.juego_info.nombre : t.juego %> · <%= t.periodo || "sin semestre" %>
+          </div>
+        </td>
+        <td>
+          <span class="chip <%= t.estado === 'en_curso' ? 'acento' : t.estado === 'finalizado' ? 'no' : 'ok' %>">
+            <%= t.estado === "inscripcion" ? "Inscripciones" : t.estado === "en_curso" ? "En curso" : "Terminado" %>
+          </span>
+          <% if (t.n_vivo > 0) { %><span class="chip vivo"><%= t.n_vivo %> en vivo</span><% } %>
+        </td>
+        <td>
+          <strong><%= t.n_equipos %></strong>
+          <% if (!historial) { %>
+            <% if (t.n_pendientes > 0) { %>
+              <span class="chip pend" title="Por revisar"><%= t.n_pendientes %> por revisar</span>
+            <% } %>
+            <% if (t.n_libres > 0) { %>
+              <span class="chip alerta" title="Esperando equipo"><%= t.n_libres %> sin equipo</span>
+            <% } %>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+  </tbody>
+</table>

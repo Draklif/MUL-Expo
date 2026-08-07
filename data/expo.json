@@ -306,8 +306,7 @@
     }
   ],
   "registro": {
-    "_comentario": "Registro de expositores. Con \"abierto\": false el formulario deja de recibir registros y la landing muestra el aviso de cierre en vez del botón.",
-    "abierto": true,
+    "_comentario": "Textos del registro de expositores. Abrirlo y cerrarlo NO se hace aquí: es \"inscripciones\" en el evento expo de config.js, igual que en el torneo y en la jam.",
     "titulo": "¿Vas a exponer?",
     "nota": "Registra tu proyecto antes del evento: eliges la materia, dices quiénes lo presentan y en qué sala quieren estar. El docente de la materia revisa el registro y lo aprueba.",
     "cierra": "Fecha de cierre por definir",

@@ -21,7 +21,7 @@
   <% if (!torneos.length) { %>
     <div class="vacio" style="margin-top:22px">
       No hay inscripciones abiertas en este momento.
-      <div style="margin-top:14px"><a href="/virtual-champions" class="btn ghost chico">Volver al torneo</a></div>
+      <div style="margin-top:14px"><a href="/virtual-champions<%= qJuego %>" class="btn ghost chico">Volver al torneo</a></div>
     </div>
   <% } else { %>
 
@@ -39,6 +39,7 @@
                   data-ejemplo="<%= t.juego_info.nick.ejemplo %>"
                   data-roles="<%= t.juego_info.roles.join('|') %>"
                   data-esperando="<%= t.esperando %>"
+                  data-acento="<%= t.juego_info.acento %>"
                   <%= String(valores.torneo_id) === String(t.id) ? "selected" : "" %>>
             <%= t.juego_info.nombre %> · <%= t.inscritos %> equipos inscritos
           </option>
@@ -154,7 +155,7 @@
 
     <div style="margin-top:30px;display:flex;gap:12px;flex-wrap:wrap">
       <button type="submit" class="btn">Inscribirme</button>
-      <a href="/vc/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+      <a href="/vc/inscripcion/estado<%= qJuego %>" class="btn ghost">Ya me inscribí</a>
     </div>
   </form>
 
@@ -191,7 +192,16 @@
         ejemplo: op.dataset.ejemplo || "",
         roles: (op.dataset.roles || "").split("|").filter(Boolean),
         esperando: Number(op.dataset.esperando) || 0,
+        acento: op.dataset.acento || "",
       };
+    }
+
+    // El color de la página sigue al juego que se elige en el selector. Toda
+    // la hoja lee var(--juego), así que cambiar esa variable repinta la
+    // cabecera, los botones y los acentos de una: quien elige LoL en la
+    // primera casilla ve dorado, no el rojo de Valorant.
+    function pintar(j) {
+      if (j && j.acento) document.documentElement.style.setProperty("--juego", j.acento);
     }
 
     function esSolo() {
@@ -244,6 +254,7 @@
       }
 
       pintarRoles(j);
+      pintar(j);
     }
 
     document.getElementById("agregar").addEventListener("click", function () {

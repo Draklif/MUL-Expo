@@ -1,6 +1,6 @@
 const express = require("express");
 const db = require("../db/database");
-const { contenidoDe } = require("../lib/eventos");
+const { contenidoDe, inscripcionesAbiertas } = require("../lib/eventos");
 const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
@@ -29,9 +29,18 @@ const limiteRegistro = crearLimite({ ventanaMs: 10 * 60 * 1000, maximo: 30 });
 const listaMaterias = () =>
   db.prepare("SELECT id, nombre FROM materias ORDER BY nombre COLLATE NOCASE").all();
 
+/**
+ * El bloque "registro" del JSON, pero con `abierto` decidido por config y no
+ * por el archivo de contenido.
+ *
+ * El JSON pone los textos —el título, la nota, la fecha de cierre, el aviso de
+ * cerrado—; config pone si se recibe o no. Es el mismo reparto que en el
+ * torneo y en la jam: un solo interruptor por evento y en un solo archivo, en
+ * vez de tres formas distintas de cerrar tres eventos.
+ */
 function estadoRegistro() {
   const { registro } = contenidoDe("expo");
-  return registro || { abierto: true };
+  return { ...(registro || {}), abierto: inscripcionesAbiertas("expo") };
 }
 
 function vistaFormulario(extra = {}) {

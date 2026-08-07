@@ -35,6 +35,17 @@ const contenido = () => contenidoEvento(EVENTO ? EVENTO.datos : "");
 /**
  * Arma el marco común: qué juego se está viendo, su torneo vigente y los
  * datos de cabecera. Todas las vistas del torneo reciben esto.
+ *
+ * Tres de las páginas del sitio no llevan el juego en la dirección —la
+ * portada, la inscripción y la consulta del código—, y sin él caían siempre
+ * en el primero de config.VC.juegos. El efecto era feo: alguien mirando el
+ * bracket de LoL tocaba "Inicio" y la página se le ponía roja de Valorant sin
+ * haber pedido nada. Por eso esas tres aceptan `?juego=`, y por eso `qJuego`
+ * viaja a las vistas: es lo que hay que colgarle a cualquier enlace interno
+ * que no lleve el juego en la ruta.
+ *
+ * Con un solo juego configurado el parámetro sobra y no se pone: no hay entre
+ * qué elegir y solo ensuciaría las direcciones que se comparten.
  */
 function marco(req, juegoId) {
   const juego = vc.juegoDe(juegoId || req.query.juego);
@@ -45,6 +56,10 @@ function marco(req, juegoId) {
     juegos: vc.JUEGOS,
     juego,
     torneo,
+    qJuego: vc.JUEGOS.length > 1 && juego ? `?juego=${encodeURIComponent(juego.id)}` : "",
+    // Si el botón de "Inscribirme" tiene sentido o no. Sale una sola vez y de
+    // un solo sitio para que ninguna vista lo decida por su cuenta.
+    abierta: vc.inscripcionAbierta(torneo),
     // Las vistas formatean fechas con esto: la hora de una partida se arma
     // partiendo la cadena, nunca con Date, para que no se corra de día.
     momentoDe: vc.momento,
@@ -159,34 +174,46 @@ router.get("/vc/api/vivo", (req, res) => {
 // ---------------------------------------------------------------------
 //  Inscripción
 // ---------------------------------------------------------------------
-// Torneos abiertos, agrupados por juego, para el selector del formulario.
+// Torneos que reciben equipos, para el selector del formulario. Salen SOLO del
+// semestre activo y solo si config tiene el torneo abierto: el del semestre
+// pasado no se ofrece nunca, aunque su fila se haya quedado en 1.
 function torneosAbiertos() {
-  return db
-    .prepare(
-      `SELECT * FROM vc_torneos
-        WHERE inscripcion_abierta = 1 AND estado != 'finalizado'
-        ORDER BY created_at DESC`
-    )
-    .all()
+  return vc
+    .torneosDelSemestre()
+    .filter((t) => vc.inscripcionAbierta(t))
     .map((t) => ({
       ...t,
       juego_info: vc.juego(t.juego),
-      inscritos: db
-        .prepare("SELECT COUNT(*) AS n FROM vc_equipos WHERE torneo_id = ? AND estado != 'rechazado'")
-        .get(t.id).n,
+      inscritos: vc.contarEquipos(t.id),
       esperando: vc.agentesLibres(t.id).length,
     }))
     .filter((t) => t.juego_info); // un torneo de un juego que ya no está en config no se ofrece
 }
 
 function vistaInscripcion(req, extra = {}) {
+  // Al reenviar el formulario con errores, el POST va a /vc/inscripcion a
+  // secas y el ?juego= se pierde. El juego sale entonces del torneo que la
+  // persona ya había elegido en el selector: la página no puede cambiarle de
+  // color justo cuando le está diciendo qué corregir.
+  const elegido =
+    extra.valores && extra.valores.torneo_id ? vc.torneo(extra.valores.torneo_id) : null;
+
+  const base = marco(req, elegido ? elegido.juego : null);
+  const torneos = torneosAbiertos();
+
+  // El selector llega con el juego que se venía mirando ya elegido. Quien
+  // entra desde la pestaña de LoL no tiene por qué volver a decir "LoL" en la
+  // primera casilla del formulario.
+  const porDefecto =
+    base.torneo && torneos.some((t) => t.id === base.torneo.id) ? String(base.torneo.id) : "";
+
   return {
-    ...marco(req),
+    ...base,
     activa: "inscripcion",
     title: "Inscripción · Virtual Champions",
-    torneos: torneosAbiertos(),
+    torneos,
     errores: [],
-    valores: { modo: "equipo", jugadores: [] },
+    valores: { modo: "equipo", jugadores: [], torneo_id: porDefecto },
     ...extra,
   };
 }
@@ -216,7 +243,7 @@ router.post("/vc/inscripcion", (req, res) => {
   const errores = [];
 
   if (!torneo || !juego) errores.push("Elige el juego en el que se van a inscribir.");
-  else if (!torneo.inscripcion_abierta || torneo.estado === "finalizado") {
+  else if (!vc.inscripcionAbierta(torneo)) {
     errores.push(`Las inscripciones de ${juego.nombre} están cerradas.`);
   }
 

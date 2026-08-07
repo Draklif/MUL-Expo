@@ -22,9 +22,13 @@
     <% if (hero && hero.entradilla) { %><p class="entradilla"><%= hero.entradilla %></p><% } %>
 
     <div class="vc-hero-acciones">
-      <a href="/vc/inscripcion" class="btn">Inscribirme</a>
+      <%/* Con las inscripciones cerradas el botón no se deshabilita: se va. Un
+           botón apagado ocupa el mismo espacio y no sirve para nada. */%>
+      <% if (abierta) { %>
+        <a href="/vc/inscripcion<%= qJuego %>" class="btn">Inscribirme</a>
+      <% } %>
       <% if (juego && torneo) { %>
-        <a href="/vc/<%= juego.id %>/bracket" class="btn ghost">Ver el bracket</a>
+        <a href="/vc/<%= juego.id %>/bracket" class="btn <%= abierta ? 'ghost' : '' %>">Ver el bracket</a>
       <% } %>
     </div>
 
@@ -160,20 +164,30 @@
   </section>
   <% } %>
 
-  <%/* ───── INSCRIPCIÓN ───── */%>
+  <%/* ───── INSCRIPCIÓN ─────
+       Cerradas las inscripciones, la sección cambia de discurso en vez de
+       desaparecer: quien ya se inscribió sigue necesitando consultar su
+       código, y quien llega tarde merece que se lo digan. */%>
   <section class="vc-sec">
     <p class="eyebrow">Participar</p>
-    <h2>Inscríbete</h2>
+    <h2><%= abierta ? "Inscríbete" : "Inscripciones cerradas" %></h2>
     <p class="sec-lead">
-      Con tu equipo completo o tú solo. Si te inscribes solo, quedas en la lista
-      de espera y te asignamos equipo apenas se junten los jugadores que faltan.
-      <% if (esperando > 0) { %>
-        Ahora mismo hay <strong><%= esperando %></strong> esperando.
+      <% if (abierta) { %>
+        Con tu equipo completo o tú solo. Si te inscribes solo, quedas en la lista
+        de espera y te asignamos equipo apenas se junten los jugadores que faltan.
+        <% if (esperando > 0) { %>
+          Ahora mismo hay <strong><%= esperando %></strong> esperando.
+        <% } %>
+      <% } else { %>
+        Ya no se reciben equipos para este torneo. Si te alcanzaste a inscribir,
+        tu código sigue sirviendo para consultar en qué vas.
       <% } %>
     </p>
     <div class="vc-hero-acciones" style="margin-bottom:0">
-      <a href="/vc/inscripcion" class="btn">Inscribirme</a>
-      <a href="/vc/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+      <% if (abierta) { %>
+        <a href="/vc/inscripcion<%= qJuego %>" class="btn">Inscribirme</a>
+      <% } %>
+      <a href="/vc/inscripcion/estado<%= qJuego %>" class="btn <%= abierta ? 'ghost' : '' %>">Ya me inscribí</a>
     </div>
   </section>
 

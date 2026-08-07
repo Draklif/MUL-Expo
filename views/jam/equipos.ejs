@@ -11,11 +11,14 @@
       <% if (abierta) { %><a href="/jam/inscripcion" class="btn chico">Inscribirme</a><% } %>
     </div>
 
+    <%/* Los que están buscando equipo se cuentan aparte de los equipos, y
+         aparte de quienes entraron en solitario: esos tres son cosas
+         distintas y juntarlos en un número no dice nada. */%>
     <% if (esperando > 0) { %>
       <p class="sec-lead">
         Además hay <strong><%= esperando %></strong>
-        <%= esperando === 1 ? "persona inscrita sola" : "personas inscritas solas" %>
-        esperando equipo. La organización los ubica antes de que arranque.
+        <%= esperando === 1 ? "persona buscando equipo" : "personas buscando equipo" %>.
+        La organización las ubica antes de que arranque.
       </p>
     <% } %>
 

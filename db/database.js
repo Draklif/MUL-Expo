@@ -1,6 +1,6 @@
 const { DatabaseSync } = require("node:sqlite");
 const path = require("path");
-const { DOCENTES, PERIODO_INICIAL } = require("../config");
+const { DOCENTES, PERIODO, VC, JAM } = require("../config");
 
 const db = new DatabaseSync(path.join(__dirname, "expo.db"));
 db.exec("PRAGMA journal_mode = WAL");
@@ -305,6 +305,12 @@ db.exec(`
   -- Equipos inscritos. Mismo invento del código de 6 caracteres: se dicta, se
   -- teclea, y con él se consulta el estado y se entrega el juego sin cuenta.
   --
+  -- Un equipo puede ser de UNA persona: quien entra en solitario es un equipo
+  -- de uno y entrega su juego como cualquier otro. Eso lo marca la columna
+  -- "solitario" (ver más abajo, en las migraciones suaves), y es distinto de
+  -- quien se inscribe solo BUSCANDO equipo —ese no tiene fila aquí: vive en
+  -- jam_integrantes con equipo_id nulo hasta que la organización lo ubique—.
+  --
   -- Las cuatro columnas del final son la entrega: mientras estén vacías, el
   -- equipo todavía no ha subido nada.
   CREATE TABLE IF NOT EXISTS jam_equipos (
@@ -385,28 +391,113 @@ function agregarColumna(tabla, columna, definicion) {
 
 agregarColumna("estudiantes", "email", "TEXT");
 agregarColumna("proyectos", "sala", "TEXT");
+// Un equipo de la jam que es UNA persona porque así se inscribió. No es lo
+// mismo que un equipo que se quedó en uno porque los demás se retiraron, y por
+// eso se guarda en vez de deducirse de contar integrantes: quien entra en
+// solitario eligió entrar en solitario, y la página tiene que decirlo así.
+agregarColumna("jam_equipos", "solitario", "INTEGER NOT NULL DEFAULT 0");
 // Cuándo se le avisó por correo al estudiante. Nulo = todavía no sabe que su
 // certificado existe; es lo que evita repetirle el aviso cada vez que se
 // regeneran los certificados de la materia.
 agregarColumna("certificados", "avisado_at", "DATETIME");
 
-// ---------- Semestre inicial ----------
-// Si no hay ninguno, se crea el de config.js y se marca activo.
+// ---------- Semestres ----------
+// La base tiene que tener al menos uno antes de poder repartir nada.
 if (!db.prepare("SELECT COUNT(*) AS n FROM periodos").get().n) {
-  db.prepare("INSERT INTO periodos (codigo, activo) VALUES (?, 1)").run(PERIODO_INICIAL);
-}
-// Siempre tiene que haber exactamente uno activo.
-if (!db.prepare("SELECT COUNT(*) AS n FROM periodos WHERE activo = 1").get().n) {
-  db.prepare("UPDATE periodos SET activo = 1 WHERE id = (SELECT MAX(id) FROM periodos)").run();
+  db.prepare("INSERT INTO periodos (codigo, activo) VALUES (?, 1)").run(PERIODO);
 }
 
-const periodoBase = db.prepare("SELECT id FROM periodos WHERE activo = 1").get().id;
+// El más viejo de todos. Es a donde va lo que venga de una versión anterior a
+// los semestres, y se calcula ANTES de tocar el de config: si no, estrenar un
+// semestre nuevo se llevaría consigo los proyectos de hace dos años.
+const periodoBase = db.prepare("SELECT id FROM periodos ORDER BY id LIMIT 1").get().id;
 
 // ---------- Cada dato de estudiante cuelga de un semestre ----------
 for (const tabla of ["proyectos", "solicitudes", "estudiantes", "certificados"]) {
   agregarColumna(tabla, "periodo_id", "INTEGER REFERENCES periodos(id)");
-  // Lo que existía antes de esta versión es del semestre inicial.
+  // Lo que existía antes de esta versión es del semestre más antiguo.
   db.prepare(`UPDATE ${tabla} SET periodo_id = ? WHERE periodo_id IS NULL`).run(periodoBase);
+}
+
+// ---------- El semestre en curso lo dice config.PERIODO ----------
+// Cambiar esa línea y reiniciar es todo lo que hace falta para empezar de
+// cero: aquí se crea si no existía y se deja como el único activo. Lo del
+// semestre pasado no se toca, solo deja de ser el que recibe.
+if (!db.prepare("SELECT 1 FROM periodos WHERE codigo = ?").get(PERIODO)) {
+  db.prepare("INSERT INTO periodos (codigo, activo) VALUES (?, 0)").run(PERIODO);
+  console.log(`  ✓ Semestre ${PERIODO} abierto.`);
+}
+
+const periodoActual = db.prepare("SELECT * FROM periodos WHERE codigo = ?").get(PERIODO);
+
+if (!periodoActual.activo) {
+  db.exec("BEGIN");
+  try {
+    db.prepare("UPDATE periodos SET activo = 0").run();
+    db.prepare("UPDATE periodos SET activo = 1 WHERE id = ?").run(periodoActual.id);
+    db.exec("COMMIT");
+  } catch (e) {
+    db.exec("ROLLBACK");
+    throw e;
+  }
+}
+
+// ---------- La temporada: lo que cada evento necesita para recibir ----------
+// El torneo de cada juego y la edición de la jam se abren SOLOS, vacíos y en
+// el semestre en curso. Es lo que hace que empezar el semestre siguiente sea
+// cambiar config.PERIODO y ya: nadie tiene que acordarse de crear nada.
+//
+// Es idempotente —se corre en cada arranque y no duplica—, y lo que se abrió
+// en semestres pasados se queda donde está con sus equipos y sus resultados.
+db.exec("BEGIN");
+try {
+  // Lo de semestres pasados se marca cerrado. Que ya no reciba a nadie está
+  // garantizado por el semestre —nada de otro periodo pasa los candados de
+  // inscripción—, pero una fila que se quedó diciendo "inscripciones
+  // abiertas" desde hace un año se lee mal en el panel, y el panel es para
+  // saber qué está pasando de un vistazo.
+  db.prepare(
+    `UPDATE vc_torneos SET estado = 'finalizado', inscripcion_abierta = 0
+      WHERE periodo_id != ? AND (estado != 'finalizado' OR inscripcion_abierta = 1)`
+  ).run(periodoActual.id);
+
+  db.prepare(
+    `UPDATE jam_ediciones SET estado = 'finalizada', inscripcion_abierta = 0, entregas_abiertas = 0
+      WHERE periodo_id != ? AND (estado != 'finalizada' OR inscripcion_abierta = 1 OR entregas_abiertas = 1)`
+  ).run(periodoActual.id);
+
+  const insertTorneo = db.prepare(
+    `INSERT INTO vc_torneos (juego, nombre, periodo_id, estado, inscripcion_abierta)
+     VALUES (?, ?, ?, 'inscripcion', 1)`
+  );
+  const hayTorneo = db.prepare("SELECT 1 FROM vc_torneos WHERE juego = ? AND periodo_id = ?");
+
+  for (const juego of VC.juegos) {
+    if (hayTorneo.get(juego.id, periodoActual.id)) continue;
+    insertTorneo.run(juego.id, `Virtual Champions · ${juego.nombre}`, periodoActual.id);
+    console.log(`  ✓ Torneo de ${juego.nombre} abierto en ${PERIODO}.`);
+  }
+
+  if (!db.prepare("SELECT 1 FROM jam_ediciones WHERE periodo_id = ?").get(periodoActual.id)) {
+    db.prepare(
+      `INSERT INTO jam_ediciones
+         (periodo_id, nombre, estado, inscripcion_abierta, entregas_abiertas,
+          horas, max_integrantes, cupo_equipos)
+       VALUES (?, ?, 'inscripcion', 1, 1, ?, ?, ?)`
+    ).run(
+      periodoActual.id,
+      `Jam de Altura · ${PERIODO}`,
+      JAM.horas,
+      JAM.max_integrantes,
+      JAM.cupo_equipos || null
+    );
+    console.log(`  ✓ Edición de la Jam abierta en ${PERIODO}.`);
+  }
+
+  db.exec("COMMIT");
+} catch (e) {
+  db.exec("ROLLBACK");
+  throw e;
 }
 
 db.exec(`

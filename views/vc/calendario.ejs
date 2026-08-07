@@ -11,7 +11,9 @@
   <% if (!dias.length) { %>
     <div class="vacio" style="margin-top:26px">
       Todavía no hay partidas programadas.
-      <div style="margin-top:14px"><a href="/vc/inscripcion" class="btn chico">Inscribirme</a></div>
+      <% if (abierta) { %>
+        <div style="margin-top:14px"><a href="/vc/inscripcion<%= qJuego %>" class="btn chico">Inscribirme</a></div>
+      <% } %>
     </div>
   <% } else { %>
     <% dias.forEach(function (d) { %>

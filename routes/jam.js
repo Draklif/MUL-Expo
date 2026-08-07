@@ -129,6 +129,9 @@ function vistaInscripcion(req, extra = {}) {
     max: base.edicion ? base.edicion.max_integrantes : jam.MAX_INTEGRANTES,
     errores: [],
     valores: { modo: "equipo", integrantes: [] },
+    // Cuántos hay esperando equipo ahora mismo: es lo que hace que elegir
+    // "busco equipo" no se sienta como caer en un vacío.
+    esperando: base.edicion ? jam.solistas(base.edicion.id).length : 0,
     ...extra,
   };
 }
@@ -142,7 +145,7 @@ router.post("/jam/inscripcion", (req, res) => {
   const max = edicion ? edicion.max_integrantes : jam.MAX_INTEGRANTES;
 
   const valores = {
-    modo: req.body.modo === "solo" ? "solo" : "equipo",
+    modo: jam.modoValido(req.body.modo),
     equipo: String(req.body.equipo || "").trim().slice(0, MAX_NOMBRE_EQUIPO),
     lema: String(req.body.lema || "").trim().slice(0, 120),
     lider_nombre: limpiarNombre(req.body.lider_nombre).slice(0, 120),
@@ -152,6 +155,10 @@ router.post("/jam/inscripcion", (req, res) => {
     // formulario solo caben max - 1.
     integrantes: jam.integrantesDesdeFormulario(req.body, Math.max(0, max - 1)),
   };
+
+  // Las dos modalidades que crean un equipo en la base. La tercera
+  // ("buscando") todavía no tiene equipo: es una persona en la lista.
+  const creaEquipo = valores.modo === "equipo" || valores.modo === "solitario";
 
   const fallar = (errores, status = 400) =>
     res.status(status).render("jam/inscripcion", vistaInscripcion(req, { errores, valores }));
@@ -185,6 +192,12 @@ router.post("/jam/inscripcion", (req, res) => {
       : []),
   ].slice(0, max);
 
+  // A quien entra en solitario no se le pide nombre de equipo: si no escribe
+  // ninguno, sale con el suyo. Ponerle una casilla obligatoria a alguien que
+  // ya dijo que va solo es pedirle que se invente algo por gusto.
+  const nombreEquipo =
+    valores.modo === "solitario" ? valores.equipo || valores.lider_nombre : valores.equipo;
+
   if (valores.modo === "equipo") {
     if (!valores.equipo) errores.push("Ponle nombre al equipo.");
 
@@ -203,19 +216,33 @@ router.post("/jam/inscripcion", (req, res) => {
       );
     }
 
-    // Nombre de equipo repetido en la misma edición. La comparación va en JS
-    // porque el COLLATE NOCASE de SQLite solo ignora mayúsculas en ASCII.
-    if (edicion && valores.equipo) {
-      const objetivo = valores.equipo.toLowerCase();
-      const repetido = db
-        .prepare("SELECT codigo, nombre FROM jam_equipos WHERE edicion_id = ? AND estado != 'rechazado'")
-        .all(edicion.id)
-        .find((e) => e.nombre.toLowerCase() === objetivo);
-      if (repetido) {
-        errores.push(
-          `Ya hay un equipo llamado "${repetido.nombre}". Consulta su estado con el código ${repetido.codigo}.`
-        );
-      }
+    // Un equipo de una sola persona en la modalidad "con mi equipo" casi
+    // siempre es que se eligió la tarjeta equivocada, así que se dice en vez
+    // de dejar pasar un equipo que en realidad quería ser otra cosa.
+    if (equipo.length < 2 && !errores.length) {
+      errores.push(
+        "Quedó una sola persona en el equipo. Agrega a tus compañeros, o elige " +
+          "arriba “Yo solo” si vas a hacer el juego por tu cuenta."
+      );
+    }
+  }
+
+  // Nombre repetido en la misma edición. Vale para las dos modalidades que
+  // crean equipo: el de quien va en solitario también sale en la galería, y
+  // dos entradas con el mismo nombre no hay quien las distinga. La comparación
+  // va en JS porque el COLLATE NOCASE de SQLite solo ignora mayúsculas ASCII.
+  if (edicion && creaEquipo && nombreEquipo) {
+    const objetivo = nombreEquipo.toLowerCase();
+    const repetido = db
+      .prepare("SELECT codigo, nombre FROM jam_equipos WHERE edicion_id = ? AND estado != 'rechazado'")
+      .all(edicion.id)
+      .find((e) => e.nombre.toLowerCase() === objetivo);
+    if (repetido) {
+      errores.push(
+        valores.modo === "solitario"
+          ? `Ya hay una inscripción llamada "${repetido.nombre}". Ponle otro nombre en “Cómo quieres aparecer”.`
+          : `Ya hay un equipo llamado "${repetido.nombre}". Consulta su estado con el código ${repetido.codigo}.`
+      );
     }
   }
 
@@ -247,18 +274,22 @@ router.post("/jam/inscripcion", (req, res) => {
 
   db.exec("BEGIN");
   try {
-    if (valores.modo === "equipo") {
+    if (creaEquipo) {
+      // Un equipo, sea de cuatro o de uno. La única diferencia es la marca de
+      // solitario: de ahí en adelante se comporta igual —se revisa, sale en la
+      // galería y entrega su juego con este código—.
       const info = db
         .prepare(
           `INSERT INTO jam_equipos
-             (edicion_id, codigo, nombre, lema, contacto_nombre, contacto_email)
-           VALUES (?, ?, ?, ?, ?, ?)`
+             (edicion_id, codigo, nombre, lema, solitario, contacto_nombre, contacto_email)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`
         )
         .run(
           edicion.id,
           codigo,
-          valores.equipo,
+          nombreEquipo,
           valores.lema || null,
+          valores.modo === "solitario" ? 1 : 0,
           valores.lider_nombre,
           valores.lider_email
         );
@@ -272,7 +303,9 @@ router.post("/jam/inscripcion", (req, res) => {
         insertar.run(edicion.id, info.lastInsertRowid, i.nombre, i.email, i.disciplina, n === 0 ? 1 : 0, n);
       });
     } else {
-      // Inscripción individual: sin equipo todavía, con su propio código.
+      // Busca equipo: todavía no tiene uno, así que no hay fila en jam_equipos.
+      // Queda en la lista con su propio código hasta que la organización lo
+      // ubique (o hasta que decida quedarse en solitario).
       db.prepare(
         `INSERT INTO jam_integrantes (edicion_id, equipo_id, codigo, nombre, email, disciplina)
          VALUES (?, NULL, ?, ?, ?, ?)`
@@ -301,8 +334,8 @@ router.post("/jam/inscripcion", (req, res) => {
       codigo,
       nombre: valores.lider_nombre,
       email: valores.lider_email,
-      equipo: valores.equipo,
-      solo: valores.modo === "solo",
+      equipo: nombreEquipo,
+      modo: valores.modo,
       integrantes: equipo.map((i) => i.nombre),
       cuando: f.momento_inicio ? `${f.momento_inicio.dia}, ${f.momento_inicio.hora}` : null,
     },

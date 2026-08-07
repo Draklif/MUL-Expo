@@ -11,19 +11,11 @@
     </div>
   <% } %>
 
-  <%/* ───── SEMESTRE ───── */%>
-  <% if (query.periodo_nuevo) { %>
-    <div class="alert ok" style="margin-top:16px">✓ Semestre <%= query.periodo_nuevo %> abierto.</div>
-  <% } else if (query.periodo_activo) { %>
-    <div class="alert ok" style="margin-top:16px">
-      ✓ <%= query.periodo_activo %> es ahora el semestre activo: los registros nuevos entran ahí.
-    </div>
-  <% } else if (query.periodo_error) { %>
-    <div class="alert err" style="margin-top:16px">
-      <%= query.periodo_error === 'existe' ? 'Ese semestre ya existe.' : 'El código va en formato AAAA-NN, por ejemplo 2027-10.' %>
-    </div>
-  <% } %>
-
+  <%/* ───── SEMESTRE ─────
+       El selector de aquí abajo es para MIRAR, no para cambiar de semestre:
+       cuál es el activo lo dice config.PERIODO y no hay botón que lo mueva.
+       Con un botón aquí y una línea en el config habría dos verdades, y una
+       de las dos estaría equivocada tarde o temprano. */%>
   <div class="section-head" style="margin-top:18px">
     <h2>Semestre</h2>
     <span class="count"><%= periodo.codigo %></span>
@@ -32,7 +24,7 @@
   <div class="filtros">
     <% periodos.forEach(p => { %>
       <a href="/panel?periodo=<%= p.id %>" class="filtro <%= p.id === periodo.id ? 'activo' : '' %>"
-         title="<%= p.activo ? 'Semestre activo: aquí entran los registros nuevos' : 'Semestre cerrado' %>">
+         title="<%= p.activo ? 'Semestre en curso: aquí entran los registros nuevos' : 'Semestre cerrado, de consulta' %>">
         <%= p.codigo %><% if (p.activo) { %><span class="punto-activo"></span><% } %>
       </a>
     <% }) %>
@@ -41,45 +33,20 @@
   <% if (!periodo.activo) { %>
     <div class="aviso-periodo">
       <div>
-        Estás viendo <strong><%= periodo.codigo %></strong>, que ya no es el semestre
-        activo. Lo que registren los estudiantes hoy entra en
+        Estás viendo <strong><%= periodo.codigo %></strong>, que ya se cerró. Lo
+        que registren los estudiantes hoy entra en
         <strong><%= periodoActivo.codigo %></strong>.
       </div>
-      <form method="POST" action="/periodos/<%= periodo.id %>/activar"
-            onsubmit="return confirm('¿Hacer de <%= periodo.codigo %> el semestre activo? Los registros nuevos empezarán a entrar ahí.');">
-        <button type="submit" class="btn ghost">Activar <%= periodo.codigo %></button>
-      </form>
+      <a href="/panel?periodo=<%= periodoActivo.id %>" class="btn ghost">Volver a <%= periodoActivo.codigo %></a>
     </div>
   <% } else { %>
     <p class="hint" style="margin-top:-4px">
-      Es el semestre activo <span class="punto-activo"></span>: aquí caen los
+      Es el semestre en curso <span class="punto-activo"></span>: aquí caen los
       registros que hagan los estudiantes. Las materias son las mismas en todos
-      los semestres.
+      los semestres. Para empezar el siguiente se cambia <code>PERIODO</code> en
+      <code>config.js</code> y se reinicia.
     </p>
   <% } %>
-
-  <details class="panel" style="margin-top:12px">
-    <summary>Abrir un semestre nuevo</summary>
-    <div class="panel-body">
-      <form method="POST" action="/periodos">
-        <div class="form-row">
-          <label for="codigo">Código del semestre</label>
-          <input type="text" id="codigo" name="codigo" placeholder="2027-10" required
-                 pattern="\d{4}-\d{2}" title="Formato AAAA-NN, por ejemplo 2027-10"
-                 maxlength="7" autocomplete="off" />
-          <p class="hint">
-            Las materias siguen siendo las mismas; lo que empieza de cero son los
-            estudiantes, sus proyectos y sus notas.
-          </p>
-        </div>
-        <label class="pick-linea">
-          <input type="checkbox" name="activar" value="1" checked />
-          <span>Activarlo de una vez (los registros nuevos entrarán ahí)</span>
-        </label>
-        <button type="submit" class="btn block ghost" style="margin-top:14px">+ Abrir semestre</button>
-      </form>
-    </div>
-  </details>
 
   <p class="eyebrow" style="margin-top:26px">Crear materia</p>
 

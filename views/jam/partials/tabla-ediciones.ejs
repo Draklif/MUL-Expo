@@ -1,0 +1,67 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     La tabla de ediciones del panel, para el semestre en curso y para el
+     archivo.
+
+     Son TRES columnas y no ocho a propósito, por la misma razón que la del
+     torneo: ocho columnas entraban en un portátil y en un teléfono se salían
+     de la pantalla, arrastrando la página entera. La respuesta no es una
+     barra de scroll ni un envoltorio con overflow —eso solo esconde el
+     problema detrás de un gesto que nadie hace—: es que sobraban columnas.
+
+     El semestre y la hora de arranque bajan a la línea chica del nombre, los
+     conteos son chips en una sola celda y el botón "Abrir" se va porque el
+     nombre ya es el enlace. Entra completa en un teléfono sin esconder nada.
+
+       lista     — las ediciones a pintar.
+       historial — true en los semestres pasados: ahí ya no importa cuántos
+                   quedaron por revisar.
+     ───────────────────────────────────────────────────────────────── */%>
+<table class="tabla">
+  <thead>
+    <tr>
+      <th>Edición</th>
+      <th>Estado</th>
+      <th>Equipos</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% lista.forEach(function (e) { %>
+      <tr>
+        <td>
+          <a href="/jam/panel/ediciones/<%= e.id %>" style="text-decoration:none">
+            <span class="nom"><%= e.nombre %></span>
+          </a>
+          <div class="mini">
+            <%= e.periodo || "sin semestre" %> ·
+            <% if (e.fase.momento_inicio) { %>
+              arranca <%= e.fase.momento_inicio.diaCorto %>, <%= e.fase.momento_inicio.hora %>
+            <% } else { %>
+              sin fecha
+            <% } %>
+          </div>
+        </td>
+        <td>
+          <span class="chip <%= e.estado === 'finalizada' ? 'no' : e.estado === 'en_curso' ? 'acento' : 'ok' %>">
+            <%= e.estado === "inscripcion" ? "Inscripciones" : e.estado === "en_curso" ? "En curso" : "Cerrada" %>
+          </span>
+          <% if (e.fase.clave === "en_curso") { %><span class="chip vivo">Corriendo</span><% } %>
+          <% if (e.tema_revelado) { %><span class="chip cian">Tema fuera</span><% } %>
+        </td>
+        <td>
+          <strong><%= e.cifras.equipos %></strong>
+          <% if (e.cifras.entregas > 0) { %>
+            <span class="chip cian"><%= e.cifras.entregas %> entregados</span>
+          <% } %>
+          <% if (!historial) { %>
+            <% if (e.cifras.pendientes > 0) { %>
+              <span class="chip pend"><%= e.cifras.pendientes %> por revisar</span>
+            <% } %>
+            <% if (e.cifras.solistas > 0) { %>
+              <span class="chip alerta"><%= e.cifras.solistas %> sin equipo</span>
+            <% } %>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+  </tbody>
+</table>

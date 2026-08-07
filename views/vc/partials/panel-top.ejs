@@ -10,9 +10,9 @@
       <a href="/vc/panel">Torneos</a>
       <a href="/virtual-champions">Ver el sitio</a>
     </nav>
-    <div style="display:flex;align-items:center;gap:12px;margin-left:12px">
+    <div class="panel-quien">
       <span class="mini"><%= docenteVC.name %><%= periodoVC ? " · " + periodoVC.codigo : "" %></span>
-      <form method="POST" action="/vc/salir" style="margin:0">
+      <form method="POST" action="/vc/salir">
         <button type="submit" class="btn ghost chico">Salir</button>
       </form>
     </div>

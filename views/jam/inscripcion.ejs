@@ -6,9 +6,9 @@
     <p class="eyebrow">Participar</p>
     <h2>Inscripción</h2>
     <p class="sec-lead">
-      Con tu equipo armado o tú solo. Todos los correos tienen que ser
-      institucionales: es lo que identifica a cada quien y lo que impide que
-      alguien quede en dos equipos.
+      Con tu equipo armado, tú solo, o solo pero buscando con quién. Todos los
+      correos tienen que ser institucionales: es lo que identifica a cada quien
+      y lo que impide que alguien quede en dos equipos.
     </p>
   </section>
 
@@ -33,36 +33,62 @@
   <form method="POST" action="/jam/inscripcion" style="margin-top:26px" id="form">
 
     <%/* ───── MODALIDAD ─────
-         Dos tarjetas grandes en vez de dos radios: es la decisión más
-         importante del formulario y tiene que verse. */%>
-    <div class="opciones">
+         Tres tarjetas grandes en vez de tres radios: es la decisión más
+         importante del formulario y tiene que verse.
+
+         Las dos últimas son la distinción que faltaba. Entrar solo puede
+         significar dos cosas opuestas —"hago mi juego yo" y "no tengo con
+         quién, ayúdenme"— y hasta ahora solo se podía decir la segunda. Quien
+         quería hacer su juego por su cuenta acababa en la lista de espera,
+         aguantando a que le asignaran compañeros que no había pedido. */%>
+    <div class="opciones tres">
       <label class="opcion">
-        <input type="radio" name="modo" value="equipo" <%= valores.modo !== "solo" ? "checked" : "" %> />
+        <input type="radio" name="modo" value="equipo" <%= valores.modo === "equipo" ? "checked" : "" %> />
         <span class="t">Con mi equipo</span>
         <span class="d">Ya sabemos quiénes somos. Los registro a todos aquí y quedamos inscritos juntos.</span>
       </label>
       <label class="opcion">
-        <input type="radio" name="modo" value="solo" <%= valores.modo === "solo" ? "checked" : "" %> />
+        <input type="radio" name="modo" value="solitario" <%= valores.modo === "solitario" ? "checked" : "" %> />
         <span class="t">Yo solo</span>
-        <span class="d">No tengo equipo. Digo de qué me encargo y la organización me ubica con gente que haga lo demás.</span>
+        <span class="d">Voy a hacer mi juego por mi cuenta. Quedo inscrito de una y entrego con mi código.</span>
+      </label>
+      <label class="opcion">
+        <input type="radio" name="modo" value="buscando" <%= valores.modo === "buscando" ? "checked" : "" %> />
+        <span class="t">Busco equipo</span>
+        <span class="d">Estoy solo pero no quiero estarlo. Digo de qué me encargo y la organización me ubica.</span>
       </label>
     </div>
 
-    <div class="aviso" id="aviso-solo" hidden>
+    <div class="aviso" id="aviso-solitario" hidden>
       <p style="margin:0">
-        Vas a quedar en la lista. <strong>La organización arma los equipos
-        mezclando disciplinas</strong> y te llega un correo con quiénes te
-        tocaron. Por eso importa que digas bien de qué te encargas.
+        Quedas inscrito <strong>como equipo de una persona</strong>: sales en la
+        galería, entregas tu juego con tu código y nadie te va a asignar
+        compañeros. Cuarenta y ocho horas alcanzan para un juego pequeño; que
+        sea pequeño no es un problema.
+      </p>
+    </div>
+
+    <div class="aviso" id="aviso-buscando" hidden>
+      <p style="margin:0">
+        Vas a quedar en la lista<% if (esperando > 0) { %> —van
+        <strong><%= esperando %></strong> esperando—<% } %>.
+        <strong>La organización arma los equipos mezclando disciplinas</strong>
+        y te llega un correo con quiénes te tocaron. Por eso importa que digas
+        bien de qué te encargas.
+      </p>
+      <p class="mini" style="margin:10px 0 0">
+        Si al final no se junta un equipo, te preguntamos si prefieres entrar en
+        solitario antes de que arranque.
       </p>
     </div>
 
     <%/* ───── DATOS DEL EQUIPO ───── */%>
     <fieldset id="bloque-equipo">
       <div class="campo">
-        <label for="equipo">Nombre del equipo</label>
+        <label for="equipo" id="lbl-equipo">Nombre del equipo</label>
         <input type="text" name="equipo" id="equipo" maxlength="40"
                value="<%= valores.equipo || '' %>" placeholder="Los del último minuto" />
-        <p class="ayuda">Es con el que van a salir en la página. Se puede cambiar escribiéndonos.</p>
+        <p class="ayuda" id="ayuda-equipo">Es con el que van a salir en la página. Se puede cambiar escribiéndonos.</p>
       </div>
       <div class="campo">
         <label for="lema">Lema (opcional)</label>
@@ -135,7 +161,7 @@
     </div>
 
     <div style="margin-top:36px;display:flex;gap:18px;flex-wrap:wrap">
-      <button type="submit" class="btn">Inscribirnos</button>
+      <button type="submit" class="btn" id="enviar">Inscribirnos</button>
       <a href="/jam/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
     </div>
   </form>
@@ -146,31 +172,53 @@
 <%- include('partials/pie') %>
 
 <script>
-  // El formulario se acomoda a la modalidad: quien entra solo no tiene que ver
-  // ni el nombre del equipo ni las filas de compañeros. Todo esto es
-  // comodidad: el servidor vuelve a validar lo mismo por su cuenta y quien
-  // tenga el JavaScript apagado puede llenarlo igual.
+  // El formulario se acomoda a la modalidad. Las tres piden cosas distintas:
+  //
+  //   equipo    — nombre del equipo (obligatorio) y las filas de compañeros.
+  //   solitario — nombre opcional (si no lo pone, sale con el suyo) y ningún
+  //               compañero.
+  //   buscando  — solo sus datos: todavía no hay equipo que nombrar.
+  //
+  // Todo esto es comodidad: el servidor vuelve a validar lo mismo por su
+  // cuenta y quien tenga el JavaScript apagado puede llenarlo igual.
   (function () {
     var form = document.getElementById("form");
     if (!form) return;
 
     var bloqueEquipo = document.getElementById("bloque-equipo");
     var bloqueCompas = document.getElementById("bloque-companeros");
-    var avisoSolo = document.getElementById("aviso-solo");
+    var avisoSolitario = document.getElementById("aviso-solitario");
+    var avisoBuscando = document.getElementById("aviso-buscando");
     var titLider = document.getElementById("tit-lider");
     var campoEquipo = document.getElementById("equipo");
+    var lblEquipo = document.getElementById("lbl-equipo");
+    var ayudaEquipo = document.getElementById("ayuda-equipo");
+    var enviar = document.getElementById("enviar");
 
     function acomodar() {
       var elegido = form.querySelector('input[name="modo"]:checked');
-      var solo = elegido && elegido.value === "solo";
+      var modo = elegido ? elegido.value : "equipo";
+      var enEquipo = modo === "equipo";
+      var solitario = modo === "solitario";
 
-      bloqueEquipo.hidden = solo;
-      bloqueCompas.hidden = solo;
-      avisoSolo.hidden = !solo;
-      titLider.textContent = solo ? "Tus datos" : "Tú (líder)";
+      // El nombre solo desaparece para quien busca equipo: quien va solo sí
+      // puede elegir con qué nombre sale en la galería.
+      bloqueEquipo.hidden = modo === "buscando";
+      bloqueCompas.hidden = !enEquipo;
+      avisoSolitario.hidden = !solitario;
+      avisoBuscando.hidden = modo !== "buscando";
+
+      titLider.textContent = enEquipo ? "Tú (líder)" : "Tus datos";
+      enviar.textContent = enEquipo ? "Inscribirnos" : "Inscribirme";
+
+      lblEquipo.textContent = solitario ? "Cómo quieres aparecer" : "Nombre del equipo";
+      ayudaEquipo.textContent = solitario
+        ? "Opcional: si lo dejas en blanco sales con tu nombre."
+        : "Es con el que van a salir en la página. Se puede cambiar escribiéndonos.";
+      campoEquipo.placeholder = solitario ? "Tu nombre, o el que prefieras" : "Los del último minuto";
 
       // Un campo oculto y obligatorio bloquea el envío sin decir por qué.
-      campoEquipo.required = !solo;
+      campoEquipo.required = enEquipo;
     }
 
     form.querySelectorAll('input[name="modo"]').forEach(function (r) {

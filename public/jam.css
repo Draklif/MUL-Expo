@@ -318,6 +318,11 @@ a.tarjeta:hover { --marco: var(--acento); background: var(--bg-hover); }
   border-bottom: 4px solid var(--borde);
 }
 
+/* La cabecera es UN renglón y punto, igual que en el torneo. Envolver aquí
+   es lo peor que puede pasarle a una barra pegajosa: crece a dos y tres
+   renglones y se come media pantalla en cada scroll. Lo que cede cuando no
+   cabe se decide abajo —el menú se aprieta y luego se va al borde inferior—,
+   que es siempre mejor que dejar que se acomode solo. */
 .jam-top-in {
   max-width: 1180px;
   margin: 0 auto;
@@ -326,9 +331,10 @@ a.tarjeta:hover { --marco: var(--acento); background: var(--bg-hover); }
   align-items: center;
   gap: 20px;
   min-height: 64px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
+/* La marca es lo único intocable de la cabecera: ni se encoge ni se parte. */
 .jam-marca {
   font-family: var(--display);
   font-size: 13px;
@@ -339,6 +345,7 @@ a.tarjeta:hover { --marco: var(--acento); background: var(--bg-hover); }
   display: inline-flex;
   align-items: center;
   gap: 9px;
+  flex: 0 0 auto;
 }
 
 .jam-marca em { font-style: normal; color: var(--acento); }
@@ -353,11 +360,16 @@ a.tarjeta:hover { --marco: var(--acento); background: var(--bg-hover); }
   animation: latido 1.1s steps(2, end) infinite;
 }
 
+/* El menú tampoco envuelve: se aprieta. Entre el ancho de escritorio y el de
+   celular hay una franja donde los enlaces y la marca no caben juntos; ahí el
+   nav cede espaciado en vez de partirse en dos filas. Pasada esa franja, el
+   bloque de celular lo manda al borde inferior y el problema desaparece. */
 .jam-nav {
   display: flex;
   gap: 2px;
   margin-left: auto;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .jam-nav a {
@@ -370,6 +382,13 @@ a.tarjeta:hover { --marco: var(--acento); background: var(--bg-hover); }
   text-decoration: none;
   padding: 11px 12px;
   border-bottom: 4px solid transparent;
+  white-space: nowrap;
+  flex: 0 1 auto;
+}
+
+@media (max-width: 1080px) {
+  .jam-top-in { gap: 12px; }
+  .jam-nav a { padding: 11px 7px; letter-spacing: 0; }
 }
 
 .jam-nav a:hover { color: var(--ink); }
@@ -793,6 +812,20 @@ fieldset { border: 0; margin: 0; padding: 0; }
   margin-bottom: 26px;
 }
 
+/* Tres modalidades en la misma fila. Con el minmax de 240px no cabían en los
+   740px útiles de .jam.angosto y quedaban dos arriba y una sola abajo, que se
+   lee como si esa última fuera de otra categoría. Se les baja el mínimo en vez
+   de dejar que se acomoden solas: o van las tres en fila, o van las tres
+   apiladas, pero nunca 2+1. */
+.opciones.tres { grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 14px; }
+.opciones.tres .opcion { padding: 15px; }
+.opciones.tres .t { font-size: 11px; }
+.opciones.tres .d { font-size: 12px; }
+
+@media (max-width: 660px) {
+  .opciones.tres { grid-template-columns: 1fr; }
+}
+
 .opcion {
   display: block;
   position: relative;
@@ -966,7 +999,35 @@ details.faq .r { color: var(--ink-dim); padding: 0 0 16px 24px; max-width: 68ch;
    --------------------------------------------------------------------- */
 .panel-top { background: var(--bg-elev); }
 
+/* Quién eres y la salida, a la derecha de la cabecera del panel. El nombre se
+   recorta antes de empujar el botón de salir fuera de la pantalla. */
+.panel-quien {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 12px;
+  min-width: 0;
+}
+
+.panel-quien .mini { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-quien form { margin: 0; flex: 0 0 auto; }
+
 .tabla { width: 100%; border-collapse: collapse; margin-top: 8px; }
+
+/* Tablas del panel en pantalla angosta.
+
+   Una tabla de seis columnas no cabe en un teléfono, y las dos salidas
+   habituales son malas: dejarla desbordar arrastra la página entera a lo
+   ancho, y meterla en un contenedor con scroll esconde media tabla detrás de
+   un gesto que nadie hace porque nada indica que esté ahí.
+
+   La salida es decidir qué sobra. Las columnas marcadas .col-op son las
+   prescindibles —el correo, la mezcla de disciplinas, el código— y se van; lo
+   que queda es lo que se viene a mirar, completo y sin scroll. El dato
+   escondido está siempre a un clic, en la ficha del equipo. */
+@media (max-width: 760px) {
+  .tabla .col-op { display: none; }
+}
 
 .tabla th {
   font-family: var(--display);
@@ -1012,7 +1073,9 @@ details.faq .r { color: var(--ink-dim); padding: 0 0 16px 24px; max-width: 68ch;
 .revision { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-top: 16px; }
 .revision .campo { flex: 1; min-width: 220px; margin-bottom: 0; }
 
-/* Lista de quienes esperan equipo, con casilla para armarlo. */
+/* Lista de quienes buscan equipo: casilla para armarlo y botón para dejar a
+   esa persona en solitario. Un renglón, sin envolver: lo que cede cuando no
+   cabe es la disciplina, que se esconde antes que el botón. */
 .libre {
   display: flex;
   align-items: center;
@@ -1032,7 +1095,33 @@ details.faq .r { color: var(--ink-dim); padding: 0 0 16px 24px; max-width: 68ch;
   box-shadow: none;
 }
 
-.libre .quien { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* La casilla y el nombre son un solo blanco para el clic. El label de aquí no
+   es un rótulo de formulario, así que no lleva la tipografía de píxel de los
+   demás: es texto corrido y tiene que leerse como tal. */
+.libre .marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  cursor: pointer;
+  font-family: var(--body);
+  font-size: 13px;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+}
+
+.libre .quien { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.libre .disc { margin-left: auto; white-space: nowrap; }
+.libre .btn { flex: 0 0 auto; }
+
+/* En pantalla angosta el renglón no cabe con las tres cosas. Se va la
+   disciplina, que es el dato de apoyo: el nombre y el botón se quedan. */
+@media (max-width: 560px) {
+  .libre .disc { display: none; }
+}
 
 /* ---------------------------------------------------------------------
    CELULAR — el menú se va abajo
@@ -1087,10 +1176,12 @@ details.faq .r { color: var(--ink-dim); padding: 0 0 16px 24px; max-width: 68ch;
      panel no la lleva y no tiene por qué quedar con un hueco. */
   body:has(.jam-nav.tabs) { padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px)); }
 
-  /* El panel es otra historia: dos enlaces y el botón de salir. Se le quita
-     el nombre del docente, que es lo único prescindible. */
+  /* El panel es otra historia: dos enlaces y el botón de salir, y no tiene
+     barra de abajo. Se le quita el nombre del docente, que es lo único
+     prescindible, y con eso entra en un renglón sin envolver. */
   .panel-top .jam-top-in { gap: 10px; padding: 0 12px; min-height: 56px; }
-  .panel-top .mini { display: none; }
+  .panel-top .panel-quien .mini { display: none; }
+  .panel-top .panel-quien { margin-left: auto; }
   .panel-top .jam-nav a { padding: 9px 8px; }
 
   .reloj { padding: 20px 12px 18px; }

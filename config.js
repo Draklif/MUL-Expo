@@ -3,9 +3,25 @@
 //  Al reiniciar, los docentes se sincronizan automáticamente con esta lista.
 // =====================================================================
 
-// Semestre con el que arranca la base la primera vez. Después se crean y se
-// cambian desde el panel; esto ya no se vuelve a mirar.
-const PERIODO_INICIAL = "2026-20";
+// ---------------------------------------------------------------------
+//  EL SEMESTRE EN CURSO
+// ---------------------------------------------------------------------
+// Esta línea es EL interruptor del sitio entero. Todo lo que hacen los
+// estudiantes —el registro de la Expo, los equipos del torneo, la jam—
+// cuelga del semestre que diga aquí.
+//
+// Empezar un semestre nuevo es cambiar el código y reiniciar. Al arrancar:
+//
+//   · si el semestre no existe, se crea y queda activo;
+//   · el torneo de cada juego y la edición de la jam se abren solos, vacíos;
+//   · lo del semestre pasado NO se borra: queda archivado y se sigue
+//     consultando desde el panel y desde los certificados ya emitidos.
+//
+// Después de eso solo falta abrir las inscripciones del evento que toque, ahí
+// abajo en EVENTOS.
+//
+// Formato AAAA-NN: 10 para el primer semestre del año, 20 para el segundo.
+const PERIODO = "2026-20";
 
 // Dominio institucional. Todo correo (docentes y estudiantes) tiene que
 // terminar en @DOMINIO; cualquier otro se rechaza.
@@ -14,14 +30,19 @@ const DOMINIO = "uniboyaca.edu.co";
 // ---------------------------------------------------------------------
 //  EVENTOS DEL PROGRAMA
 // ---------------------------------------------------------------------
-// No hay dos eventos a la vez: la raíz "/" muestra el que esté más próximo a
-// suceder y ese es el único que ve quien llegue sin enlace. Cada evento vive
-// además en su propia dirección (/slug), que nunca cambia y sirve para
-// compartirlo antes o después de su turno.
+// No hay dos eventos a la vez. Un semestre es de la Expo, o del torneo, o de
+// la jam: el que tenga `activo: true` es el que ve quien llegue a la raíz "/"
+// sin enlace. Cada evento vive además en su propia dirección (/slug), que
+// nunca cambia y sirve para compartirlo antes o después de su turno.
 //
-// Para mover la raíz basta con las fechas: se escribe la de cada evento y el
-// sitio se acomoda solo el día que toque. El orden de esta lista solo decide
-// el desempate cuando ninguno tiene fecha futura.
+// Dos banderas y ya está. No hay botones equivalentes en ningún panel: esto
+// es lo único que decide qué está pasando en el sitio.
+//
+//   activo        — true en UNO solo. Es el evento del semestre: el que toma
+//                   la raíz "/" y el único al que se le abren inscripciones.
+//   inscripciones — true mientras el formulario reciba gente. Se pone en true
+//                   al empezar el semestre y en false el día que se cierra;
+//                   cerrarlo no borra nada, solo deja de admitir.
 //
 //   slug   — la dirección (/expo). No se cambia una vez repartida.
 //   fecha  — AAAA-MM-DD del día del evento. Vacío = "por confirmar".
@@ -35,6 +56,8 @@ const EVENTOS = [
   {
     slug: "expo",
     nombre: "Expo Multimedia",
+    activo: true,
+    inscripciones: true,
     fecha: "",
     lema: "Todos los proyectos finales del semestre, en un solo recorrido.",
     datos: "expo.json",
@@ -43,6 +66,8 @@ const EVENTOS = [
   {
     slug: "virtual-champions",
     nombre: "Virtual Champions",
+    activo: false,
+    inscripciones: false,
     fecha: "",
     lema: "El torneo de esports del programa. Clasificatorias en línea, final en vivo.",
     datos: "virtual-champions.json",
@@ -52,6 +77,8 @@ const EVENTOS = [
   {
     slug: "jam-de-altura",
     nombre: "Jam de Altura",
+    activo: false,
+    inscripciones: false,
     fecha: "",
     lema: "Cuarenta y ocho horas, un tema y un videojuego. Todo en línea.",
     datos: "jam-de-altura.json",
@@ -61,17 +88,14 @@ const EVENTOS = [
   {
     slug: "music-fest",
     nombre: "Multimedia Music Fest",
+    activo: false,
+    inscripciones: false,
     fecha: "",
     lema: "",
     datos: "",
     vista: "",
   },
 ];
-
-// Deja la raíz clavada en un evento, pase lo que pase con las fechas: se pone
-// aquí su slug (o EVENTO=slug en el .env, que pesa más y sirve para probar sin
-// tocar el archivo). Vacío = manda la fecha, que es lo normal.
-const EVENTO_ACTIVO = "";
 
 // ---------------------------------------------------------------------
 //  VIRTUAL CHAMPIONS
@@ -80,6 +104,9 @@ const EVENTO_ACTIVO = "";
 // abajo: agregarlo o quitarlo es todo lo que hace falta para que aparezca (o
 // desaparezca) del sitio público y del panel. Nada más en el código nombra a
 // Valorant ni a League of Legends.
+//
+// El torneo de cada juego para el semestre en curso se abre solo al arrancar,
+// vacío; no hay que crearlo a mano desde ningún lado.
 //
 //   id         — identificador corto. Va en la dirección (/vc/valorant/bracket)
 //                y en la clase de CSS (.juego-valorant), así que no se cambia
@@ -133,9 +160,9 @@ const VC = {
 //  JAM DE ALTURA
 // ---------------------------------------------------------------------
 // La gamejam de 48 horas, completamente virtual. A diferencia del torneo, aquí
-// no hay varios juegos ni varios torneos a la vez: hay UNA edición por
-// semestre y todo el sitio habla de ella. Lo que se repite cada semestre es la
-// edición entera, y eso se abre con un botón desde el panel.
+// no hay varios juegos ni varias jams a la vez: hay UNA edición por semestre y
+// todo el sitio habla de ella. La edición del semestre en curso se abre sola
+// al arrancar, con los valores de aquí abajo; no hay que crearla a mano.
 //
 //   max_integrantes — el tope de un equipo. Inscribirse solo también vale.
 //   horas           — cuánto dura la jam. Es lo que cuenta el reloj gigante.
@@ -226,10 +253,9 @@ const CRITERIOS_IND = [
 const ESCALA_MAX = 5;
 
 module.exports = {
-  PERIODO_INICIAL,
+  PERIODO,
   DOMINIO,
   EVENTOS,
-  EVENTO_ACTIVO,
   VC,
   JAM,
   PASSWORD,

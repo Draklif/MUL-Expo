@@ -1,16 +1,16 @@
 // =====================================================================
 //  Jam de Altura — el panel de la organización.
 //
-//  Las herramientas son cinco y se usan en este orden:
+//  La edición del semestre NO se abre desde aquí: ya está abierta y vacía
+//  desde que arrancó el servidor, según config.PERIODO. Lo que queda son
+//  cuatro herramientas y se usan en este orden:
 //
-//    1. Abrir la edición del semestre (el botón que hace que todo lo demás
-//       empiece de cero sin borrar lo del semestre pasado).
-//    2. Poner el día y la hora del arranque: eso es lo que echa a andar el
+//    1. Poner el día y la hora del arranque: eso es lo que echa a andar el
 //       reloj de la página pública.
-//    3. Revisar las inscripciones y armar equipos con los que se apuntaron
+//    2. Revisar las inscripciones y armar equipos con los que se apuntaron
 //       solos.
-//    4. Revelar el tema. Es un botón grande y aparte a propósito.
-//    5. El tablón: avisos que salen en la página mientras corre la jam.
+//    3. Revelar el tema. Es un botón grande y aparte a propósito.
+//    4. El tablón: avisos que salen en la página mientras corre la jam.
 //
 //  Va con su propia contraseña y su propia sesión (lib/jam-auth.js): son los
 //  mismos docentes de la Expo y del torneo, pero son tres herramientas.
@@ -20,6 +20,7 @@ const db = require("../db/database");
 const jam = require("../lib/jam");
 const envios = require("../lib/envios");
 const periodos = require("../lib/periodos");
+const eventos = require("../lib/eventos");
 const { JAM } = require("../config");
 const { limpiarNombre } = require("../lib/listas");
 const { desdeInput, paraInput, sumarHoras, momento } = require("../lib/fechas");
@@ -93,6 +94,9 @@ router.use("/panel", requireJam, (req, res, next) => {
 // ---------------------------------------------------------------------
 //  Portada del panel: las ediciones
 // ---------------------------------------------------------------------
+// Aquí no se abre ninguna edición: la del semestre en curso ya está abierta
+// desde que arrancó el servidor. Esta pantalla la lista y deja entrar a la
+// sala de control; las de semestres pasados quedan abajo, de consulta.
 router.get("/panel", (req, res) => {
   const lista = jam.ediciones().map((e) => ({
     ...e,
@@ -103,57 +107,16 @@ router.get("/panel", (req, res) => {
   res.render(
     "jam/panel",
     marco({
-      ediciones: lista,
-      // Para el formulario de "abrir edición": los semestres que ya existen y
-      // el que está activo, que es el que viene propuesto.
-      periodos: periodos.todos(),
-      porDefecto: JAM,
+      ediciones: lista.filter((e) => e.periodo_activo),
+      pasadas: lista.filter((e) => !e.periodo_activo),
+      periodo: periodos.activo(),
+      // Si la jam está recibiendo equipos ahora mismo. Se decide en config, no
+      // en esta pantalla, así que hay que decirlo o alguien va a buscar el
+      // interruptor un buen rato.
+      abierta: eventos.inscripcionesAbiertas("jam-de-altura"),
       aviso: req.query,
     })
   );
-});
-
-/**
- * Abrir la edición de un semestre. Este es EL botón de "pasar de semestre":
- *
- *   - si se escribió un código de semestre nuevo, lo crea;
- *   - si se marcó, lo deja como el semestre activo del programa (que es el
- *     mismo que usan la Expo y el torneo: uno solo para todo el sitio);
- *   - deja la edición anterior finalizada y abre una nueva, vacía y con las
- *     inscripciones abiertas.
- *
- * Con eso la jam del semestre siguiente queda lista para recibir inscripciones
- * sin tocar nada más, y la del semestre pasado se queda donde estaba, con sus
- * equipos y sus juegos.
- */
-router.post("/panel/ediciones", (req, res) => {
-  const codigoNuevo = String(req.body.periodo_nuevo || "").trim();
-  let periodo = null;
-
-  if (codigoNuevo) {
-    if (!periodos.codigoValido(codigoNuevo)) {
-      return res.redirect("/jam/panel?error=periodo_formato");
-    }
-    periodo = periodos.porCodigo(codigoNuevo) || periodos.crear(codigoNuevo);
-  } else {
-    periodo = periodos.porId(req.body.periodo_id) || periodos.activo();
-  }
-
-  if (req.body.activar_periodo === "1" && periodo) periodos.activar(periodo.id);
-
-  const nombre =
-    limpiarNombre(req.body.nombre).slice(0, 80) ||
-    `Jam de Altura · ${periodo ? periodo.codigo : "sin semestre"}`;
-
-  const edicion = jam.abrirEdicion({
-    periodoId: periodo ? periodo.id : null,
-    nombre,
-    horas: req.body.horas,
-    maxIntegrantes: req.body.max_integrantes,
-    cupoEquipos: req.body.cupo_equipos,
-  });
-
-  res.redirect(`/jam/panel/ediciones/${edicion.id}?abierta=1`);
 });
 
 // ---------------------------------------------------------------------
@@ -435,6 +398,42 @@ router.post("/panel/equipos/:id/borrar", (req, res) => {
   // reasignar sin pedirles que se inscriban otra vez.
   db.prepare("DELETE FROM jam_equipos WHERE id = ?").run(equipo.id);
   res.redirect(`/jam/panel/ediciones/${equipo.edicion_id}?borrado=1#equipos`);
+});
+
+/**
+ * Dejar en solitario a quien estaba buscando equipo.
+ *
+ * Es la salida del callejón del final: llega el día del arranque, quedan dos o
+ * tres sueltos que no alcanzan para armar nada, y sin esto no participan —sin
+ * equipo no hay dónde entregar el juego—. Con esto entran igual, cada uno por
+ * su cuenta, que es lo que habrían elegido de haber sabido.
+ *
+ * Conserva su código: es el único que anotaron.
+ */
+router.post("/panel/integrantes/:id/solitario", (req, res) => {
+  const persona = db
+    .prepare("SELECT * FROM jam_integrantes WHERE id = ?")
+    .get(Number(req.params.id));
+  if (!persona) return res.redirect("/jam/panel");
+
+  const volver = `/jam/panel/ediciones/${persona.edicion_id}`;
+  const equipo = jam.hacerSolitario(persona.id, req.session.docenteJam.id);
+  if (!equipo) return res.redirect(`${volver}?error=ya_tiene#libres`);
+
+  envios.jamAvisoEquipoArmado(
+    {
+      nombre: persona.nombre,
+      email: persona.email,
+      equipo: equipo.nombre,
+      codigo: equipo.codigo,
+      companeros: [],
+      equipoId: equipo.id,
+      solitario: true,
+    },
+    envios.urlBase(req)
+  );
+
+  res.redirect(`${volver}?solitario=1#libres`);
 });
 
 // Sacar a alguien de su equipo y devolverlo a la bolsa de libres. Pasa cada

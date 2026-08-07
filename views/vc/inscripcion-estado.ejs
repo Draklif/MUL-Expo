@@ -23,8 +23,15 @@
     <div class="codigo-grande"><%= codigo %></div>
   <% } %>
 
-  <%/* ───── BUSCADOR ───── */%>
+  <%/* ───── BUSCADOR ─────
+       El juego va en un campo escondido y no colgado del action: en un
+       formulario GET el navegador tira la parte de consulta de la dirección y
+       la reemplaza por los campos, así que un ?juego= puesto ahí se perdería
+       al primer "Consultar" y la página se volvería del color del otro. */%>
   <form method="GET" action="/vc/inscripcion/estado" style="margin:22px 0">
+    <% if (juegos.length > 1 && juego) { %>
+      <input type="hidden" name="juego" value="<%= juego.id %>" />
+    <% } %>
     <div class="campo">
       <label for="codigo">Tu código</label>
       <div style="display:flex;gap:10px;flex-wrap:wrap">

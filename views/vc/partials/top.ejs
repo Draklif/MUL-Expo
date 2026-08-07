@@ -30,14 +30,32 @@
   const icono = (k) =>
     `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONOS[k]}</svg>`;
+
+  // Las tres páginas que no llevan el juego en la ruta se lo llevan colgado,
+  // para que al ir de LoL a "Inicio" la página no se vuelva roja de Valorant.
+  // Con un solo juego configurado, qJuego viene vacío y no se pone nada.
+  const inicio = `/virtual-champions${qJuego}`;
+  const inscripcion = `/vc/inscripcion${qJuego}`;
+
+  // A dónde lleva cambiar de juego: a la MISMA sección, no siempre al bracket.
+  // Cambiar de pestaña estando en el calendario y aterrizar en el bracket es
+  // un salto que nadie pidió; lo que se está cambiando es el juego, no la
+  // página.
+  const otroJuego = (id) => {
+    if (activa === "bracket" || activa === "calendario" || activa === "equipos") {
+      return `/vc/${id}/${activa}`;
+    }
+    if (activa === "inscripcion") return `/vc/inscripcion?juego=${encodeURIComponent(id)}`;
+    return `/virtual-champions?juego=${encodeURIComponent(id)}`;
+  };
 %>
 
 <header class="vc-top">
   <div class="vc-top-in publica">
-    <a href="/virtual-champions" class="vc-marca">Virtual <em>Champions</em></a>
+    <a href="<%= inicio %>" class="vc-marca">Virtual <em>Champions</em></a>
 
     <nav class="vc-nav tabs" aria-label="Secciones del torneo">
-      <a href="/virtual-champions" class="<%= activa === 'inicio' ? 'on' : '' %>"
+      <a href="<%= inicio %>" class="<%= activa === 'inicio' ? 'on' : '' %>"
          <%- activa === 'inicio' ? 'aria-current="page"' : '' %>>
         <%- icono('inicio') %><span>Inicio</span>
       </a>
@@ -57,7 +75,7 @@
         </a>
       <% } %>
 
-      <a href="/vc/inscripcion" class="<%= activa === 'inscripcion' ? 'on' : '' %>"
+      <a href="<%= inscripcion %>" class="<%= activa === 'inscripcion' ? 'on' : '' %>"
          <%- activa === 'inscripcion' ? 'aria-current="page"' : '' %>>
         <%- icono('inscripcion') %><span>Inscripción</span>
       </a>
@@ -71,8 +89,9 @@
 <div class="vc-juegos">
   <div class="vc-juegos-in">
     <% juegos.forEach(function (j) { %>
-      <a href="/vc/<%= j.id %>/bracket"
+      <a href="<%= otroJuego(j.id) %>"
          class="vc-juego <%= juego && j.id === juego.id ? 'on' : '' %>"
+         <%- juego && j.id === juego.id ? 'aria-current="true"' : '' %>
          style="--jc: <%= j.acento %>"><%= j.nombre %></a>
     <% }); %>
   </div>

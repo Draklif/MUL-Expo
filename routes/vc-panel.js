@@ -14,6 +14,7 @@ const vc = require("../lib/vc");
 const bracket = require("../lib/vc-bracket");
 const envios = require("../lib/envios");
 const periodos = require("../lib/periodos");
+const eventos = require("../lib/eventos");
 const { VC } = require("../config");
 const { limpiarNombre } = require("../lib/listas");
 const { requireVC, verificar, configurado } = require("../lib/vc-auth");
@@ -82,11 +83,16 @@ router.use("/panel", requireVC, (req, res, next) => {
 
 // ---------------------------------------------------------------------
 //  Torneos
+//
+//  Aquí no se crea ninguno: el torneo de cada juego para el semestre en curso
+//  se abre solo al arrancar, según config.PERIODO y config.VC.juegos. El panel
+//  los muestra y los opera, y los de semestres pasados quedan abajo, de
+//  consulta.
 // ---------------------------------------------------------------------
 router.get("/panel", (req, res) => {
   const torneos = db
     .prepare(
-      `SELECT t.*, p.codigo AS periodo,
+      `SELECT t.*, p.codigo AS periodo, p.activo AS periodo_activo,
               (SELECT COUNT(*) FROM vc_equipos e
                 WHERE e.torneo_id = t.id AND e.estado = 'aprobado')  AS n_equipos,
               (SELECT COUNT(*) FROM vc_equipos e
@@ -102,22 +108,19 @@ router.get("/panel", (req, res) => {
     .all()
     .map((t) => ({ ...t, juego_info: vc.juego(t.juego) }));
 
-  res.render("vc/panel", marco({ torneos }));
-});
-
-router.post("/panel/torneos", (req, res) => {
-  const juego = vc.juego(req.body.juego);
-  const nombre = limpiarNombre(req.body.nombre).slice(0, 80);
-  if (!juego) return res.redirect("/vc/panel?error=juego");
-
-  const info = db
-    .prepare(
-      `INSERT INTO vc_torneos (juego, nombre, periodo_id, estado, inscripcion_abierta)
-       VALUES (?, ?, ?, 'inscripcion', 1)`
-    )
-    .run(juego.id, nombre || `Virtual Champions · ${juego.nombre}`, periodos.activo().id);
-
-  res.redirect(`/vc/panel/torneos/${info.lastInsertRowid}`);
+  res.render(
+    "vc/panel",
+    marco({
+      // Los del semestre en curso arriba y separados: son los únicos en los
+      // que va a pasar algo esta temporada.
+      torneos: torneos.filter((t) => t.periodo_activo),
+      pasados: torneos.filter((t) => !t.periodo_activo),
+      // Si el sitio del torneo está recibiendo equipos ahora mismo, para poder
+      // decirlo en el panel en vez de que alguien lo adivine.
+      abierta: eventos.inscripcionesAbiertas("virtual-champions"),
+      aviso: req.query,
+    })
+  );
 });
 
 // Estado del torneo e interruptor de inscripciones.
@@ -134,8 +137,18 @@ router.post("/panel/torneos/:id/estado", (req, res) => {
   res.redirect(`/vc/panel/torneos/${id}?ok=1`);
 });
 
+// Un torneo con equipos inscritos no se borra de un clic: eso es el trabajo de
+// un semestre entero y no hay forma de deshacerlo. Es el mismo freno que tiene
+// la jam al borrar una edición.
 router.post("/panel/torneos/:id/borrar", (req, res) => {
-  db.prepare("DELETE FROM vc_torneos WHERE id = ?").run(Number(req.params.id));
+  const torneo = vc.torneo(req.params.id);
+  if (!torneo) return res.redirect("/vc/panel");
+
+  if (vc.contarEquipos(torneo.id) > 0) {
+    return res.redirect(`/vc/panel/torneos/${torneo.id}?error=con_equipos`);
+  }
+
+  db.prepare("DELETE FROM vc_torneos WHERE id = ?").run(torneo.id);
   res.redirect("/vc/panel?borrado=1");
 });
 

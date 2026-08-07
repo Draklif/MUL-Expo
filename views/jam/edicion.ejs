@@ -21,13 +21,15 @@
       escondido: "Tema escondido otra vez.",
       revisado: "Inscripción revisada y avisada por correo.",
       borrado: "Borrado.",
-      liberado: "Esa persona volvió a la lista de quienes esperan equipo.",
+      liberado: "Esa persona volvió a la lista de quienes buscan equipo.",
+      solitario: "Queda en solitario: ya es un equipo de una persona y le llegó el correo con su código.",
     };
     const MALOS = {
       sin_tema: "Primero escribe el tema y guárdalo; después se revela.",
       sin_revelar: "El tema todavía no está revelado. No se puede mandar por correo antes de que salga en la página.",
       armar: "Para armar un equipo hacen falta un nombre y al menos dos personas de la lista.",
       con_gente: "Esa edición ya tiene gente inscrita: no se borra. Ciérrala en los ajustes si ya terminó.",
+      ya_tiene: "Esa persona ya tiene equipo: no hay nada que dejar en solitario.",
     };
     const bueno = Object.keys(BUENOS).find((k) => aviso[k]);
     const malo = MALOS[aviso.error];
@@ -80,7 +82,10 @@
       <div class="jam-dato"><div class="k">Equipos</div><div class="v"><%= cifras.equipos %></div></div>
       <div class="jam-dato"><div class="k">Por revisar</div><div class="v"><%= cifras.pendientes %></div></div>
       <div class="jam-dato"><div class="k">Personas</div><div class="v"><%= cifras.personas %></div></div>
-      <div class="jam-dato"><div class="k">Sin equipo</div><div class="v"><%= cifras.solistas %></div></div>
+      <div class="jam-dato"><div class="k">Buscando equipo</div><div class="v"><%= cifras.solistas %></div></div>
+      <% if (cifras.solitarios) { %>
+        <div class="jam-dato"><div class="k">En solitario</div><div class="v"><%= cifras.solitarios %></div></div>
+      <% } %>
       <div class="jam-dato"><div class="k">Entregas</div><div class="v"><%= cifras.entregas %></div></div>
     </div>
   </section>
@@ -238,11 +243,18 @@
   <%/* ───── 4. ARMAR EQUIPOS ───── */%>
   <section class="jam-sec" id="libres">
     <div class="herramienta">
-      <h3>4 · Quienes esperan equipo</h3>
+      <h3>4 · Quienes buscan equipo</h3>
       <p class="sec-lead">
         Se marcan los que van juntos, se le pone nombre al equipo y listo: queda
         admitido de una y a cada uno le llega un correo con quiénes le tocaron.
         El primero de la lista queda de líder.
+      </p>
+      <p class="mini" style="margin:-10px 0 20px">
+        Aquí no sale quien se inscribió <strong>en solitario</strong>: ese ya es
+        un equipo de una persona y está abajo, con los demás. Estos son los que
+        <em>sí</em> quieren equipo y todavía no tienen. Si llega el arranque y a
+        alguno no se le pudo armar ninguno, <strong>Dejar en solitario</strong>
+        lo convierte en equipo de uno para que alcance a participar.
       </p>
 
       <% if (mezclaLibres.length) { %>
@@ -259,17 +271,28 @@
       <% } %>
 
       <% if (!libres.length) { %>
-        <div class="vacio" style="margin:0">Nadie está esperando equipo.</div>
+        <div class="vacio" style="margin:0">Nadie está buscando equipo.</div>
       <% } else { %>
         <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/armar">
+          <%/* El botón de "solitario" va dentro de este mismo formulario y no
+               en uno propio: no se pueden anidar formularios, y `formaction`
+               hace exactamente lo que hace falta —manda a otra dirección, con
+               el id de la persona en la URL, que es lo único que esa ruta
+               mira—. `formnovalidate` es para que no exija el nombre del
+               equipo, que aquí no viene al caso. */%>
           <% libres.forEach(function (i) { %>
-            <label class="libre">
-              <input type="checkbox" name="integrante" value="<%= i.id %>" />
-              <span class="quien"><%= i.nombre %></span>
-              <span class="mini" style="margin-left:auto;white-space:nowrap">
-                <%= i.disciplina || "sin disciplina" %>
-              </span>
-            </label>
+            <div class="libre">
+              <label class="marca">
+                <input type="checkbox" name="integrante" value="<%= i.id %>" />
+                <span class="quien"><%= i.nombre %></span>
+              </label>
+              <span class="mini disc"><%= i.disciplina || "sin disciplina" %></span>
+              <button type="submit" class="btn chico"
+                      formaction="/jam/panel/integrantes/<%= i.id %>/solitario" formnovalidate
+                      onclick="return confirm('¿Dejar a <%= i.nombre %> en solitario? Queda como equipo de una persona y le llega un correo con su código.')">
+                Solitario
+              </button>
+            </div>
           <% }); %>
 
           <div class="fila" style="margin-top:20px">
@@ -295,14 +318,18 @@
       <% if (!aprobados.length) { %>
         <div class="vacio" style="margin:0">Todavía no hay equipos admitidos.</div>
       <% } else { %>
-        <div style="overflow-x:auto">
+        <%/* Sin envoltorio con scroll: las columnas prescindibles se van en
+             pantalla angosta (.col-op) y la tabla entra completa. Un scroll
+             horizontal aquí escondía el botón de borrar detrás de un gesto
+             que nadie hace. */%>
+        <div>
           <table class="tabla">
             <thead>
               <tr>
                 <th>Equipo</th>
-                <th>Código</th>
+                <th class="col-op">Código</th>
                 <th>Integrantes</th>
-                <th>Mezcla</th>
+                <th class="col-op">Mezcla</th>
                 <th>Entrega</th>
                 <th></th>
               </tr>
@@ -314,7 +341,7 @@
                     <a href="/jam/equipo/<%= e.id %>" style="text-decoration:none"><span class="nom"><%= e.nombre %></span></a>
                     <div class="mini"><%= e.contacto_email || "" %><%= e.armado ? " · armado por la organización" : "" %></div>
                   </td>
-                  <td class="mini"><%= e.codigo %></td>
+                  <td class="mini col-op"><%= e.codigo %></td>
                   <%/* Cada integrante con su botón de sacar al lado, y no todos
                        juntos en la columna de acciones: sacar a alguien de un
                        equipo es una operación sobre esa persona, y hay que ver
@@ -323,13 +350,13 @@
                     <% e.integrantes.forEach(function (i) { %>
                       <form method="POST" action="/jam/panel/integrantes/<%= i.id %>/liberar"
                             style="margin:0 0 6px;display:flex;gap:8px;align-items:center"
-                            onsubmit="return confirm('¿Sacar a <%= i.nombre %> de <%= e.nombre %>? Vuelve a la lista de quienes esperan equipo.')">
+                            onsubmit="return confirm('¿Sacar a <%= i.nombre %> de <%= e.nombre %>? Vuelve a la lista de quienes buscan equipo.')">
                         <span class="mini" style="flex:1"><%= i.nombre %></span>
                         <button type="submit" class="btn chico" title="Sacar del equipo">Sacar</button>
                       </form>
                     <% }); %>
                   </td>
-                  <td class="mini"><%= e.mezcla.join(", ") || "—" %></td>
+                  <td class="mini col-op"><%= e.mezcla.join(", ") || "—" %></td>
                   <td>
                     <% if (e.entregado) { %>
                       <a href="<%= e.juego_url %>" target="_blank" rel="noopener" style="color:var(--acento)">
@@ -339,7 +366,7 @@
                   </td>
                   <td>
                     <form method="POST" action="/jam/panel/equipos/<%= e.id %>/borrar" style="margin:0"
-                          onsubmit="return confirm('¿Borrar <%= e.nombre %>? Sus integrantes vuelven a la lista de quienes esperan equipo.')">
+                          onsubmit="return confirm('¿Borrar <%= e.nombre %>? Sus integrantes vuelven a la lista de quienes buscan equipo.')">
                       <button type="submit" class="btn chico">Borrar</button>
                     </form>
                   </td>

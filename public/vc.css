@@ -185,6 +185,12 @@ img { max-width: 100%; }
   border-bottom: 1px solid var(--linea);
 }
 
+/* La cabecera es UN renglón y punto. Nunca envuelve, en ningún ancho.
+   Envolver aquí es lo peor que puede pasarle a una barra pegajosa: crece a
+   dos y tres renglones, se come media pantalla y se queda ahí en cada
+   scroll. Lo que cede cuando no cabe está decidido más abajo —el menú se
+   aprieta y a partir de cierto ancho se va al borde inferior—, que es
+   siempre mejor que dejar que se acomode solo. */
 .vc-top-in {
   max-width: 1180px;
   margin: 0 auto;
@@ -193,9 +199,10 @@ img { max-width: 100%; }
   align-items: center;
   gap: 22px;
   min-height: 62px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 
+/* La marca es lo único intocable de la cabecera: ni se encoge ni se parte. */
 .vc-marca {
   font-family: var(--display);
   font-size: 17px;
@@ -204,6 +211,7 @@ img { max-width: 100%; }
   text-transform: uppercase;
   text-decoration: none;
   white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .vc-marca em {
@@ -211,11 +219,17 @@ img { max-width: 100%; }
   color: var(--juego);
 }
 
+/* El menú tampoco envuelve: se aprieta. Entre el ancho de escritorio y el de
+   celular hay una franja incómoda donde cinco enlaces y la marca no caben
+   juntos; ahí el nav cede espaciado y letra en vez de partirse en dos filas.
+   Pasada esa franja, el bloque de celular de más abajo lo manda al borde
+   inferior de la pantalla y el problema deja de existir. */
 .vc-nav {
   display: flex;
   gap: 4px;
   margin-left: auto;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  min-width: 0;
 }
 
 .vc-nav a {
@@ -228,6 +242,13 @@ img { max-width: 100%; }
   text-decoration: none;
   padding: 8px 12px;
   border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  flex: 0 1 auto;
+}
+
+@media (max-width: 1080px) {
+  .vc-top-in { gap: 14px; }
+  .vc-nav a { padding: 8px 8px; letter-spacing: .06em; }
 }
 
 .vc-nav a:hover { color: var(--ink); }
@@ -1090,7 +1111,41 @@ details.faq .r { color: var(--ink-dim); padding-bottom: 14px; max-width: 68ch; }
   background: var(--bg-elev);
 }
 
+/* Quién eres y la salida, a la derecha de la cabecera del panel. El nombre se
+   recorta antes de empujar el botón de salir fuera de la pantalla. */
+.panel-quien {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: 12px;
+  min-width: 0;
+}
+
+.panel-quien .mini {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.panel-quien form { margin: 0; flex: 0 0 auto; }
+
 .tabla { width: 100%; border-collapse: collapse; }
+
+/* Tablas del panel en pantalla angosta.
+
+   Una tabla de seis columnas no cabe en un teléfono, y las dos salidas
+   habituales son malas: dejarla desbordar arrastra la página entera a lo
+   ancho, y meterla en un contenedor con scroll esconde media tabla detrás de
+   un gesto que nadie hace porque nada indica que esté ahí.
+
+   La salida es decidir qué sobra. Las columnas marcadas .col-op son las
+   prescindibles —el correo, la mezcla, de dónde salió el equipo— y se van;
+   lo que queda es lo que se viene a mirar, completo y sin scroll. El dato
+   escondido está siempre a un clic, en la ficha de cada quien. */
+@media (max-width: 760px) {
+  .tabla .col-op { display: none; }
+  .tabla th, .tabla td { padding: 9px 6px; }
+}
 
 .tabla th {
   font-family: var(--display);
@@ -1249,11 +1304,12 @@ details.faq .r { color: var(--ink-dim); padding-bottom: 14px; max-width: 68ch; }
   .vc-juegos-in { padding: 0 8px; }
   .vc-juego { padding: 14px 16px; }
 
-  /* El panel es otra historia: son dos enlaces y el botón de salir. Se le
-     quita el nombre del docente, que es lo único prescindible, y con eso
-     entra en un renglón. */
+  /* El panel es otra historia: son dos enlaces y el botón de salir, y no
+     tiene barra de abajo. Se le quita el nombre del docente, que es lo único
+     prescindible, y con eso entra en un renglón sin envolver. */
   .panel-top .vc-top-in { gap: 10px; padding: 0 14px; min-height: 54px; }
-  .panel-top .mini { display: none; }
+  .panel-top .panel-quien .mini { display: none; }
+  .panel-top .panel-quien { margin-left: auto; }
   .panel-top .vc-nav { gap: 0; }
   .panel-top .vc-nav a { padding: 8px 10px; }
 }

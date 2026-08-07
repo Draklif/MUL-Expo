@@ -24,11 +24,16 @@ se sube a git y el `.env` no.**
 
 Abre `config.js` —cómo funciona la app— y:
 
-1. Ajusta el array `DOCENTES`: cada uno con su `name` y su `email`
+1. Pon `PERIODO`, el semestre en curso (`2026-20`). Es **el** interruptor del
+   sitio: todo lo que hagan los estudiantes cuelga de ahí. Ver
+   [Semestres](#semestres).
+2. En `EVENTOS`, marca con `activo: true` el evento del semestre —uno solo— y
+   con `inscripciones: true` el día que abras el formulario. Ver
+   [Los eventos](#los-eventos).
+3. Ajusta el array `DOCENTES`: cada uno con su `name` y su `email`
    institucional, que es con lo que entra.
-   Y `PERIODO_INICIAL`, el semestre con el que arranca la base.
-2. Ajusta `CRITERIOS` si quieres otros nombres de rúbrica.
-3. Cambia `ESCALA_MAX` si prefieres 0-10 en vez de 0-5.
+4. Ajusta `CRITERIOS` si quieres otros nombres de rúbrica.
+5. Cambia `ESCALA_MAX` si prefieres 0-10 en vez de 0-5.
 
 Copia `.env.example` como `.env` —lo secreto— y llénalo:
 
@@ -116,34 +121,51 @@ panel queda cerrado y todo lo demás funciona igual.
 
 ## Los eventos
 
-El programa tiene varios eventos y **nunca hay dos a la vez**, así que la raíz
-`/` no es un menú de entrada: es directamente **el evento más próximo a
-suceder**. Quien llegue sin enlace ve lo que viene, sin un clic de por medio.
+El programa tiene varios eventos y **nunca hay dos a la vez**: un semestre es
+de la Expo, o del torneo, o de la jam. Así que la raíz `/` no es un menú de
+entrada: es directamente **el evento del semestre**. Quien llegue sin enlace ve
+lo que hay, sin un clic de por medio.
 
 Todo se maneja desde `EVENTOS`, en `config.js`:
 
 ```js
-{ slug: "expo", nombre: "Expo Multimedia", fecha: "2026-11-20",
-  lema: "…", datos: "expo.json", vista: "landing" }
+{ slug: "expo", nombre: "Expo Multimedia",
+  activo: true, inscripciones: true,
+  fecha: "2026-11-20", lema: "…", datos: "expo.json", vista: "landing" }
 ```
 
 | Campo | Para qué |
 |---|---|
+| `activo` | `true` en **uno solo**: es el evento del semestre y el que toma la raíz `/` |
+| `inscripciones` | `true` mientras el formulario reciba gente |
 | `slug` | La dirección propia del evento (`/expo`). No se cambia una vez repartida |
 | `fecha` | `AAAA-MM-DD` del día del evento. Vacío = "por confirmar" |
 | `lema` | Una línea para la página de aviso, mientras no tenga la suya |
 | `datos` | Archivo de `data/` con su contenido. Vacío = todavía no tiene |
 | `vista` | Plantilla de `views/`. Vacío = usa `evento-proximo.ejs` |
 
-**Cómo se decide la raíz:** gana el evento con la fecha más cercana que aún no
-haya pasado (el día del evento cuenta como vigente). O sea que basta con
-escribir las fechas una vez: el sitio cambia solo el día que toca. Si ninguno
-tiene fecha futura —porque están vacías o porque ya pasaron todas— manda el
-orden de la lista, y así el sitio nunca se queda sin portada.
+### Las dos banderas
 
-**Para forzarlo** —probar, o clavar la raíz en un evento pase lo que pase— hay
-dos llaves: `EVENTO_ACTIVO` en `config.js`, y `EVENTO=slug` en el `.env`, que
-pesa más y sirve para mirar una página sin tocar el archivo.
+Son **el único** sitio donde se decide qué está pasando. No hay botones
+equivalentes en ningún panel, y es a propósito: con un botón y una línea de
+config diciendo lo mismo habría dos verdades, y tarde o temprano una de las dos
+estaría equivocada.
+
+- **`activo`** manda en la raíz. Al arrancar, la consola dice cuál quedó; si
+  hay dos marcados o ninguno, avisa y sigue con el primero en vez de dejar el
+  sitio sin portada.
+- **`inscripciones`** abre y cierra el formulario del evento —el registro de
+  expositores de la Expo, la inscripción de equipos del torneo, la de la jam—.
+  Cerrarlo **no borra nada**: deja de admitir, y quien ya se inscribió sigue
+  consultando su código igual. El botón de "Inscribirme" desaparece de las
+  páginas en vez de quedarse ahí apagado.
+
+Los dos candados se piden juntos: un evento con `inscripciones: true` que no
+sea el activo **no recibe a nadie** (y la consola lo avisa al arrancar, porque
+casi siempre significa que se marcó la bandera equivocada).
+
+**Para probar sin tocar el archivo** está `EVENTO=slug` en el `.env`, que pesa
+más que `activo` y sirve para mirar la página de otro evento un rato.
 
 Cada evento vive **además** en su propia dirección, que no cambia nunca: la
 Expo está siempre en `/expo`, esté o no en la raíz. Los enlaces repartidos
@@ -157,6 +179,44 @@ dirección sigue siendo la misma. Si quiere identidad visual propia, la vista
 puede pasarle otra hoja al head (`css: '/loquesea.css'`), que reemplaza a
 `styles.css` entera en vez de apilarse encima.
 
+## Virtual Champions
+
+El torneo de esports: clasificatorias en línea y final en vivo. Vive en
+`/virtual-champions`, con identidad propia (`public/vc.css`), su propia base
+(`vc_*`) y su propio panel.
+
+**Los juegos salen de `config.VC.juegos`.** Agregar o quitar uno de esa lista
+es todo lo que hace falta para que aparezca (o desaparezca) del sitio y del
+panel: nada más en el código nombra a Valorant ni a League of Legends. Cada uno
+trae su `acento`, cuántos `titulares` lleva un equipo, sus `roles` y cómo se
+llama el nick.
+
+Hay **un torneo por juego y por semestre**, y se abren solos al arrancar. Ver
+[Semestres](#semestres).
+
+### El juego manda en el color
+
+El `acento` de cada juego se inyecta en `--juego` y toda la hoja lee esa
+variable, así que la página entera —cabecera, botones, marcadores— se pinta del
+color del juego que se está viendo. Agregar un juego nuevo no pide tocar ni una
+regla de CSS.
+
+Tres páginas no llevan el juego en la dirección: la portada, la inscripción y
+la consulta del código. Esas aceptan **`?juego=<id>`**, y todos los enlaces
+internos se lo cuelgan. Sin eso, alguien mirando el bracket de LoL tocaba
+"Inicio" y la página se le volvía roja de Valorant sin haber pedido nada.
+
+De ahí salen tres detalles que conviene conocer:
+
+- **Cambiar de juego se queda en la misma sección.** Estando en el calendario
+  de Valorant, la pestaña de LoL lleva al calendario de LoL —no al bracket,
+  como antes—. Lo que se está cambiando es el juego, no la página.
+- **La inscripción llega con el juego ya elegido** en la primera casilla, y
+  cambiarlo ahí **repinta la página en vivo**: quien elige LoL ve dorado antes
+  de terminar de llenar el formulario.
+- **Con un solo juego en `config.VC.juegos`** el parámetro no se pone: no hay
+  entre qué elegir y solo ensuciaría las direcciones que se comparten.
+
 ## Jam de Altura
 
 La gamejam de 48 horas, completamente virtual: se anuncia un tema, arranca un
@@ -167,20 +227,21 @@ base (`jam_*`) y su propio panel.
 ### La edición es la unidad que se repite
 
 Una **edición** es la jam de un semestre: sus equipos, su tema y sus juegos.
-Para el semestre siguiente **no se borra nada**: se abre otra edición y la
-anterior queda archivada tal como quedó.
+Para el semestre siguiente **no se borra nada**: sale otra edición y la anterior
+queda archivada tal como quedó.
 
-Eso se hace desde `/jam/panel`, en **Abrir la edición de un semestre**:
+**No se abre desde el panel.** La edición del semestre en curso ya está abierta
+y vacía desde que arrancó el servidor: la crea `config.PERIODO` con los valores
+de `config.JAM` (horas, tope de integrantes, cupo). Ver
+[Semestres](#semestres).
 
-- se elige un semestre de la lista o se escribe uno nuevo (`2027-10`) y se crea;
-- con la casilla marcada, ese pasa a ser el **semestre activo del programa** —el
-  mismo que usan la Expo y el torneo—;
-- la edición que estuviera abierta queda cerrada, y la nueva arranca vacía y
-  **con las inscripciones abiertas**.
+Los valores se **copian** a la fila al crearla, no se leen de config cada vez:
+si un semestre la jam dura 72 horas se cambia ahí y las ediciones viejas siguen
+contando lo que contaron.
 
-Después de eso ya no hay nada más que preparar: el sitio público muestra la
-edición nueva y el formulario empieza a recibir. Los enlaces de los equipos
-viejos (`/jam/equipo/12`) siguen funcionando para siempre.
+Lo único que falta para empezar a recibir es `inscripciones: true` en el evento
+`jam-de-altura`. Los enlaces de los equipos viejos (`/jam/equipo/12`) siguen
+funcionando para siempre.
 
 ### Las herramientas del panel, en orden de uso
 
@@ -192,6 +253,8 @@ viejos (`/jam/equipo/12`) siguen funcionando para siempre.
 | 4 | **Armar equipos** | Con los que se inscribieron solos, viendo la disciplina de cada uno |
 | 5 | **Equipos admitidos** | Quién entregó qué, y sacar a alguien de un equipo si se retiró |
 | 6 | **Tablón** | Avisos que salen en la página pública sin recargar |
+
+Abrir y cerrar la jam **no** está en esta lista: eso es `config.js`.
 
 ### El reloj y el tema
 
@@ -215,9 +278,34 @@ jam arranca, **se entrega el juego** (nombre, enlace jugable y una descripción)
 Se puede volver a entregar las veces que haga falta mientras las entregas estén
 abiertas.
 
-Quien no tiene equipo se inscribe solo, dice de qué se encarga y queda en una
-lista; la organización arma los equipos mezclando disciplinas y a cada uno le
-llega un correo con quiénes le tocaron.
+#### Las tres formas de entrar
+
+Entrar solo puede significar dos cosas opuestas —"hago mi juego yo" y "no tengo
+con quién, ayúdenme"— y el formulario deja decir cuál:
+
+| Modalidad | Qué es | Dónde queda |
+|---|---|---|
+| **Con mi equipo** | Ya saben quiénes son. Se inscribe el grupo entero | Un equipo, con todos sus integrantes |
+| **Yo solo** | Va a hacer su juego por su cuenta y así se queda | Un **equipo de una persona**: sale en la galería y entrega con su código, como cualquier otro |
+| **Busco equipo** | Está solo pero no quiere estarlo | En la lista, **sin equipo todavía**, hasta que la organización lo ubique |
+
+Las dos primeras quedan admitidas de una y a revisión. La tercera queda
+esperando: la organización arma los equipos mezclando disciplinas —eso es lo
+que muestra el panel al lado de cada nombre— y a cada uno le llega un correo
+con quiénes le tocaron.
+
+Detalles que importan:
+
+- A quien entra **en solitario** no se le exige nombre de equipo: si lo deja en
+  blanco, sale con el suyo. La página dice "En solitario" y no "1 integrante",
+  porque entró solo porque quiso y no porque le faltara gente.
+- Un equipo de **una sola persona** en la modalidad "con mi equipo" se rechaza
+  con un mensaje que señala la tarjeta correcta: casi siempre es que se eligió
+  la equivocada.
+- Si llega el arranque y a alguien de la lista **no se le pudo armar equipo**,
+  el panel tiene **Solitario** al lado de su nombre: lo convierte en equipo de
+  uno —conservando su código— para que alcance a participar. Sin eso no tendría
+  dónde entregar el juego.
 
 **Las entregas no se cierran solas** cuando el reloj llega a cero: eso es un
 interruptor del panel, porque siempre hay un equipo subiendo el build tres
@@ -285,9 +373,15 @@ mismo título en la misma materia se le muestra el código del registro que ya
 existe en vez de duplicarlo. El endpoint es público, así que tiene un tope de 6
 envíos cada 10 minutos por dispositivo.
 
-**Cerrar el registro:** en `data/expo.json`, `registro.abierto: false`. El
-formulario deja de recibir y la página de la Expo muestra `aviso_cerrado` en lugar del
-botón.
+**Cerrar el registro:** en `config.js`, `inscripciones: false` en el evento
+`expo`. El formulario deja de recibir y la página de la Expo muestra
+`aviso_cerrado` en lugar del botón. Es el mismo interruptor que cierra el
+torneo y la jam: uno por evento y en un solo archivo, para que "cerrar"
+signifique lo mismo en los tres. Ver [Las dos banderas](#las-dos-banderas).
+
+> El bloque `registro` de `data/expo.json` sigue existiendo, pero ya solo pone
+> los **textos** (`titulo`, `nota`, `cierra`, `aviso_cerrado`). Si tiene un
+> `abierto`, se ignora.
 
 ### Editar el contenido público
 
@@ -393,30 +487,57 @@ medidas en el JSON, la página se redibuja sola.
 
 ## Semestres
 
-La app sirve para la Expo de este semestre y para las que vengan. **Las materias
-no se repiten por semestre**: se crean una vez y siguen ahí. Lo que arranca de
-cero cada semestre son los registros, los proyectos, las notas y los
-certificados.
+**El semestre es el único interruptor de la app**, y es el mismo para los tres
+eventos: la Expo, el torneo y la jam cuelgan todos de él.
 
-En el panel, arriba, están los semestres. El que tiene el punto verde es el
-**activo**: ahí caen los registros que hagan los estudiantes, sin importar qué
-semestre esté mirando cada docente. Tocar otro semestre cambia lo que se ve
-—materias con sus conteos, proyectos, estudiantes, podio, certificados, tablero
-y CSV— y se recuerda en la sesión.
+### Empezar un semestre
 
-Para empezar el siguiente: **Abrir un semestre nuevo**, con el código en formato
-`AAAA-NN` (`2027-10` para el primero del año, `2027-20` para el segundo). Con la
-casilla marcada queda activo de una vez; si no, se abre para preparar y se
-activa después con el botón que aparece al verlo.
+Dos líneas de `config.js` y un reinicio:
 
-- El semestre con el que arranca una base nueva sale de `PERIODO_INICIAL` en
-  `config.js`. Después se maneja todo desde el panel.
-- Al actualizar una base existente, todo lo que había queda asignado al semestre
-  inicial.
+```js
+const PERIODO = "2027-10";          // el semestre en curso
+// …y en EVENTOS, en el que toque:
+{ slug: "expo", activo: true, inscripciones: true, … }
+```
+
+Al arrancar, la app sola:
+
+- crea el semestre si no existía y lo deja como el único activo;
+- **abre el torneo de cada juego** de `config.VC.juegos`, vacío y con las
+  inscripciones listas;
+- **abre la edición de la jam**, vacía, con las horas y el tope de integrantes
+  de `config.JAM`;
+- deja lo del semestre pasado **marcado como cerrado**, pero intacto.
+
+Y ya. No hay nada que crear a mano, ni un botón de "abrir edición", ni uno de
+"crear torneo": desaparecieron. La consola del arranque dice qué semestre quedó
+y si las inscripciones están abiertas o cerradas.
+
+### Qué se conserva y qué arranca de cero
+
+**Las materias no se repiten por semestre**: se crean una vez y siguen ahí. Lo
+que arranca de cero son los registros, los proyectos, las notas, los
+certificados, los equipos del torneo y los de la jam.
+
+Nada se borra. El torneo del semestre pasado conserva sus equipos, su bracket y
+sus marcadores; la edición pasada de la jam conserva su tema y sus juegos
+entregados; los certificados siguen públicos y verificables con su QR. Todo eso
+queda de consulta —abajo, en la sección "Archivo" de cada panel— y ninguno de
+los tres vuelve a admitir a nadie: un torneo o una edición de otro semestre no
+pasa los candados de inscripción aunque su fila diga que están abiertas.
+
+### El selector del panel es para mirar
+
+En el panel de la Expo, arriba, están los semestres. El que tiene el punto verde
+es el activo. Tocar otro cambia lo que se ve —materias con sus conteos,
+proyectos, estudiantes, podio, certificados, tablero y CSV— y se recuerda en la
+sesión, pero **no cambia dónde caen los registros nuevos**: eso lo decide
+`PERIODO` y nada más.
+
+- Al actualizar una base que venía de antes de los semestres, todo lo que había
+  queda asignado al semestre **más antiguo**, no al que esté en curso.
 - Un mismo estudiante puede repetir materia en otro semestre: la clave única es
   materia + semestre + correo.
-- Los certificados de semestres pasados siguen públicos y verificables con su
-  QR; nada se reescribe al abrir uno nuevo.
 
 ## Certificados
 

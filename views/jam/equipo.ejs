@@ -8,7 +8,12 @@
       <div style="min-width:0">
         <h2 style="font-size:clamp(16px,4vw,26px)"><%= equipo.nombre %></h2>
         <div class="mini" style="margin-top:8px">
-          <%= equipo.integrantes.length %> integrantes
+          <% if (equipo.solitario) { %>
+            En solitario
+          <% } else { %>
+            <%= equipo.integrantes.length %>
+            <%= equipo.integrantes.length === 1 ? "integrante" : "integrantes" %>
+          <% } %>
           <% if (equipo.armado) { %> · equipo armado por la organización<% } %>
         </div>
       </div>
@@ -37,8 +42,8 @@
 
   <%/* ───── QUIÉNES SON ───── */%>
   <section class="jam-sec">
-    <p class="eyebrow">El equipo</p>
-    <h2 style="font-size:20px">Quiénes lo hicieron</h2>
+    <p class="eyebrow"><%= equipo.solitario ? "Quién" : "El equipo" %></p>
+    <h2 style="font-size:20px"><%= equipo.solitario ? "Quién lo hizo" : "Quiénes lo hicieron" %></h2>
     <ul class="roster">
       <% equipo.integrantes.forEach(function (i) { %>
         <li>

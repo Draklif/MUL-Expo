@@ -21,8 +21,14 @@
     <span class="escudo <%= tono %>"><%= iniciales %></span>
     <div style="min-width:0">
       <div class="nom"><%= e.nombre %></div>
+      <%/* Quien entró en solitario se dice así y no como "1 integrante": entró
+           solo porque quiso, no porque le faltara gente. */%>
       <div class="mini">
-        <%= e.integrantes.length %> <%= e.integrantes.length === 1 ? "integrante" : "integrantes" %>
+        <% if (e.solitario) { %>
+          En solitario
+        <% } else { %>
+          <%= e.integrantes.length %> <%= e.integrantes.length === 1 ? "integrante" : "integrantes" %>
+        <% } %>
         <% if (e.entregado) { %> · entregó<% } %>
       </div>
     </div>
