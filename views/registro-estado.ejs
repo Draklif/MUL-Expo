@@ -90,10 +90,10 @@
           <ul class="lista-cert">
             <% solicitud.certificados.forEach(c => { %>
               <li>
-                <span class="cert-medalla <%= c.etiqueta.cls %>"><%= c.puesto || '·' %></span>
+                <span class="cert-medalla <%= c.premio_cls %>"><%= c.puesto || '·' %></span>
                 <span class="cert-quien">
-                  <strong><%= c.estudiante %></strong>
-                  <em><%= c.etiqueta.label %></em>
+                  <strong><%= c.persona %></strong>
+                  <em><%= c.premio_label %></em>
                 </span>
                 <a href="/certificado/<%= c.codigo %>" class="cert-link">Ver ↗</a>
               </li>

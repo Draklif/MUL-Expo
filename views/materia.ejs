@@ -243,11 +243,11 @@
         <ul class="lista-cert">
           <% certificados.forEach(c => { %>
             <li>
-              <span class="cert-medalla <%= c.etiqueta.cls %>"><%= c.puesto || '·' %></span>
+              <span class="cert-medalla <%= c.premio_cls %>"><%= c.puesto || '·' %></span>
               <span class="cert-quien">
-                <strong><%= c.estudiante %></strong>
+                <strong><%= c.persona %></strong>
                 <em>
-                  <%= c.etiqueta.label %> · <%= c.proyecto_titulo %><%
+                  <%= c.premio_label %> · <%= c.titulo %><%
                     if (c.email) { %> · <%= c.avisado_at ? '✉ avisado' : 'sin avisar' %><% } %>
                 </em>
               </span>

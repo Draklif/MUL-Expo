@@ -4,7 +4,6 @@ const { contenidoDe, inscripcionesAbiertas } = require("../lib/eventos");
 const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
-const { etiquetaPuesto } = require("../lib/certificados");
 const envios = require("../lib/envios");
 const periodos = require("../lib/periodos");
 const {
@@ -248,17 +247,18 @@ function buscarPorCodigo(codigo) {
   solicitud.sala_nombre = (salas.find((s) => s.id === solicitud.sala) || {}).name || solicitud.sala;
 
   // Certificados del equipo, para que cada quien encuentre el suyo con el
-  // mismo código con el que consulta el registro.
+  // mismo código con el que consulta el registro. Solo los de la Expo: esta es
+  // la página del registro de la muestra, y el mismo estudiante puede tener
+  // certificados del torneo o de la jam que aquí no vienen a cuento.
   const correos = solicitud.integrantes.map((i) => i.email).filter(Boolean);
   solicitud.certificados = correos.length
     ? db
         .prepare(
-          `SELECT codigo, estudiante, puesto FROM certificados
-           WHERE email IN (${correos.map(() => "?").join(",")})
-           ORDER BY (puesto IS NULL), puesto, estudiante COLLATE NOCASE`
+          `SELECT codigo, persona, puesto, premio_label, premio_cls FROM certificados
+           WHERE evento = 'expo' AND email IN (${correos.map(() => "?").join(",")})
+           ORDER BY (puesto IS NULL), puesto, persona COLLATE NOCASE`
         )
         .all(...correos)
-        .map((c) => ({ ...c, etiqueta: etiquetaPuesto(c.puesto) }))
     : [];
 
   return solicitud;

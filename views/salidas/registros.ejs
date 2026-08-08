@@ -291,6 +291,105 @@
       <% } %>
     </section>
   <% }); %>
+
+  <%/* ───── CERTIFICADOS DE ASISTENCIA ─────
+       Va de última porque es lo último que pasa: cuando el bus ya volvió y la
+       lista ya se pasó. Sin premios: una salida no es una competencia. */%>
+  <section class="sal-sec" id="certificados">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Cuando ya se volvió</p>
+        <h2 style="font-size:24px">Certificados de asistencia</h2>
+      </div>
+    </div>
+    <p class="sec-lead" style="margin:0 0 18px">
+      Los recibe quien aparece como <strong>asistió</strong>, no quien pagó:
+      se paga y a veces no se va. Firma <%= salida.docente ? salida.docente.nombre : "el docente encargado" %>,
+      que es quien responde por la salida.
+    </p>
+
+    <% if (aviso.emitidos !== undefined) {
+         const nuevos = Number(aviso.emitidos) || 0, act = Number(aviso.actualizados) || 0; %>
+      <div class="aviso bueno" style="margin-bottom:18px">
+        <p style="margin:0">
+          <%= nuevos %> certificado<%= nuevos === 1 ? '' : 's' %> nuevo<%= nuevos === 1 ? '' : 's' %><% if (act) { %>
+          · <%= act %> actualizado<%= act === 1 ? '' : 's' %><% } %>.
+        </p>
+      </div>
+    <% } %>
+    <% if (aviso.cert_avisados !== undefined) {
+         const ok = Number(aviso.cert_avisados) || 0, mal = Number(aviso.cert_fallaron) || 0; %>
+      <div class="aviso <%= mal ? 'malo' : 'bueno' %>" style="margin-bottom:18px">
+        <p style="margin:0">
+          <% if (ok) { %>Salieron <%= ok %> correo<%= ok === 1 ? '' : 's' %>.<% } %>
+          <% if (mal) { %>
+            <%= mal %> no <%= mal === 1 ? 'salió y queda pendiente' : 'salieron y quedan pendientes' %>: se puede reintentar.
+          <% } else if (!ok) { %>No había avisos pendientes.<% } %>
+        </p>
+      </div>
+    <% } %>
+
+    <%/* Si la lista está a medio pasar, decirlo ANTES de que alguien emita de
+         menos y tenga que explicar por qué a unos sí y a otros no. */%>
+    <% if (cifras.sin_pasar) { %>
+      <div class="aviso malo" style="margin-bottom:18px">
+        <p style="margin:0">
+          Faltan <strong><%= cifras.sin_pasar %></strong> por pasar lista. Si emites
+          ahora, esos quedan por fuera: se puede volver a emitir después y se
+          agregan sin cambiarle el enlace a nadie.
+        </p>
+      </div>
+    <% } %>
+
+    <% if (!cifras.asistieron) { %>
+      <div class="vacio">
+        Todavía no hay nadie marcado como que asistió, así que no hay nada que
+        certificar. Pasa la lista arriba y vuelve.
+      </div>
+    <% } else { %>
+      <form method="POST" action="/salidas/panel/<%= salida.id %>/certificados"
+            onsubmit="return confirm('Se generan las constancias de quienes asistieron. Si ya existían, se actualizan sin cambiar sus enlaces.');">
+        <button type="submit" class="btn">
+          <%= certificados.length ? 'Regenerar constancias' : `Generar ${cifras.asistieron} constancia${cifras.asistieron === 1 ? '' : 's'}` %>
+        </button>
+      </form>
+    <% } %>
+
+    <% const porAvisar = certificados.filter(function (c) { return c.email && !c.avisado_at; }).length; %>
+
+    <% if (correoActivo && porAvisar) { %>
+      <form method="POST" action="/salidas/panel/<%= salida.id %>/certificados/avisos" style="margin-top:14px"
+            onsubmit="return confirm('Se le manda a cada estudiante el enlace de su constancia. Un correo no se puede devolver.');">
+        <button type="submit" class="btn">
+          Avisar por correo a <%= porAvisar %> estudiante<%= porAvisar === 1 ? '' : 's' %>
+        </button>
+      </form>
+      <p class="mini" style="margin-top:8px">
+        A cada quien se le avisa una sola vez: regenerar no vuelve a escribirle a nadie.
+      </p>
+    <% } else if (certificados.length && !correoActivo) { %>
+      <p class="mini" style="margin-top:14px">
+        El aviso por correo está apagado: falta la cuenta de envío en el <code>.env</code>.
+      </p>
+    <% } %>
+
+    <% if (certificados.length) { %>
+      <details style="margin-top:20px">
+        <summary class="mini" style="cursor:pointer">Ver las <%= certificados.length %> constancias y sus enlaces</summary>
+        <div style="margin-top:14px">
+          <% certificados.forEach(function (c) { %>
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px">
+              <span style="flex:1"><%= c.persona %></span>
+              <% if (c.email) { %>
+                <span class="chip <%= c.avisado_at ? 'ok' : '' %>"><%= c.avisado_at ? 'Avisado' : 'Sin avisar' %></span>
+              <% } %>
+              <a href="/certificado/<%= c.codigo %>" target="_blank" rel="noopener" class="mini"><%= c.codigo %> ↗</a>
+            </div>
+          <% }); %>
+        </div>
+      </details>
+    <% } %>
+  </section>
 </main>
 
 <%/* Abrir la ficha con un clic en cualquier parte de ella. Lo único que hay

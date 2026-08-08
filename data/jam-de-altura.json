@@ -57,12 +57,13 @@
   "premios": {
     "titulo": "Qué se lleva quien entrega",
     "lead": "Además de un juego terminado, que ya es bastante.",
-    "puestos": [
-      { "puesto": "Mejor juego", "premio": "Reconocimiento del programa y lugar en la Expo Multimedia" },
-      { "puesto": "Mejor uso del tema", "premio": "Reconocimiento del programa" },
-      { "puesto": "Mejor apartado artístico", "premio": "Reconocimiento del programa" },
-      { "puesto": "Todos los que entregan", "premio": "Certificado de participación" }
-    ]
+    "_comentario": "El NOMBRE de cada categoría vive en config.JAM.premios: de ahí salen esta página, el selector del panel y el certificado. Aquí solo va qué se lleva cada una, buscada por su id. El certificado de participación no es una categoría —no se adjudica, lo recibe todo el que entrega— y por eso va abajo, en 'nota'.",
+    "detalle": {
+      "mejor-juego": "Reconocimiento del programa y lugar en la Expo Multimedia",
+      "mejor-tema": "Reconocimiento del programa",
+      "mejor-arte": "Reconocimiento del programa"
+    },
+    "nota": "Y todo el que entrega recibe su certificado de participación."
   },
 
   "faq": {

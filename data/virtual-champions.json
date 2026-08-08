@@ -52,11 +52,12 @@
   "premios": {
     "titulo": "Qué se lleva el campeón",
     "lead": "Además del derecho a decirlo todo el semestre.",
-    "puestos": [
-      { "puesto": "Campeón", "premio": "Trofeo del torneo y reconocimiento del programa" },
-      { "puesto": "Subcampeón", "premio": "Medalla y reconocimiento del programa" },
-      { "puesto": "MVP de la final", "premio": "Reconocimiento individual" }
-    ]
+    "_comentario": "El NOMBRE de cada categoría vive en config.VC.premios: de ahí salen esta página, el selector del panel y el certificado, para que no puedan decir tres cosas distintas. Aquí solo va qué se lleva cada una, buscada por su id.",
+    "detalle": {
+      "campeon": "Trofeo del torneo y reconocimiento del programa",
+      "subcampeon": "Medalla y reconocimiento del programa",
+      "mvp": "Reconocimiento individual"
+    }
   },
 
   "faq": {

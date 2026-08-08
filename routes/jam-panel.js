@@ -25,6 +25,10 @@ const { JAM } = require("../config");
 const { limpiarNombre } = require("../lib/listas");
 const { desdeInput, paraInput, sumarHoras, momento } = require("../lib/fechas");
 const { requireJam, verificar, configurado } = require("../lib/jam-auth");
+const premios = require("../lib/premios");
+const certificados = require("../lib/certificados");
+
+const EVENTO = "jam-de-altura";
 
 const router = express.Router();
 
@@ -142,6 +146,8 @@ router.get("/panel/ediciones/:id", (req, res) => {
       mezclaLibres: jam.porDisciplina(edicion.id, true),
       anuncios: jam.anuncios(edicion.id, 30),
       cifras: jam.resumen(edicion.id),
+      premios: premios.paraElPanel(EVENTO, edicion.id),
+      certificados: certificados.deLote(EVENTO, edicion.id),
       correoActivo: envios.activo(),
       aviso: req.query,
     })
@@ -480,6 +486,63 @@ router.post("/panel/anuncios/:id/borrar", (req, res) => {
 
   db.prepare("DELETE FROM jam_anuncios WHERE id = ?").run(anuncio.id);
   res.redirect(`/jam/panel/ediciones/${anuncio.edicion_id}?ok=1#tablon`);
+});
+
+// ---------------------------------------------------------------------
+//  Premios y certificados
+// ---------------------------------------------------------------------
+
+// Quién se lleva cada categoría. Aquí no se calcula nada: la jam no tiene
+// notas, tiene un jurado, y esto es donde queda escrito lo que decidió.
+router.post("/panel/ediciones/:id/premios", (req, res) => {
+  const edicion = jam.edicion(req.params.id);
+  if (!edicion) return res.redirect("/jam/panel");
+
+  for (const categoria of premios.catalogo(EVENTO)) {
+    // Solo lo que venga en el formulario: un envío parcial no debería borrar
+    // las categorías que no traía.
+    if (!(categoria.id in req.body)) continue;
+    premios.asignar(EVENTO, edicion.id, categoria.id, req.body[categoria.id], req.session.docenteJam.id);
+  }
+
+  res.redirect(`/jam/panel/ediciones/${edicion.id}?ok=1#certificados`);
+});
+
+// Emitir. Es idempotente: se puede repetir cuando llegue una entrega tardía o
+// cuando el jurado se decida, y los enlaces ya repartidos no cambian.
+router.post("/panel/ediciones/:id/certificados", (req, res) => {
+  const edicion = jam.edicion(req.params.id);
+  if (!edicion) return res.redirect("/jam/panel");
+
+  const r = certificados.emitirDeJam(
+    edicion.id,
+    edicion.periodo_id || periodos.activo().id,
+    req.session.docenteJam.name
+  );
+
+  res.redirect(
+    `/jam/panel/ediciones/${edicion.id}?emitidos=${r.emitidos}&actualizados=${r.actualizados}#certificados`
+  );
+});
+
+// Avisar es un paso aparte de emitir, igual que en la Expo: emitir se repite
+// sin consecuencias, pero un correo no se puede devolver.
+router.post("/panel/ediciones/:id/certificados/avisos", async (req, res) => {
+  const edicion = jam.edicion(req.params.id);
+  if (!edicion) return res.redirect("/jam/panel");
+
+  let r = { enviados: 0, fallaron: 0 };
+  try {
+    r = await certificados.avisarPendientes(EVENTO, edicion.id, envios.urlBase(req));
+  } catch (e) {
+    console.error(`  ! Avisos de certificados de la jam ${edicion.id}: ${e.message}`);
+  }
+
+  // cert_avisados y no avisados a secas: 'avisados' ya es el del correo del
+  // tema, y las dos banderas viven en la misma query.
+  res.redirect(
+    `/jam/panel/ediciones/${edicion.id}?cert_avisados=${r.enviados}&cert_fallaron=${r.fallaron}#certificados`
+  );
 });
 
 module.exports = router;

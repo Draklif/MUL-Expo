@@ -175,6 +175,23 @@ const VC = {
   formato_ronda: 1,
   formato_final: 5,
   final_presencial: true,
+
+  // Los premios del torneo. De aquí salen las tres cosas a la vez: lo que
+  // promete la página, lo que el panel deja adjudicar y lo que termina escrito
+  // en el certificado. Una sola lista para que no haya dos verdades.
+  //
+  //   ambito — a quién se le entrega. 'equipo' certifica a la plantilla
+  //            entera; 'persona', a un solo jugador.
+  //   cls    — el color de la medalla: oro, plata o bronce.
+  //
+  // Quitar una categoría de aquí la borra del panel y de la página; los
+  // certificados que ya se emitieron con ella siguen diciendo lo mismo, porque
+  // lo suyo quedó congelado al emitirlos.
+  premios: [
+    { id: "campeon", label: "Campeón", ambito: "equipo", cls: "oro" },
+    { id: "subcampeon", label: "Subcampeón", ambito: "equipo", cls: "plata" },
+    { id: "mvp", label: "MVP de la final", ambito: "persona", cls: "bronce" },
+  ],
 };
 
 // ---------------------------------------------------------------------
@@ -207,6 +224,18 @@ const JAM = {
     "Narrativa",
     "Producción",
   ],
+
+  // Los premios de la jam. Aquí no hay nota que calcular —quién hizo el mejor
+  // apartado artístico lo decide un jurado mirando los juegos—, así que el
+  // panel los adjudica a mano y de aquí sale la lista.
+  //
+  // El certificado de participación no está en esta lista y no hace falta que
+  // esté: lo recibe todo el que entregó, sin que nadie lo declare.
+  premios: [
+    { id: "mejor-juego", label: "Mejor juego", ambito: "equipo", cls: "oro" },
+    { id: "mejor-tema", label: "Mejor uso del tema", ambito: "equipo", cls: "plata" },
+    { id: "mejor-arte", label: "Mejor apartado artístico", ambito: "equipo", cls: "bronce" },
+  ],
 };
 
 // ---------------------------------------------------------------------
@@ -237,6 +266,24 @@ const MUSIC = {
     { id: "sonido", nombre: "Sonido", desc: "Consola, microfoneo, monitores y la mezcla de sala." },
     { id: "luces", nombre: "Luces", desc: "Diseño de iluminación y operación durante el show." },
     { id: "visuales", nombre: "Visuales", desc: "Contenido en pantalla, VJ y cámaras." },
+  ],
+
+  // Los reconocimientos de la tarde. El festival no es una competencia y por
+  // eso son pocos y no hay podio: se trata de nombrar lo que se destacó, no de
+  // ordenar a nadie.
+  //
+  //   ambito — 'acto' se adjudica a un grupo del cartel y 'produccion' a
+  //            alguien del equipo técnico. Son dos listas distintas porque son
+  //            dos tablas distintas.
+  premios: [
+    { id: "mejor-acto", label: "Mejor acto del festival", ambito: "acto", cls: "oro" },
+    { id: "revelacion", label: "Revelación del cartel", ambito: "acto", cls: "plata" },
+    {
+      id: "produccion-destacada",
+      label: "Reconocimiento de producción",
+      ambito: "produccion",
+      cls: "bronce",
+    },
   ],
 };
 

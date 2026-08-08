@@ -638,32 +638,76 @@ sesión, pero **no cambia dónde caen los registros nuevos**: eso lo decide
 
 ## Certificados
 
-Al final de cada materia, **Generar certificados** emite **uno por estudiante**:
-puesto para los tres primeros y constancia de participación para el resto.
+El certificado no es una cosa de la Expo: es una cosa del programa. **Los cinco
+—la muestra, el torneo, la jam, el festival y las salidas— emiten por el mismo
+sitio**, con un solo código, una sola página y un solo QR. Cambia quién
+califica y qué dice la frase; lo demás es igual.
 
-- El **puesto sale de las notas** con el mismo cálculo del tablero: cada docente
-  promedia los criterios que calificó y la nota del proyecto es el promedio
-  entre docentes. Los empates comparten puesto y el siguiente salta (1.°, 1.°,
-  3.°). Un proyecto sin calificar no entra al podio: sale con participación.
 - Cada certificado lleva un **código de 8 caracteres** y vive en
   `/certificado/CODIGO`, público y sin login. Su **QR apunta a esa misma
   página**, así que escanearlo es la verificación.
-- Los datos quedan **congelados** al emitir (nombre, proyecto, materia, sala,
-  compañeros, docente que firma). Si después cambia una nota o se borra el
-  proyecto, lo que alguien ya compartió sigue diciendo lo mismo.
-- **Regenerar es seguro**: actualiza los puestos sin crear certificados nuevos
+- Los datos quedan **congelados** al emitir (nombre, qué hizo, dónde,
+  compañeros, quién firma). Si después cambia una nota, se borra un proyecto o
+  se le cambia el nombre a un equipo, lo que alguien ya compartió sigue
+  diciendo lo mismo.
+- **Regenerar es seguro**: actualiza los premios sin crear certificados nuevos
   ni cambiar los enlaces que ya circulan.
+- Desde la página se puede **compartir** (usa el menú nativo del celular, o
+  copia el enlace) y **descargar en PDF**, que imprime solo el certificado
+  sobre fondo blanco.
 
-El estudiante lo encuentra en `/registro/estado` con el mismo código con el que
-consultó su registro. Desde la página puede **compartir** (usa el menú nativo
-del celular, o copia el enlace) y **descargar en PDF**, que imprime solo el
-certificado sobre fondo blanco.
+### Quién recibe qué
 
-Lo que va en el certificado se decidió así: nombre, puesto, proyecto, materia,
-sala, compañeros de equipo, fecha, firma del docente y «Universidad de Boyacá ·
-Ingeniería en Multimedia». **La nota numérica no aparece.** El emisor se cambia
-con `institucion` en `data/expo.json`, y `evento.fecha` (hoy vacío) reemplaza la
-fecha de emisión cuando se defina el día de la Expo.
+| Evento | Certificado de participación | Premios |
+|---|---|---|
+| Expo Multimedia | Uno por estudiante de cada proyecto | El **puesto sale de las notas**: 1.°, 2.° y 3.° del ranking de la materia |
+| Virtual Champions | Cada jugador de los equipos aprobados, **suplentes incluidos** | `config.VC.premios`, adjudicados en el panel del torneo |
+| Jam de Altura | Cada integrante de los equipos que **entregaron** | `config.JAM.premios`, adjudicados en el panel de la edición |
+| Multimedia Music Fest | Un grupo confirmado = **un certificado al contacto**; una persona de producción = el suyo | `config.MUSIC.premios` |
+| Salidas pedagógicas | Quien aparece como **asistió**, no quien pagó | No hay: una salida no es una competencia |
+
+El puesto de la Expo se calcula con el mismo cálculo del tablero: cada docente
+promedia los criterios que calificó y la nota del proyecto es el promedio entre
+docentes. Los empates comparten puesto y el siguiente salta (1.°, 1.°, 3.°). Un
+proyecto sin calificar no entra al podio: sale con participación.
+
+En Music Fest solo se certifica al contacto de cada grupo porque la inscripción
+de un acto **no pide la lista de quiénes lo integran**, solo cuántos son: no hay
+nombres que poner. El día que se pidan, `emitirDeMusic` es donde se reparten.
+
+### Los premios que no se calculan
+
+El podio de la Expo sale de las notas. El torneo, la jam y el festival no tienen
+notas —quién hizo el mejor apartado artístico lo decide un jurado—, así que
+alguien lo declara desde el panel y queda en la tabla `premios_evento`.
+
+Las **categorías viven en `config.js`** (`VC.premios`, `JAM.premios`,
+`MUSIC.premios`), no en los JSON de contenido: de ahí salen a la vez la promesa
+de la página pública, el selector del panel y lo que termina escrito en el
+certificado, para que no puedan decir tres cosas distintas. En
+`data/<evento>.json` queda solo **qué se lleva** cada categoría, buscado por su
+id. Cada categoría se entrega una sola vez por torneo o por edición: declarar
+otro ganador reemplaza al anterior en vez de dejar dos campeones.
+
+En Virtual Champions el selector de «Campeón» llega **preseleccionado** con
+quien ganó la última partida cerrada del bracket. Es una sugerencia y no se
+escribe sola: la final es presencial, hay torneos que se resuelven fuera del
+bracket y corregir un mapa puede cambiar el ganador después.
+
+### Dónde lo encuentra quien participó
+
+Con el mismo código con el que consulta todo lo demás: `/registro/estado` en la
+Expo, `/vc/inscripcion/estado`, `/jam/inscripcion/estado`,
+`/music/inscripcion/estado` y `/salidas/estado`. El bloque aparece solo cuando
+la organización ya emitió; antes de eso no se promete nada.
+
+Lo que va en el certificado se decidió así: nombre, reconocimiento, qué hizo,
+dónde, compañeros de equipo, fecha, firma y «Universidad de Boyacá · Ingeniería
+en Multimedia». **La nota numérica no aparece.** Firma quien apretó el botón en
+el panel, salvo en las salidas, donde firma el docente encargado que está en
+`config.SALIDAS` porque es quien responde por ella. El emisor se cambia con
+`institucion` en `data/expo.json`, y `evento.fecha` reemplaza la fecha de
+emisión cuando el evento tenga día definido.
 
 ## Correos automáticos
 
@@ -712,19 +756,20 @@ Gmail).
 
 ### El aviso de los certificados es un botón aparte
 
-Emitir certificados es idempotente y se repite cada vez que cambia una nota;
-un correo, en cambio, no se puede devolver. Por eso **generar no avisa**: en la
-materia aparece un botón *«Avisar por correo a N estudiantes»* que se toca
-cuando el podio ya está definitivo.
+Emitir certificados es idempotente y se repite cada vez que cambia una nota o
+se declara un premio; un correo, en cambio, no se puede devolver. Por eso
+**generar no avisa**: al lado del botón de emitir hay otro, *«Avisar por correo
+a N…»*, que se toca cuando el podio ya está definitivo. Es igual en los cinco
+paneles.
 
-- A cada estudiante se le avisa **una sola vez**: regenerar los certificados no
+- A cada quien se le avisa **una sola vez**: regenerar los certificados no
   vuelve a escribirle a nadie. En la lista de certificados cada uno dice
   `✉ avisado` o `sin avisar`.
 - Si un correo no sale, ese certificado **queda pendiente** y el botón sigue
   ahí para reintentar. Nadie recibe el aviso dos veces.
 - Los certificados sin correo (de proyectos cargados a mano, sin registro) no
   se pueden avisar y quedan por fuera de la cuenta.
-- Si después de avisar cambia un puesto, ese correo ya salió: lo que se manda
+- Si después de avisar cambia un premio, ese correo ya salió: lo que se manda
   es un enlace, y el certificado en `/certificado/CODIGO` sí muestra siempre el
   dato actualizado.
 

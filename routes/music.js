@@ -21,8 +21,18 @@ const envios = require("../lib/envios");
 const { contenidoEvento } = require("../lib/contenido");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
+const { porCorreo: certificadosDe } = require("../lib/certificados");
 
 const router = express.Router();
+
+// Los certificados de quien acaba de consultar su código. Solo los del
+// festival: la misma persona puede tener el de la jam o el del torneo, y aquí
+// no vienen a cuento.
+function certificadosDeHallado(hallado) {
+  if (!hallado) return [];
+  const correo = hallado.acto ? hallado.acto.contacto_email : hallado.persona.email;
+  return correo ? certificadosDe(correo, "music-fest") : [];
+}
 
 const EVENTO = eventos.porSlug("music-fest");
 
@@ -332,6 +342,7 @@ router.get("/music/inscripcion/listo/:codigo", publica, (req, res) => {
       title: "Listo · Music Fest",
       recienHecho: true,
       hallado,
+      certificados: certificadosDeHallado(hallado),
       codigo: req.params.codigo.toUpperCase(),
       error: null,
       correoActivo: envios.activo(),
@@ -350,6 +361,7 @@ router.get("/music/inscripcion/estado", publica, (req, res) => {
       title: "Consultar el código · Music Fest",
       recienHecho: false,
       hallado,
+      certificados: certificadosDeHallado(hallado),
       codigo,
       error: codigo && !hallado ? "No encontramos ese código. Revisa que esté bien escrito." : null,
       correoActivo: envios.activo(),

@@ -14,6 +14,8 @@ const { contenidoEvento } = require("../lib/contenido");
 const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
+const { porCorreo: certificadosDe } = require("../lib/certificados");
+const premios = require("../lib/premios");
 
 const router = express.Router();
 
@@ -65,6 +67,9 @@ function marco(req, juegoId) {
   return {
     ...contenido(),
     evento: EVENTO,
+    // Las categorías de premio salen de config y no del JSON: son las mismas
+    // que el panel adjudica y las mismas que dice el certificado.
+    catalogoPremios: premios.catalogo("virtual-champions"),
     juegos: vc.JUEGOS,
     juego,
     torneo,
@@ -440,11 +445,21 @@ function vistaEstado(req, { codigo, recienEnviada, error }) {
     : null;
   const juegoId = torneo ? torneo.juego : null;
 
+  // Los certificados del equipo, con el mismo código con el que se consulta
+  // todo lo demás. Solo los del torneo: el mismo jugador puede tener el de la
+  // jam o el de la Expo, y aquí no vienen a cuento.
+  const correos = !encontrado
+    ? []
+    : encontrado.tipo === "equipo"
+      ? (encontrado.equipo.jugadores || []).map((j) => j.email).filter(Boolean)
+      : [encontrado.jugador.email].filter(Boolean);
+
   return {
     ...marco(req, juegoId),
     activa: "inscripcion",
     title: "Tu inscripción · Virtual Champions",
     encontrado,
+    certificados: correos.flatMap((c) => certificadosDe(c, "virtual-champions")),
     codigo: codigo || "",
     recienEnviada,
     error,

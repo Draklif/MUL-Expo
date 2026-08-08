@@ -14,6 +14,8 @@ const { contenidoEvento } = require("../lib/contenido");
 const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
+const { porCorreo: certificadosDe } = require("../lib/certificados");
+const premios = require("../lib/premios");
 
 const router = express.Router();
 
@@ -54,6 +56,9 @@ function marco(req, extra = {}) {
   return {
     ...contenido(),
     evento: EVENTO,
+    // Las categorías de premio salen de config y no del JSON: son las mismas
+    // que el panel adjudica y las mismas que dice el certificado.
+    catalogoPremios: premios.catalogo("jam-de-altura"),
     slug: "jam-de-altura",
     edicion,
     fase,
@@ -364,11 +369,24 @@ function vistaEstado(req, { codigo, recienEnviada, error, ok }) {
   const base = marco(req);
   const encontrado = codigo ? jam.buscarPorCodigo(codigo) : null;
 
+  // Los certificados del equipo, con el mismo código con el que se consulta
+  // todo lo demás. Solo los de la jam: la misma persona puede tener el de la
+  // Expo o el del torneo, y aquí no vienen a cuento.
+  const correos =
+    encontrado && encontrado.tipo === "equipo"
+      ? (encontrado.equipo.integrantes || []).map((i) => i.email).filter(Boolean)
+      : encontrado && encontrado.tipo === "solista"
+        ? [encontrado.persona.email].filter(Boolean)
+        : [];
+
+  const certificados = correos.flatMap((c) => certificadosDe(c, "jam-de-altura"));
+
   return {
     ...base,
     activa: "inscripcion",
     title: "Tu inscripción · Jam de Altura",
     encontrado,
+    certificados,
     codigo: codigo || "",
     recienEnviada,
     error,

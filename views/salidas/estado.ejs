@@ -210,6 +210,26 @@
         <p style="margin-top:24px;color:var(--tinta-dim)">Evita sanciones y disfruta la salida.</p>
       </section>
     <% } %>
+
+    <%/* ───── CONSTANCIA DE ASISTENCIA ─────
+         Aparece sola cuando el docente la emite, después de la salida. Antes
+         de eso no se menciona: prometerla y que no esté es peor. */%>
+    <% if (certificados && certificados.length) { %>
+      <section class="sal-sec">
+        <p class="eyebrow">Después de la salida</p>
+        <h2 style="font-size:24px">Tu constancia</h2>
+        <% certificados.forEach(function (c) { %>
+          <div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+            <span style="flex:1"><%= c.titulo %> <span class="mini">· <%= c.premio_label %></span></span>
+            <a href="/certificado/<%= c.codigo %>" class="btn" target="_blank" rel="noopener">Ver la constancia</a>
+          </div>
+        <% }); %>
+        <p class="mini" style="margin-top:14px">
+          Ese enlace es la constancia: se comparte, se descarga en PDF y se
+          verifica con su QR.
+        </p>
+      </section>
+    <% } %>
   <% } %>
 </main>
 

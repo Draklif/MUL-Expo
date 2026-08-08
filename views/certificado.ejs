@@ -3,74 +3,115 @@
                  'agosto','septiembre','octubre','noviembre','diciembre'];
   const d = new Date((cert.emitido_at || '').replace(' ', 'T') + 'Z');
   const emitido = isNaN(d) ? '' : `${d.getUTCDate()} de ${MESES[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
-  const fecha = (evento && evento.fecha) ? evento.fecha : emitido;
+  const fecha = fechaEvento || emitido;
   const companeros = (cert.companeros || '').split('\n').filter(Boolean);
-  const titulo = cert.estudiante + ' — ' + puesto.label + ' · Expo Multimedia';
+  const donde = [cert.contexto, cert.detalle].filter(Boolean).join(' · ');
+
+  /* El renglón del equipo es de una sola línea y no puede crecer, así que un
+     equipo grande hay que resolverlo ANTES de que el CSS lo corte: dejarlo a
+     los puntos suspensivos parte el último nombre por la mitad, y medio
+     apellido en un certificado se lee como un error.
+
+     Entran los que quepan en el presupuesto de caracteres y el resto se
+     cuenta. El primero entra siempre, aunque él solo se pase: un nombre
+     kilométrico se corta, pero se corta uno.
+
+     De dónde sale el 110: en la hoja quedan unos 790 px para los nombres, y
+     a 13.4 px de cuerpo eso son ~118 caracteres en letra proporcional. Los
+     equipos largos de verdad —los 7 de una plantilla del torneo, los 6 de un
+     proyecto de la muestra— viven todos en eventos de letra proporcional. La
+     jam es la única monoespaciada, donde cabrían ~98, pero sus equipos son
+     de 4 como mucho (config.JAM.max_integrantes) y nunca pasan de 80. */
+  const TOPE = 110;
+  const visibles = [];
+  let largo = 0;
+
+  for (const nombre of companeros) {
+    const suma = largo + nombre.length + (visibles.length ? 3 : 0);
+    if (visibles.length && suma > TOPE) break;
+    visibles.push(nombre);
+    largo = suma;
+  }
+
+  const restantes = companeros.length - visibles.length;
+  const equipo = visibles.join(' · ') + (restantes ? ` y ${restantes} más` : '');
+  const titulo = cert.persona + ' — ' + cert.premio_label + ' · ' + eventoNombre;
 %>
 <%- include('partials/head', {
       title: titulo,
-      descripcion: `${cert.estudiante} · ${puesto.label} en ${cert.materia_nombre} con el proyecto «${cert.proyecto_titulo}».`
+      descripcion: `${cert.persona} · ${cert.premio_label} en ${eventoNombre} con «${cert.titulo}».`
     }) %>
 
-<main class="cert-pantalla <%= puesto.cls %>">
+<%/* Dos clases y las dos hacen falta: la del premio pinta la medalla —un
+     campeón se lee dorado venga del evento que venga— y la del evento pinta
+     todo lo demás: el papel, la letra y el filo. */%>
+<main class="cert-pantalla <%= cert.premio_cls %> evento-<%= cert.evento %>">
   <article class="cert">
-    <header class="cert-top">
-      <p class="cert-institucion"><%= institucion || 'Universidad de Boyacá' %></p>
-      <p class="cert-programa"><%= programa %> · <%= evento.name %></p>
-    </header>
+    <%/* La hoja es una capa aparte de <article> porque <article> es el
+         contenedor de consulta: un elemento no puede medirse contra sí
+         mismo, y los márgenes de aquí adentro van en cqw. */%>
+    <div class="cert-hoja">
+      <header class="cert-top">
+        <p class="cert-institucion"><%= institucion || 'Universidad de Boyacá' %></p>
+        <p class="cert-programa"><%= programa %> · <%= eventoNombre %></p>
+      </header>
 
-    <div class="cert-sello" aria-hidden="true">
-      <span><%= cert.puesto || '★' %></span>
+      <%/* Ocho renglones de altura fija y SIEMPRE los ocho, tengan algo que
+           decir o no: un certificado sin compañeros de equipo deja el
+           renglón vacío en vez de subir el pie. Es lo que hace que dos
+           certificados cualesquiera se superpongan exactos al imprimirlos. */%>
+      <div class="cert-cuerpo">
+        <div class="cert-sello" aria-hidden="true">
+          <span><%= cert.puesto || '★' %></span>
+        </div>
+
+        <p class="cert-puesto"><%= cert.premio_label %></p>
+        <p class="cert-otorga">Se otorga a</p>
+        <h1 class="cert-nombre"><%= cert.persona %></h1>
+
+        <p class="cert-motivo"><%= motivo %></p>
+        <p class="cert-obra">«<%= cert.titulo %>»</p>
+        <p class="cert-donde"><%= donde %></p>
+
+        <p class="cert-equipo">
+          <% if (companeros.length) { %>
+            <span>Equipo</span><%= equipo %>
+          <% } %>
+        </p>
+      </div>
+
+      <footer class="cert-pie">
+        <div class="cert-firma">
+          <% if (cert.firma) { %>
+            <span class="cert-linea"></span>
+            <strong><%= cert.firma %></strong>
+            <% if (cert.firma_cargo) { %><em><%= cert.firma_cargo %></em><% } %>
+          <% } %>
+        </div>
+
+        <div class="cert-fecha">
+          <% if (fecha) { %><strong><%= fecha %></strong><% } %>
+          <em>Código <%= cert.codigo %></em>
+        </div>
+
+        <%/* Sin rótulo: un QR en un certificado ya se entiende, y la línea de
+             abajo de la hoja dice para qué sirve. El papelito viene teñido
+             del color del evento desde el propio SVG (lib/certificados.js). */%>
+        <div class="cert-qr">
+          <%- qr %>
+        </div>
+      </footer>
     </div>
-    <p class="cert-puesto"><%= puesto.label %></p>
-
-    <p class="cert-otorga">Se otorga a</p>
-    <h1 class="cert-nombre"><%= cert.estudiante %></h1>
-
-    <p class="cert-motivo">
-      por su participación en la muestra con el proyecto
-      <strong>«<%= cert.proyecto_titulo %>»</strong>
-    </p>
-    <p class="cert-donde">
-      <%= cert.materia_nombre %><% if (cert.sala_nombre) { %> · <%= cert.sala_nombre %><% } %>
-    </p>
-
-    <% if (companeros.length) { %>
-      <p class="cert-equipo">
-        <span>Equipo</span>
-        <%= companeros.join(' · ') %>
-      </p>
-    <% } %>
-
-    <footer class="cert-pie">
-      <div class="cert-firma">
-        <% if (cert.docente) { %>
-          <span class="cert-linea"></span>
-          <strong><%= cert.docente %></strong>
-          <em>Docente de <%= cert.materia_nombre %></em>
-        <% } %>
-      </div>
-
-      <div class="cert-fecha">
-        <% if (fecha) { %><strong><%= fecha %></strong><% } %>
-        <em>Código <%= cert.codigo %></em>
-      </div>
-
-      <div class="cert-qr">
-        <%- qr %>
-        <span>Verifica escaneando</span>
-      </div>
-    </footer>
   </article>
 
   <div class="cert-acciones">
     <button type="button" class="btn" id="compartir">Compartir</button>
     <button type="button" class="btn ghost" onclick="window.print()">Descargar PDF</button>
-    <a href="/expo" class="cert-volver">Ir a la Expo</a>
+    <a href="<%= volver %>" class="cert-volver">Ir a <%= eventoNombre %></a>
   </div>
 
   <p class="cert-verificado">
-    Certificado verificado por <%= evento.name %> · <%= programa %>
+    Certificado verificado por <%= eventoNombre %> · <%= programa %>
   </p>
 </main>
 
@@ -80,7 +121,7 @@
     if (!boton) return;
 
     var url = <%- JSON.stringify(url) %>;
-    var texto = <%- JSON.stringify(puesto.label + " en " + cert.materia_nombre + " — Expo Multimedia") %>;
+    var texto = <%- JSON.stringify(cert.premio_label + " · " + eventoNombre) %>;
 
     boton.addEventListener("click", async function () {
       if (navigator.share) {

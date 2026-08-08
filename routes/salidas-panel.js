@@ -21,8 +21,13 @@ const salidas = require("../lib/salidas");
 const envios = require("../lib/envios");
 const periodos = require("../lib/periodos");
 const { requireSalidas, verificar, configurado } = require("../lib/salidas-auth");
+const certificados = require("../lib/certificados");
 
 const router = express.Router();
+
+// Una salida no es un evento del programa, pero certifica igual. Aquí se llama
+// así para que la tabla de certificados sepa de dónde salió.
+const EVENTO = "salidas";
 
 function marco(extra = {}) {
   return {
@@ -130,6 +135,7 @@ router.get("/panel/:id", (req, res) => {
       // que ya no necesitan nada.
       pendientes: registros.filter((r) => !r.confirmado),
       confirmados: registros.filter((r) => r.confirmado),
+      certificados: certificados.deLote(EVENTO, salida.id),
       correoActivo: envios.activo(),
       aviso: req.query,
     })
@@ -342,6 +348,50 @@ router.get("/panel/:id/lista.csv", (req, res) => {
   res.set("Content-Type", "text/csv; charset=utf-8");
   res.set("Content-Disposition", `attachment; filename="${salida.id}-lista.csv"`);
   res.send("﻿" + filas.map((f) => f.map(escapar).join(";")).join("\r\n"));
+});
+
+// ---------------------------------------------------------------------
+//  Certificados de asistencia
+// ---------------------------------------------------------------------
+
+/**
+ * Constancia de asistencia, y solo para quien asistió: la lista de inscritos
+ * no sirve —se paga y a veces no se va—, así que lo que cuenta es la
+ * asistencia que se pasó ese día. Aquí no hay premios: una salida no es una
+ * competencia.
+ *
+ * Firma el docente encargado que está en config.SALIDAS, que es quien responde
+ * por la salida, y no quien tenga la sesión abierta.
+ */
+router.post("/panel/:id/certificados", (req, res) => {
+  const salida = salidas.porId(req.params.id);
+  if (!salida) return res.redirect("/salidas/panel");
+
+  const r = certificados.emitirDeSalida(salida.id, periodos.activo().id);
+
+  res.redirect(
+    `/salidas/panel/${salida.id}?emitidos=${r.emitidos}&actualizados=${r.actualizados}#certificados`
+  );
+});
+
+// Avisar es un paso aparte de emitir, igual que el resto del sitio: emitir se
+// repite sin consecuencias, un correo no se devuelve.
+router.post("/panel/:id/certificados/avisos", async (req, res) => {
+  const salida = salidas.porId(req.params.id);
+  if (!salida) return res.redirect("/salidas/panel");
+
+  let r = { enviados: 0, fallaron: 0 };
+  try {
+    r = await certificados.avisarPendientes(EVENTO, salida.id, envios.urlBase(req));
+  } catch (e) {
+    console.error(`  ! Avisos de certificados de la salida ${salida.id}: ${e.message}`);
+  }
+
+  // cert_avisados y no avisados a secas: la página ya usa banderas propias
+  // para el correo de confirmación de pagos.
+  res.redirect(
+    `/salidas/panel/${salida.id}?cert_avisados=${r.enviados}&cert_fallaron=${r.fallaron}#certificados`
+  );
 });
 
 module.exports = router;

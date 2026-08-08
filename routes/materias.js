@@ -3,12 +3,7 @@ const db = require("../db/database");
 const { parseLista } = require("../lib/listas");
 const { contenidoDe } = require("../lib/eventos");
 const { rankingDeMateria } = require("../lib/ranking");
-const {
-  emitirDeMateria,
-  deMateria,
-  etiquetaPuesto,
-  avisarPendientes,
-} = require("../lib/certificados");
+const { emitirDeMateria, deLote, avisarPendientes } = require("../lib/certificados");
 const envios = require("../lib/envios");
 
 const router = express.Router();
@@ -137,10 +132,7 @@ router.get("/:id", (req, res) => {
   // Podio y certificados ya emitidos
   const ranking = rankingDeMateria(req.params.id, req.periodo.id);
   const podio = ranking.filter((p) => p.puesto && p.puesto <= 3);
-  const certificados = deMateria(req.params.id, req.periodo.id).map((c) => ({
-    ...c,
-    etiqueta: etiquetaPuesto(c.puesto),
-  }));
+  const certificados = deLote("expo", req.params.id);
 
   res.render("materia", {
     materia,
@@ -179,7 +171,7 @@ router.post("/:id/certificados/avisos", async (req, res) => {
 
   let r = { enviados: 0, fallaron: 0 };
   try {
-    r = await avisarPendientes(materiaId, req.periodo.id, envios.urlBase(req));
+    r = await avisarPendientes("expo", materiaId, envios.urlBase(req));
   } catch (e) {
     console.error(`  ! Avisos de certificados de la materia ${materiaId}: ${e.message}`);
   }

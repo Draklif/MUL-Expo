@@ -96,6 +96,28 @@
       </p>
     </section>
   <% } %>
+
+  <%/* ───── CERTIFICADOS ─────
+       Salen solos cuando la organización los emite; antes de eso no se
+       promete nada. */%>
+  <% if (certificados && certificados.length) { %>
+    <section class="mf-sec">
+      <p class="eyebrow">Certificados</p>
+      <div class="herramienta" style="margin-top:14px">
+        <% certificados.forEach(function (c) { %>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+            <span style="flex:1"><%= c.persona %> <span class="mini">· <%= c.titulo %></span></span>
+            <span class="mini"><%= c.premio_label %></span>
+            <a href="/certificado/<%= c.codigo %>" class="btn plano chico" target="_blank" rel="noopener">Ver</a>
+          </div>
+        <% }); %>
+        <p class="mini" style="margin:14px 0 0">
+          Cada enlace es el certificado: se comparte, se descarga en PDF y se
+          verifica con su QR.
+        </p>
+      </div>
+    </section>
+  <% } %>
 </main>
 
 <%- include('partials/pie') %>

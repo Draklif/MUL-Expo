@@ -276,20 +276,29 @@
   </section>
   <% } %>
 
-  <%/* ───── PREMIOS ───── */%>
-  <% if (premios && premios.puestos && premios.puestos.length) { %>
+  <%/* ───── PREMIOS ─────
+       Las categorías salen de config.JAM.premios y no del JSON: son las mismas
+       que el panel deja adjudicar y las mismas que dice el certificado. Del
+       JSON sale qué se lleva cada una, buscado por id.
+
+       El certificado de participación no es una tarjeta más: no se adjudica,
+       lo recibe todo el que entrega, y por eso va suelto abajo. */%>
+  <% if (catalogoPremios && catalogoPremios.length) { %>
   <section class="jam-sec">
     <p class="eyebrow">Lo que está en juego</p>
     <h2><%= premios.titulo %></h2>
     <% if (premios.lead) { %><p class="sec-lead"><%= premios.lead %></p><% } %>
     <div class="grid">
-      <% premios.puestos.forEach(function (x) { %>
+      <% catalogoPremios.forEach(function (x) { %>
         <div class="tarjeta">
-          <div class="eyebrow" style="margin-bottom:10px"><%= x.puesto %></div>
-          <p style="margin:0;color:var(--ink-dim);font-size:14px"><%= x.premio %></p>
+          <div class="eyebrow" style="margin-bottom:10px"><%= x.label %></div>
+          <p style="margin:0;color:var(--ink-dim);font-size:14px"><%= (premios.detalle || {})[x.id] || "" %></p>
         </div>
       <% }); %>
     </div>
+    <% if (premios.nota) { %>
+      <p class="sec-lead" style="margin-top:20px"><%= premios.nota %></p>
+    <% } %>
   </section>
   <% } %>
 

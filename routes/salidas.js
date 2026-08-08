@@ -18,6 +18,7 @@ const periodos = require("../lib/periodos");
 const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
+const { porCorreo: certificadosDe } = require("../lib/certificados");
 
 const router = express.Router();
 
@@ -96,6 +97,10 @@ router.get("/salidas/estado", (req, res) => {
       title: "Tu registro · Salidas pedagógicas",
       codigo,
       registro,
+      // La constancia de asistencia, cuando ya se emitió. Solo la de salidas:
+      // la misma persona puede tener certificados de la Expo o del festival, y
+      // aquí no vienen a cuento.
+      certificados: registro && registro.email ? certificadosDe(registro.email, "salidas") : [],
       // La cabecera y la boleta se arman con la salida, y aquí la salida sale
       // del registro que se consultó: sin código todavía no hay ninguna.
       salida: registro ? registro.salida_info : null,
@@ -259,6 +264,7 @@ router.get("/salidas/:id/registro/listo/:codigo", (req, res, next) => {
       title: `Listo · ${salida.nombre}`,
       codigo: registro.codigo,
       registro,
+      certificados: registro.email ? certificadosDe(registro.email, "salidas") : [],
       salida,
       recienHecho: true,
       error: null,

@@ -22,8 +22,12 @@ const music = require("../lib/music");
 const envios = require("../lib/envios");
 const periodos = require("../lib/periodos");
 const { requireMusic, verificar, configurado } = require("../lib/music-auth");
+const premios = require("../lib/premios");
+const certificados = require("../lib/certificados");
 
 const router = express.Router();
+
+const EVENTO = "music-fest";
 
 function marco(extra = {}) {
   return {
@@ -116,6 +120,8 @@ router.get("/panel", (req, res) => {
       prodRechazados: gente.filter((p) => p.estado === "rechazado"),
       porArea: music.porArea(edicion.id),
       cifras: music.resumen(edicion.id),
+      premios: premios.paraElPanel(EVENTO, edicion.id),
+      certificados: certificados.deLote(EVENTO, edicion.id),
       correoActivo: envios.activo(),
       aviso: req.query,
     })
@@ -338,6 +344,62 @@ router.get("/panel/lista.csv", (req, res) => {
   res.set("Content-Type", "text/csv; charset=utf-8");
   res.set("Content-Disposition", 'attachment; filename="music-fest.csv"');
   res.send("﻿" + filas.map((f) => f.map(escapar).join(";")).join("\r\n"));
+});
+
+// ---------------------------------------------------------------------
+//  Premios y certificados
+// ---------------------------------------------------------------------
+
+// El festival no es una competencia y los reconocimientos son pocos: esto es
+// nombrar lo que se destacó, no ordenar a nadie.
+router.post("/panel/premios", (req, res) => {
+  const edicion = music.edicionVigente();
+  if (!edicion) return res.redirect("/music/panel");
+
+  for (const categoria of premios.catalogo(EVENTO)) {
+    if (!(categoria.id in req.body)) continue;
+    premios.asignar(
+      EVENTO,
+      edicion.id,
+      categoria.id,
+      req.body[categoria.id],
+      req.session.docenteMusic.id
+    );
+  }
+
+  res.redirect("/music/panel?ok=1#certificados");
+});
+
+// Emitir. Un certificado por grupo del cartel —a nombre del contacto, que es
+// el único nombre que la inscripción de un acto guarda— y uno por cada persona
+// del equipo de producción.
+router.post("/panel/certificados", (req, res) => {
+  const edicion = music.edicionVigente();
+  if (!edicion) return res.redirect("/music/panel");
+
+  const r = certificados.emitirDeMusic(
+    edicion.id,
+    edicion.periodo_id || periodos.activo().id,
+    req.session.docenteMusic.name
+  );
+
+  res.redirect(`/music/panel?emitidos=${r.emitidos}&actualizados=${r.actualizados}#certificados`);
+});
+
+// Avisar es un paso aparte de emitir: emitir se repite sin consecuencias, un
+// correo no se devuelve.
+router.post("/panel/certificados/avisos", async (req, res) => {
+  const edicion = music.edicionVigente();
+  if (!edicion) return res.redirect("/music/panel");
+
+  let r = { enviados: 0, fallaron: 0 };
+  try {
+    r = await certificados.avisarPendientes(EVENTO, edicion.id, envios.urlBase(req));
+  } catch (e) {
+    console.error(`  ! Avisos de certificados del festival ${edicion.id}: ${e.message}`);
+  }
+
+  res.redirect(`/music/panel?avisados=${r.enviados}&fallaron=${r.fallaron}#certificados`);
 });
 
 module.exports = router;

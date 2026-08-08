@@ -113,31 +113,85 @@ db.exec(`
 
   CREATE INDEX IF NOT EXISTS idx_sol_int ON solicitud_integrantes(solicitud_id);
 
-  -- Certificados. Los datos se congelan al emitirlos: si después cambia una
-  -- nota o se borra un proyecto, el certificado que alguien ya compartió
-  -- sigue diciendo lo mismo.
+  -- =================================================================
+  --  CERTIFICADOS
+  --  Esta tabla NO es de la Expo: es del programa. La misma fila sirve
+  --  para un proyecto de la muestra, un jugador del torneo, un equipo de
+  --  la jam, un grupo del festival o quien se subió al bus de una salida.
+  --  Un solo código, una sola página y un solo QR para los cinco.
+  --
+  --  Los datos se congelan al emitirlos: si después cambia una nota, se
+  --  borra un proyecto o se le cambia el nombre a un equipo, el
+  --  certificado que alguien ya compartió sigue diciendo lo mismo.
+  -- =================================================================
   CREATE TABLE IF NOT EXISTS certificados (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
-    codigo          TEXT NOT NULL UNIQUE,
-    materia_id      INTEGER NOT NULL,
-    proyecto_id     INTEGER,
-    estudiante      TEXT NOT NULL,
-    email           TEXT COLLATE NOCASE,
-    proyecto_titulo TEXT NOT NULL,
-    materia_nombre  TEXT NOT NULL,
-    sala            TEXT,
-    sala_nombre     TEXT,
-    puesto          INTEGER,
-    companeros      TEXT,
-    docente         TEXT,
-    emitido_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE (materia_id, proyecto_id, estudiante),
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo       TEXT NOT NULL UNIQUE,
+    -- Slug del evento, o 'salidas' —que no es un evento y por eso no está
+    -- en config.EVENTOS, pero sí certifica—.
+    evento       TEXT NOT NULL DEFAULT 'expo',
+    periodo_id   INTEGER,
+    -- A quién se le emitió. ref_tipo dice de qué tabla sale ref_id, y no
+    -- hay llave foránea por la misma razón que salida_registros.salida no
+    -- la tiene: apuntan a tablas distintas, y una de ellas ni siquiera es
+    -- una tabla (una salida vive en config).
+    ref_tipo     TEXT NOT NULL DEFAULT 'proyecto',
+    ref_id       TEXT NOT NULL,
+    -- Sobre qué se emite en bloque: la materia, el torneo, la edición o
+    -- la salida. Es lo que un botón del panel genera de una sola vez.
+    lote         TEXT NOT NULL,
+    persona      TEXT NOT NULL,
+    email        TEXT COLLATE NOCASE,
+    titulo       TEXT NOT NULL,   -- proyecto | equipo | grupo | área | salida
+    contexto     TEXT,            -- materia | juego | edición | lugar
+    detalle      TEXT,            -- sala | disciplina | rol | fecha
+    puesto       INTEGER,         -- solo la Expo: 1, 2, 3
+    premio       TEXT,            -- id del premio en config; nulo = participación
+    premio_label TEXT NOT NULL,   -- lo que dice el certificado, congelado
+    premio_cls   TEXT NOT NULL,   -- oro | plata | bronce | part
+    companeros   TEXT,
+    firma        TEXT,
+    firma_cargo  TEXT,
+    -- Solo la Expo. Se conservan para que borrar una materia siga
+    -- llevándose sus certificados, que es como funciona desde el principio.
+    materia_id   INTEGER,
+    proyecto_id  INTEGER,
+    emitido_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    avisado_at   DATETIME,
+    UNIQUE (evento, ref_tipo, ref_id, persona),
     FOREIGN KEY (materia_id)  REFERENCES materias(id)  ON DELETE CASCADE,
-    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL
+    FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL,
+    FOREIGN KEY (periodo_id)  REFERENCES periodos(id)
   );
 
-  CREATE INDEX IF NOT EXISTS idx_cert_materia ON certificados(materia_id);
-  CREATE INDEX IF NOT EXISTS idx_cert_email   ON certificados(email);
+  -- Los índices de certificados NO van aquí: en una base que viene de antes,
+  -- este bloque corre cuando la tabla todavía tiene la forma vieja y un índice
+  -- sobre 'evento' no existiría todavía. Se crean después de la migración.
+
+  -- Los premios que un docente le adjudicó a alguien. En la Expo el podio se
+  -- calcula de las notas y no pasa por aquí; en el torneo, la jam y el
+  -- festival no hay nota que calcular —quién fue el mejor apartado artístico
+  -- lo decide un jurado—, así que la designación se guarda.
+  --
+  -- Las categorías salen de config (VC.premios, JAM.premios, MUSIC.premios) y
+  -- aquí solo queda el id: agregar una categoría no pide migración, y quitarla
+  -- deja una fila que simplemente deja de mostrarse.
+  CREATE TABLE IF NOT EXISTS premios_evento (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    evento       TEXT NOT NULL,
+    lote         TEXT NOT NULL,   -- torneo_id | edicion_id
+    premio       TEXT NOT NULL,   -- id de la categoría en config
+    ref_tipo     TEXT NOT NULL,   -- vc_equipo | vc_jugador | jam_equipo | music_acto | music_persona
+    ref_id       INTEGER NOT NULL,
+    otorgado_por INTEGER,
+    otorgado_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- Un ganador por categoría y por edición. Declarar otro reemplaza al
+    -- anterior en vez de dejar dos campeones.
+    UNIQUE (evento, lote, premio),
+    FOREIGN KEY (otorgado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_premios_lote ON premios_evento(evento, lote);
 
   -- =================================================================
   --  VIRTUAL CHAMPIONS
@@ -688,7 +742,6 @@ try {
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_proy_periodo ON proyectos(periodo_id);
   CREATE INDEX IF NOT EXISTS idx_sol_periodo  ON solicitudes(periodo_id, materia_id);
-  CREATE INDEX IF NOT EXISTS idx_cert_periodo ON certificados(periodo_id);
 `);
 
 // La identidad de un estudiante es su correo, pero dentro de un semestre: la
@@ -727,6 +780,95 @@ if (sqlEstudiantes && !/UNIQUE \(materia_id, periodo_id, email\)/.test(sqlEstudi
     throw e;
   }
 }
+
+// ---------- El certificado deja de ser de la Expo ----------
+// La tabla nació con forma de muestra —materia obligatoria, proyecto, sala— y
+// ahora tiene que servirle también al torneo, a la jam, al festival y a las
+// salidas. Como el cambio es de columnas y de clave única, la tabla se rehace.
+//
+// Lo único innegociable es que los `codigo` no se toquen: hay certificados
+// repartidos por correo, con su QR impreso, y esos enlaces tienen que seguir
+// abriendo lo mismo. Por eso se copian id y código tal cual y solo se
+// reacomoda lo demás.
+const sqlCertificados = db
+  .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'certificados'")
+  .get();
+
+if (sqlCertificados && !/\bevento\b/.test(sqlCertificados.sql)) {
+  db.exec("BEGIN");
+  try {
+    db.exec(`
+      CREATE TABLE certificados_nuevo (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        codigo       TEXT NOT NULL UNIQUE,
+        evento       TEXT NOT NULL DEFAULT 'expo',
+        periodo_id   INTEGER,
+        ref_tipo     TEXT NOT NULL DEFAULT 'proyecto',
+        ref_id       TEXT NOT NULL,
+        lote         TEXT NOT NULL,
+        persona      TEXT NOT NULL,
+        email        TEXT COLLATE NOCASE,
+        titulo       TEXT NOT NULL,
+        contexto     TEXT,
+        detalle      TEXT,
+        puesto       INTEGER,
+        premio       TEXT,
+        premio_label TEXT NOT NULL,
+        premio_cls   TEXT NOT NULL,
+        companeros   TEXT,
+        firma        TEXT,
+        firma_cargo  TEXT,
+        materia_id   INTEGER,
+        proyecto_id  INTEGER,
+        emitido_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+        avisado_at   DATETIME,
+        UNIQUE (evento, ref_tipo, ref_id, persona),
+        FOREIGN KEY (materia_id)  REFERENCES materias(id)  ON DELETE CASCADE,
+        FOREIGN KEY (proyecto_id) REFERENCES proyectos(id) ON DELETE SET NULL,
+        FOREIGN KEY (periodo_id)  REFERENCES periodos(id)
+      );
+
+      -- El puesto se queda como número —la Expo lo calcula de las notas— y
+      -- además se escribe ya redactado, porque a partir de ahora es lo que
+      -- lee la página: los premios de los otros eventos no son números.
+      INSERT INTO certificados_nuevo
+        (id, codigo, evento, periodo_id, ref_tipo, ref_id, lote, persona, email,
+         titulo, contexto, detalle, puesto, premio_label, premio_cls,
+         companeros, firma, firma_cargo, materia_id, proyecto_id, emitido_at, avisado_at)
+      SELECT id, codigo, 'expo', periodo_id, 'proyecto',
+             CAST(COALESCE(proyecto_id, -id) AS TEXT), CAST(materia_id AS TEXT),
+             estudiante, email, proyecto_titulo, materia_nombre, sala_nombre, puesto,
+             CASE puesto WHEN 1 THEN 'Primer puesto'
+                         WHEN 2 THEN 'Segundo puesto'
+                         WHEN 3 THEN 'Tercer puesto'
+                         ELSE 'Participación' END,
+             CASE puesto WHEN 1 THEN 'oro'
+                         WHEN 2 THEN 'plata'
+                         WHEN 3 THEN 'bronce'
+                         ELSE 'part' END,
+             companeros, docente, 'Docente de ' || materia_nombre,
+             materia_id, proyecto_id, emitido_at, avisado_at
+      FROM certificados;
+
+      DROP TABLE certificados;
+      ALTER TABLE certificados_nuevo RENAME TO certificados;
+    `);
+    db.exec("COMMIT");
+    console.log("  ✓ certificados: ahora sirven a todos los eventos, no solo a la Expo");
+  } catch (e) {
+    db.exec("ROLLBACK");
+    throw e;
+  }
+}
+
+// Aquí y no en el bloque de esquema: un DROP TABLE se lleva sus índices por
+// delante, así que estos se crean cuando la tabla ya tiene su forma final —la
+// haya estrenado esta base o se la acabe de dar la migración de arriba—.
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_cert_lote    ON certificados(evento, lote);
+  CREATE INDEX IF NOT EXISTS idx_cert_email   ON certificados(email);
+  CREATE INDEX IF NOT EXISTS idx_cert_periodo ON certificados(periodo_id);
+`);
 
 // ---------- Sembrar docentes desde config (idempotente) ----------
 // La identidad es el correo institucional: es lo que teclean para entrar.

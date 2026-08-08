@@ -290,6 +290,117 @@
     <% } %>
   </section>
 
+  <%/* ───── PREMIOS Y CERTIFICADOS ─────
+       Va después del bracket porque es lo que pasa cuando el bracket ya
+       terminó. Los premios primero: emitir congela lo que digan. */%>
+  <section class="vc-sec" id="certificados">
+    <p class="eyebrow">Al final del torneo</p>
+    <h2 style="font-size:22px">Premios y certificados</h2>
+    <p class="mini" style="margin:8px 0 20px">
+      El certificado de participación lo reciben todos los jugadores de los
+      equipos aprobados, <strong>suplentes incluidos</strong>: la banca también
+      estuvo en el torneo.
+    </p>
+
+    <% if (query.premios) { %><div class="aviso bueno"><p style="margin:0">Premios guardados.</p></div><% } %>
+    <% if (query.emitidos !== undefined) {
+         const nuevos = Number(query.emitidos) || 0, act = Number(query.actualizados) || 0; %>
+      <div class="aviso bueno">
+        <p style="margin:0">
+          <%= nuevos %> certificado<%= nuevos === 1 ? '' : 's' %> nuevo<%= nuevos === 1 ? '' : 's' %><% if (act) { %>
+          · <%= act %> actualizado<%= act === 1 ? '' : 's' %><% } %>.
+        </p>
+      </div>
+    <% } %>
+    <% if (query.avisados !== undefined) {
+         const ok = Number(query.avisados) || 0, mal = Number(query.fallaron) || 0; %>
+      <div class="aviso <%= mal ? 'malo' : 'bueno' %>">
+        <p style="margin:0">
+          <% if (ok) { %>Salieron <%= ok %> correo<%= ok === 1 ? '' : 's' %>.<% } %>
+          <% if (mal) { %>
+            <%= mal %> no <%= mal === 1 ? 'salió y queda pendiente' : 'salieron y quedan pendientes' %>: se puede reintentar.
+          <% } else if (!ok) { %>No había avisos pendientes.<% } %>
+        </p>
+      </div>
+    <% } %>
+
+    <% if (premios.length) { %>
+      <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/premios" class="tarjeta" style="margin-top:8px">
+        <% premios.forEach(function (p) { %>
+          <div class="campo">
+            <label for="premio-<%= p.id %>"><%= p.label %></label>
+            <select name="<%= p.id %>" id="premio-<%= p.id %>">
+              <option value="">— desierto —</option>
+              <% p.candidatos.forEach(function (c) { %>
+                <%/* Si nadie ha declarado el campeón, llega marcado el que ganó
+                     la última partida cerrada. Es una sugerencia: se cambia. */%>
+                <option value="<%= c.id %>" <%= (p.asignado ? p.asignado.ref_id === c.id : p.sugerido === c.id) ? 'selected' : '' %>>
+                  <%= c.etiqueta %><%= !p.asignado && p.sugerido === c.id ? ' — ganó la final' : '' %>
+                </option>
+              <% }); %>
+            </select>
+            <% if (!p.candidatos.length) { %>
+              <p class="mini" style="margin:8px 0 0">Todavía no hay equipos aprobados: no hay a quién dárselo.</p>
+            <% } %>
+          </div>
+        <% }); %>
+        <button type="submit" class="btn chico">Guardar los premios</button>
+      </form>
+    <% } %>
+
+    <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/certificados" style="margin-top:20px"
+          onsubmit="return confirm('Se generan los certificados con los premios de este momento. Si ya existían, se actualizan sin cambiar sus enlaces.');">
+      <button type="submit" class="btn chico">
+        <%= certificados.length ? 'Regenerar certificados' : 'Generar certificados' %>
+      </button>
+    </form>
+
+    <% const porAvisar = certificados.filter(function (c) { return c.email && !c.avisado_at; }).length; %>
+
+    <% if (correoActivo && porAvisar) { %>
+      <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/certificados/avisos" style="margin-top:14px"
+            onsubmit="return confirm('Se le manda a cada jugador el enlace de su certificado, con el premio que tiene ahora mismo. Un correo no se puede devolver.');">
+        <button type="submit" class="btn chico">
+          Avisar por correo a <%= porAvisar %> jugador<%= porAvisar === 1 ? '' : 'es' %>
+        </button>
+      </form>
+      <p class="mini" style="margin-top:8px">
+        A cada quien se le avisa una sola vez: regenerar no vuelve a escribirle a nadie.
+      </p>
+    <% } else if (certificados.length && !correoActivo) { %>
+      <p class="mini" style="margin-top:14px">
+        El aviso por correo está apagado: falta la cuenta de envío en el <code>.env</code>.
+      </p>
+    <% } %>
+
+    <% if (certificados.length) { %>
+      <details style="margin-top:20px">
+        <summary class="mini">Ver los <%= certificados.length %> certificados y sus enlaces</summary>
+        <div style="margin-top:14px">
+          <table class="tabla">
+            <thead><tr><th>Jugador</th><th>Qué se lleva</th><th>Equipo</th><th>Enlace</th></tr></thead>
+            <tbody>
+              <% certificados.forEach(function (c) { %>
+                <tr>
+                  <td>
+                    <span class="nom"><%= c.persona %></span>
+                    <% if (c.email) { %><div class="mini"><%= c.avisado_at ? '✉ avisado' : 'sin avisar' %></div><% } %>
+                  </td>
+                  <td class="mini"><%= c.premio_label %></td>
+                  <td class="mini"><%= c.titulo %></td>
+                  <td>
+                    <a href="/certificado/<%= c.codigo %>" target="_blank" rel="noopener"
+                       class="mini" style="color:var(--juego)"><%= c.codigo %> ↗</a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </details>
+    <% } %>
+  </section>
+
   <%/* ───── BORRAR ───── */%>
   <section class="vc-sec">
     <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/borrar"

@@ -203,17 +203,21 @@
   </section>
   <% } %>
 
-  <%/* ───── PREMIOS ───── */%>
-  <% if (premios && premios.puestos && premios.puestos.length) { %>
+  <%/* ───── PREMIOS ─────
+       Las categorías salen de config.VC.premios y no del JSON: son las mismas
+       que el panel deja adjudicar y las mismas que termina diciendo el
+       certificado, así que hay una sola lista y no tres. Del JSON sale el
+       texto de qué se lleva cada una, buscado por id. */%>
+  <% if (catalogoPremios && catalogoPremios.length) { %>
   <section class="vc-sec">
     <p class="eyebrow">Lo que está en juego</p>
     <h2><%= premios.titulo %></h2>
     <% if (premios.lead) { %><p class="sec-lead"><%= premios.lead %></p><% } %>
     <div class="grid" style="margin-top:24px">
-      <% premios.puestos.forEach(function (x) { %>
+      <% catalogoPremios.forEach(function (x) { %>
         <div class="tarjeta cortada">
-          <div class="eyebrow" style="margin-bottom:6px"><%= x.puesto %></div>
-          <p style="margin:0;color:var(--ink-dim)"><%= x.premio %></p>
+          <div class="eyebrow" style="margin-bottom:6px"><%= x.label %></div>
+          <p style="margin:0;color:var(--ink-dim)"><%= (premios.detalle || {})[x.id] || "" %></p>
         </div>
       <% }); %>
     </div>

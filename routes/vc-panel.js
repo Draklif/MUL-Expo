@@ -18,8 +18,12 @@ const eventos = require("../lib/eventos");
 const { VC } = require("../config");
 const { limpiarNombre } = require("../lib/listas");
 const { requireVC, verificar, configurado } = require("../lib/vc-auth");
+const premios = require("../lib/premios");
+const certificados = require("../lib/certificados");
 
 const router = express.Router();
+
+const EVENTO = "virtual-champions";
 
 // Marco común de las pantallas del panel.
 function marco(extra = {}) {
@@ -178,6 +182,9 @@ router.get("/panel/torneos/:id", (req, res) => {
       libres: vc.agentesLibres(torneo.id),
       bracket: vc.bracketDe(torneo.id),
       sePuedeRegenerar: bracket.sePuedeRegenerar(torneo.id),
+      premios: premios.paraElPanel(EVENTO, torneo.id),
+      certificados: certificados.deLote(EVENTO, torneo.id),
+      correoActivo: envios.activo(),
     })
   );
 });
@@ -506,6 +513,60 @@ router.post("/panel/mapas/:id/borrar", (req, res) => {
   // recalcular reabre la partida y baja al que había subido si hace falta.
   vc.recalcular(mapa.partida_id);
   res.redirect(`/vc/panel/partidas/${mapa.partida_id}?ok=1#mapas`);
+});
+
+// ---------------------------------------------------------------------
+//  Premios y certificados
+// ---------------------------------------------------------------------
+
+// Quién se lleva cada categoría. El bracket dice quién ganó la final, pero el
+// premio lo declara alguien: la final es presencial y un mapa corregido puede
+// cambiar el ganador después de que ya se entregó el trofeo.
+router.post("/panel/torneos/:id/premios", (req, res) => {
+  const torneo = vc.torneo(req.params.id);
+  if (!torneo) return res.redirect("/vc/panel");
+
+  for (const categoria of premios.catalogo(EVENTO)) {
+    if (!(categoria.id in req.body)) continue;
+    premios.asignar(EVENTO, torneo.id, categoria.id, req.body[categoria.id], req.session.docenteVC.id);
+  }
+
+  res.redirect(`/vc/panel/torneos/${torneo.id}?premios=1#certificados`);
+});
+
+// Emitir. Uno por jugador de los equipos aprobados, suplentes incluidos: la
+// banca también estuvo en el torneo.
+router.post("/panel/torneos/:id/certificados", (req, res) => {
+  const torneo = vc.torneo(req.params.id);
+  if (!torneo) return res.redirect("/vc/panel");
+
+  const r = certificados.emitirDeTorneo(
+    torneo.id,
+    torneo.periodo_id || periodos.activo().id,
+    req.session.docenteVC.name
+  );
+
+  res.redirect(
+    `/vc/panel/torneos/${torneo.id}?emitidos=${r.emitidos}&actualizados=${r.actualizados}#certificados`
+  );
+});
+
+// Avisar es un paso aparte de emitir: emitir se repite sin consecuencias, un
+// correo no se devuelve.
+router.post("/panel/torneos/:id/certificados/avisos", async (req, res) => {
+  const torneo = vc.torneo(req.params.id);
+  if (!torneo) return res.redirect("/vc/panel");
+
+  let r = { enviados: 0, fallaron: 0 };
+  try {
+    r = await certificados.avisarPendientes(EVENTO, torneo.id, envios.urlBase(req));
+  } catch (e) {
+    console.error(`  ! Avisos de certificados del torneo ${torneo.id}: ${e.message}`);
+  }
+
+  res.redirect(
+    `/vc/panel/torneos/${torneo.id}?avisados=${r.enviados}&fallaron=${r.fallaron}#certificados`
+  );
 });
 
 module.exports = router;

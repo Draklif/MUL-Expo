@@ -433,6 +433,139 @@
   </section>
 
   <%/* ───── AJUSTES ───── */%>
+  <%/* ───── 7. PREMIOS Y CERTIFICADOS ─────
+       Va de última porque es lo último que pasa: cuando ya se entregó, ya se
+       miró y ya se decidió. Los premios primero y el botón de emitir después,
+       en ese orden, porque emitir congela lo que digan los premios. */%>
+  <section class="jam-sec" id="certificados">
+    <div class="herramienta">
+      <h3>7 · Premios y certificados</h3>
+      <p class="sec-lead">
+        El certificado de participación lo recibe todo el que <strong>entregó</strong>,
+        sin que nadie tenga que declararlo. Los premios sí se declaran aquí:
+        la jam no tiene notas, tiene un jurado.
+      </p>
+
+      <% if (aviso.emitidos !== undefined) {
+           const nuevos = Number(aviso.emitidos) || 0, act = Number(aviso.actualizados) || 0; %>
+        <div class="aviso bueno" style="margin-bottom:22px">
+          <p style="margin:0">
+            <%= nuevos %> certificado<%= nuevos === 1 ? '' : 's' %> nuevo<%= nuevos === 1 ? '' : 's' %><% if (act) { %>
+            · <%= act %> actualizado<%= act === 1 ? '' : 's' %><% } %>.
+          </p>
+        </div>
+      <% } %>
+
+      <% if (aviso.cert_avisados !== undefined) {
+           const ok = Number(aviso.cert_avisados) || 0, mal = Number(aviso.cert_fallaron) || 0; %>
+        <div class="aviso <%= mal ? 'malo' : 'bueno' %>" style="margin-bottom:22px">
+          <p style="margin:0">
+            <% if (ok) { %>Salieron <%= ok %> correo<%= ok === 1 ? '' : 's' %>.<% } %>
+            <% if (mal) { %>
+              <%= mal %> no <%= mal === 1 ? 'salió y queda pendiente' : 'salieron y quedan pendientes' %>: se puede reintentar.
+            <% } else if (!ok) { %>No había avisos pendientes.<% } %>
+          </p>
+        </div>
+      <% } %>
+
+      <%/* ── Los premios ── */%>
+      <% if (!premios.length) { %>
+        <div class="vacio" style="margin:0 0 22px">
+          No hay categorías de premio configuradas. Se agregan en
+          <code>config.JAM.premios</code>.
+        </div>
+      <% } else { %>
+        <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/premios">
+          <% premios.forEach(function (p) { %>
+            <div class="campo">
+              <label for="premio-<%= p.id %>"><%= p.label %></label>
+              <select name="<%= p.id %>" id="premio-<%= p.id %>">
+                <option value="">— desierto —</option>
+                <% p.candidatos.forEach(function (c) { %>
+                  <option value="<%= c.id %>" <%= p.asignado && p.asignado.ref_id === c.id ? 'selected' : '' %>>
+                    <%= c.etiqueta %>
+                  </option>
+                <% }); %>
+              </select>
+              <% if (!p.candidatos.length) { %>
+                <p class="ayuda">Todavía no hay equipos admitidos con entrega: no hay a quién dárselo.</p>
+              <% } %>
+            </div>
+          <% }); %>
+          <button type="submit" class="btn chico">Guardar los premios</button>
+        </form>
+      <% } %>
+
+      <%/* ── Emitir ── */%>
+      <p class="mini" style="margin:26px 0 12px">
+        <strong><%= cifras.entregas %></strong> equipo<%= cifras.entregas === 1 ? '' : 's' %> con entrega.
+        Emitir antes de que cierren las entregas deja por fuera a los que lleguen
+        después; volver a emitir los agrega sin cambiarle el enlace a nadie.
+      </p>
+
+      <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/certificados"
+            onsubmit="return confirm('Se generan los certificados con los premios de este momento. Si ya existían, se actualizan sin cambiar sus enlaces.');">
+        <button type="submit" class="btn chico">
+          <%= certificados.length ? 'Regenerar certificados' : 'Generar certificados' %>
+        </button>
+      </form>
+
+      <%/* Avisar es un paso aparte: emitir se repite sin consecuencias, un
+           correo no se devuelve. */%>
+      <% const porAvisar = certificados.filter(function (c) { return c.email && !c.avisado_at; }).length; %>
+
+      <% if (correoActivo && porAvisar) { %>
+        <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/certificados/avisos"
+              style="margin-top:14px"
+              onsubmit="return confirm('Se le manda a cada persona el enlace de su certificado, con el premio que tiene ahora mismo. Un correo no se puede devolver: hazlo cuando el jurado ya haya decidido.');">
+          <button type="submit" class="btn chico">
+            Avisar por correo a <%= porAvisar %> persona<%= porAvisar === 1 ? '' : 's' %>
+          </button>
+        </form>
+        <p class="ayuda" style="margin-top:8px">
+          A cada quien se le avisa una sola vez, así que regenerar los
+          certificados no vuelve a escribirle a nadie.
+        </p>
+      <% } else if (certificados.length && !correoActivo) { %>
+        <p class="ayuda" style="margin-top:14px">
+          El aviso por correo está apagado: falta la cuenta de envío en el
+          <code>.env</code> del servidor.
+        </p>
+      <% } %>
+
+      <% if (certificados.length) { %>
+        <details style="margin-top:22px">
+          <summary class="mini">Ver los <%= certificados.length %> certificados y sus enlaces</summary>
+          <div style="margin-top:14px">
+            <table class="tabla">
+              <thead>
+                <tr><th>Quién</th><th>Qué se lleva</th><th class="col-op">Juego</th><th>Enlace</th></tr>
+              </thead>
+              <tbody>
+                <% certificados.forEach(function (c) { %>
+                  <tr>
+                    <td>
+                      <span class="nom"><%= c.persona %></span>
+                      <% if (c.email) { %>
+                        <div class="mini"><%= c.avisado_at ? '✉ avisado' : 'sin avisar' %></div>
+                      <% } %>
+                    </td>
+                    <td class="mini"><%= c.premio_label %></td>
+                    <td class="mini col-op"><%= c.titulo %></td>
+                    <td>
+                      <a href="/certificado/<%= c.codigo %>" target="_blank" rel="noopener"
+                         class="mini" style="color:var(--acento)"><%= c.codigo %> ↗</a>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+        </details>
+      <% } %>
+    </div>
+  </section>
+
   <section class="jam-sec" id="ajustes">
     <div class="herramienta">
       <h3>Ajustes de la edición</h3>
