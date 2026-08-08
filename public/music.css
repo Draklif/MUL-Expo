@@ -995,3 +995,38 @@ body:has(> .mf-foot) > main { flex: 1 0 auto; min-width: 0; width: 100%; }
   .franja-hora { font-size: 20px; display: flex; align-items: baseline; gap: 10px; }
   .franja-hora span { margin: 0; }
 }
+
+/* ---------------------------------------------------------------------
+   EL CAMPO DE CORREO DE LOS LOGINS
+   El dominio va escrito al lado del campo y no se teclea: en estas puertas
+   el correo es siempre el de la universidad, así que pedir veinte
+   caracteres iguales para todo el mundo es pedir por pedir. Quien pegue el
+   correo entero entra igual; lo resuelve conDominio() en lib/correos.js.
+
+   Va con dos cajas pegadas y no con un ::after dentro del input, que no
+   existe: el input es un elemento de reemplazo y no admite pseudos.
+   --------------------------------------------------------------------- */
+.correo { display: flex; align-items: stretch; min-width: 0; }
+.correo input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-radius: var(--radio) 0 0 var(--radio);
+  border-right: 0;
+}
+.correo .dominio {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border: 1px solid var(--linea-fuerte);
+  border-left: 0;
+  border-radius: 0 var(--radio) var(--radio) 0;
+  background: var(--bg-elev);
+  color: var(--ink-mute);
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
+/* El input enfocado pinta su borde; el sufijo tiene que acompañarlo o el
+   campo se ve partido en dos por la mitad. */
+.correo:focus-within input, .correo:focus-within .dominio { border-color: var(--magenta); }

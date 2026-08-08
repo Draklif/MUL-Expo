@@ -1,7 +1,7 @@
 const express = require("express");
 const db = require("../db/database");
 const { PASSWORD } = require("../config");
-const { normalizar, esInstitucional, DOMINIO } = require("../lib/correos");
+const { conDominio, esInstitucional, DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
 
 const router = express.Router();
@@ -20,7 +20,7 @@ router.get("/acceso", (req, res) => {
 });
 
 function procesarAcceso(req, res) {
-  const email = normalizar(req.body.email);
+  const email = conDominio(req.body.email);
   const password = String(req.body.password || "");
 
   const fallar = (error, status = 400) =>

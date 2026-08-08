@@ -1208,3 +1208,60 @@ body:has(> .jam-foot) > main { flex: 1 0 auto; min-width: 0; width: 100%; }
   .contador .sep { display: none; }
   .jam-hero h1 .l1 { text-shadow: 3px 3px 0 var(--magenta); }
 }
+
+/* ---------------------------------------------------------------------
+   EL CAMPO DE CORREO DE LOS LOGINS
+   El dominio va escrito al lado del campo y no se teclea: en estas puertas
+   el correo es siempre el de la universidad, así que pedir veinte
+   caracteres iguales para todo el mundo es pedir por pedir. Quien pegue el
+   correo entero entra igual; lo resuelve conDominio() en lib/correos.js.
+
+   Aquí los campos no llevan borde sino un marco de cuatro sombras planas
+   —es la firma de esta hoja—, así que las dos cajas no se pueden "pegar"
+   quitando un borde: se pegan quitándole al input el lado derecho de su
+   marco y al sufijo el izquierdo, y juntándolos con un margen negativo que
+   cancela el aire que cada uno necesita para pintarse por fuera.
+   --------------------------------------------------------------------- */
+.correo { display: flex; align-items: stretch; min-width: 0; }
+
+.correo input {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Sin el lado derecho del marco. */
+  box-shadow:
+    0 -3px 0 0 var(--borde-fuerte),
+    0 3px 0 0 var(--borde-fuerte),
+    -3px 0 0 0 var(--borde-fuerte);
+}
+
+.correo input:focus {
+  box-shadow:
+    0 -3px 0 0 var(--acento),
+    0 3px 0 0 var(--acento),
+    -3px 0 0 0 var(--acento);
+}
+
+.correo .dominio {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin: 3px 3px 3px 0;
+  padding: 0 13px;
+  background: var(--bg-elev);
+  color: var(--ink-mute);
+  font-family: var(--body);
+  font-size: 13px;
+  white-space: nowrap;
+  /* Sin el lado izquierdo, para que los dos marcos formen uno solo. */
+  box-shadow:
+    0 -3px 0 0 var(--borde-fuerte),
+    0 3px 0 0 var(--borde-fuerte),
+    3px 0 0 0 var(--borde-fuerte);
+}
+
+.correo:focus-within .dominio {
+  box-shadow:
+    0 -3px 0 0 var(--acento),
+    0 3px 0 0 var(--acento),
+    3px 0 0 0 var(--acento);
+}

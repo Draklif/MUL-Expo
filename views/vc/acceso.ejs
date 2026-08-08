@@ -4,10 +4,7 @@
 
 <main class="vc angosto" style="max-width:420px;padding-top:70px">
   <p class="eyebrow">Virtual Champions</p>
-  <h2 style="font-size:30px">Acceso organización</h2>
-  <p class="sec-lead" style="margin-bottom:26px">
-    El panel del torneo va con su propia contraseña: no es la misma de la Expo.
-  </p>
+  <h2 style="font-size:30px;margin-bottom:26px">Acceso organización</h2>
 
   <% if (!configurado) { %>
     <div class="aviso malo">
@@ -25,9 +22,16 @@
   <form method="POST" action="/vc/acceso">
     <div class="campo">
       <label for="email">Correo institucional</label>
-      <input type="email" name="email" id="email" required autofocus
-             pattern="<%= PATRON_CORREO %>" value="<%= email %>"
-             placeholder="tunombre@<%= DOMINIO %>" />
+      <%/* Solo el nombre de usuario: el dominio va pegado al lado y lo completa
+           el servidor. Si alguien pega el correo entero también entra —lo
+           resuelve conDominio() en lib/correos.js—, así que el autocompletado
+           del navegador no deja a nadie fuera. */%>
+      <div class="correo">
+        <input type="text" name="email" id="email" required autofocus
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="tunombre" value="<%= email %>" />
+        <span class="dominio">@<%= DOMINIO %></span>
+      </div>
     </div>
     <div class="campo">
       <label for="password">Contraseña del torneo</label>

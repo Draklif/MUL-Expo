@@ -2,11 +2,7 @@
 
 <main class="sal angosto" style="max-width:430px;padding-top:64px">
   <p class="eyebrow">Salidas pedagógicas</p>
-  <h2>Acceso docentes</h2>
-  <p class="sec-lead" style="margin-bottom:28px">
-    Este panel va con su propia contraseña: no es la de la Expo, ni la del
-    torneo, ni la de la jam. Aquí se confirman pagos.
-  </p>
+  <h2 style="margin-bottom:28px">Acceso docentes</h2>
 
   <% if (!configurado) { %>
     <div class="aviso malo">
@@ -24,9 +20,16 @@
   <form method="POST" action="/salidas/acceso">
     <div class="campo">
       <label for="email">Correo institucional</label>
-      <input type="email" name="email" id="email" required autofocus
-             pattern="<%= PATRON_CORREO %>" value="<%= email %>"
-             placeholder="tunombre@<%= DOMINIO %>" />
+      <%/* Solo el nombre de usuario: el dominio va pegado al lado y lo completa
+           el servidor. Si alguien pega el correo entero también entra —lo
+           resuelve conDominio() en lib/correos.js—, así que el autocompletado
+           del navegador no deja a nadie fuera. */%>
+      <div class="correo">
+        <input type="text" name="email" id="email" required autofocus
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="tunombre" value="<%= email %>" />
+        <span class="dominio">@<%= DOMINIO %></span>
+      </div>
     </div>
     <div class="campo">
       <label for="password">Contraseña de salidas</label>

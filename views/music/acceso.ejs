@@ -2,11 +2,7 @@
 
 <main class="mf angosto" style="max-width:440px;padding-top:70px">
   <p class="eyebrow">Multimedia Music Fest</p>
-  <h2 class="fuego">Acceso organización</h2>
-  <p class="sec-lead" style="margin-bottom:30px">
-    El panel del festival va con su propia contraseña: no es la de la Expo, ni
-    la del torneo, ni la de la jam.
-  </p>
+  <h2 class="fuego" style="margin-bottom:30px">Acceso organización</h2>
 
   <% if (!configurado) { %>
     <div class="aviso malo">
@@ -24,9 +20,16 @@
   <form method="POST" action="/music/acceso">
     <div class="campo">
       <label for="email">Correo institucional</label>
-      <input type="email" name="email" id="email" required autofocus
-             pattern="<%= PATRON_CORREO %>" value="<%= email %>"
-             placeholder="tunombre@<%= DOMINIO %>" />
+      <%/* Solo el nombre de usuario: el dominio va pegado al lado y lo completa
+           el servidor. Si alguien pega el correo entero también entra —lo
+           resuelve conDominio() en lib/correos.js—, así que el autocompletado
+           del navegador no deja a nadie fuera. */%>
+      <div class="correo">
+        <input type="text" name="email" id="email" required autofocus
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="tunombre" value="<%= email %>" />
+        <span class="dominio">@<%= DOMINIO %></span>
+      </div>
     </div>
     <div class="campo">
       <label for="password">Contraseña del festival</label>
