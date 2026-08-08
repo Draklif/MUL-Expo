@@ -3,12 +3,13 @@
 
      Esta pantalla se usa de pie, con el celular en una mano y la plata en la
      otra, mientras hay cola. Por eso los que faltan van primero y por eso las
-     dos casillas de pago son lo más grande de cada fila: es lo único que se
+     dos casillas de pago son lo más grande de cada ficha: es lo único que se
      viene a tocar aquí.
 
-     Todo lo demás —el documento, el teléfono, el correo— es dato de apoyo y
-     se esconde en pantalla angosta antes que dejar la tabla desbordarse. Lo
-     completo está en el CSV.
+     Cerrada, la ficha dice nombre, los dos códigos y los dos pagos, y nada
+     más. Todo lo otro —el documento, el teléfono, el correo, la nota, los
+     botones— aparece al pulsarla, que es cuando alguien dejó de cobrar y se
+     puso a resolver un caso. Lo completo está en el CSV.
      ───────────────────────────────────────────────────────────────── */%>
 <%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
 <%- include('partials/panel-top') %>
@@ -74,8 +75,12 @@
       </div>
     </div>
 
+    <%/* Dos renglones y en ese orden: arriba las tres cuentas de gente, que
+         es lo que se mira de reojo mientras hay cola; abajo las dos de plata,
+         que es lo que se cuadra al final del día sentado. Los cupos libres se
+         quitaron: son una resta de dos números que ya están ahí arriba. */%>
     <div class="tarjeta">
-      <div class="datos">
+      <div class="datos cifras">
         <div class="dato">
           <div class="k">Registrados</div>
           <div class="v grande"><%= cifras.total %><% if (cifras.cupo) { %><span class="mini"> / <%= cifras.cupo %></span><% } %></div>
@@ -88,18 +93,12 @@
           <div class="k">Faltan por pagar</div>
           <div class="v grande" style="color:<%= cifras.faltan ? 'var(--ambar)' : 'var(--tinta-mute)' %>"><%= cifras.faltan %></div>
         </div>
-        <% if (cifras.libres !== null) { %>
-          <div class="dato">
-            <div class="k">Cupos libres</div>
-            <div class="v grande"><%= cifras.libres %></div>
-          </div>
-        <% } %>
-        <div class="dato">
+        <div class="dato recaudo">
           <div class="k">Recaudo transporte</div>
           <div class="v plata"><%= pesos(cifras.recaudo_transporte) || "—" %></div>
           <div class="mini"><%= cifras.transporte %> <%= cifras.transporte === 1 ? "pago" : "pagos" %></div>
         </div>
-        <div class="dato">
+        <div class="dato recaudo">
           <div class="k">Recaudo póliza</div>
           <div class="v plata"><%= pesos(cifras.recaudo_poliza) || "—" %></div>
           <div class="mini"><%= cifras.poliza %> <%= cifras.poliza === 1 ? "pago" : "pagos" %></div>
@@ -108,10 +107,10 @@
     </div>
   </section>
 
-  <%/* ───── LA TABLA ─────
+  <%/* ───── LAS FICHAS ─────
        Un solo bloque de marcado para las dos listas: cambia el título y la
-       gente, no la fila. Duplicarla sería garantizar que dentro de un mes las
-       dos tengan columnas distintas. */%>
+       gente, no la ficha. Duplicarla sería garantizar que dentro de un mes las
+       dos tengan campos distintos. */%>
   <%
     const bloques = [
       {
@@ -146,95 +145,139 @@
       <% if (!b.lista.length) { %>
         <div class="vacio"><%= b.vacio %></div>
       <% } else { %>
-        <div class="herramienta">
-          <table class="tabla">
-            <thead>
-              <tr>
-                <th>Estudiante</th>
-                <th class="col-op">Documento</th>
-                <th class="col-op">Contacto</th>
-                <th>Pagos</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% b.lista.forEach(function (r) { %>
-                <tr id="r<%= r.id %>">
-                  <td>
-                    <div class="nom"><%= r.nombre %></div>
-                    <div class="sub"><%= r.codigo_estudiante %> · código <%= r.codigo %></div>
-                    <div style="margin-top:8px"><span class="chip <%= r.estado.cls %>"><%= r.estado.label %></span></div>
-                    <% if (r.nota) { %>
-                      <div class="sub" style="margin-top:8px">✎ <%= r.nota %></div>
-                    <% } %>
-                  </td>
+        <div class="regs">
+          <% b.lista.forEach(function (r) { %>
+            <article class="reg" id="r<%= r.id %>">
+              <%/* El renglón que se ve siempre. El nombre manda pero se recorta
+                   en una línea: un nombre de cuatro apellidos no puede empujar
+                   las casillas de pago a otro renglón. Completo aparece al
+                   abrir la ficha. */%>
+              <div class="reg-cab">
+                <div class="reg-quien">
+                  <div class="nom" title="<%= r.nombre %>"><%= r.nombre %></div>
+                  <%/* Solo los dos códigos, y rotulados por separado. Son dos
+                       números distintos que se dictan por teléfono, y pegados
+                       con un punto en medio se leen como uno solo mal copiado.
+                       El documento y el contacto no caben aquí sin recortarse
+                       a medias, así que viven abajo, en la ficha abierta. */%>
+                  <div class="reg-meta">
+                    <span class="m"><b>Código</b> <span class="cod"><%= r.codigo %></span></span>
+                    <span class="m"><b>Estudiantil</b> <%= r.codigo_estudiante %></span>
+                  </div>
+                </div>
 
-                  <td class="col-op">
-                    <div><%= r.tipo_id %></div>
-                    <div class="sub"><%= r.num_id %></div>
-                  </td>
+                <%/* El estado y las casillas van juntos en una sola pieza: en
+                     pantalla angosta bajan a su propio renglón sin arrastrar
+                     consigo al chevron, que se queda arriba con el nombre. */%>
+                <div class="reg-marcas">
+                  <span class="chip <%= r.estado.cls %>"><%= r.estado.label %></span>
 
-                  <td class="col-op">
-                    <div><a href="tel:<%= r.telefono.replace(/\s/g, '') %>"><%= r.telefono %></a></div>
-                    <div class="sub"><%= r.email %></div>
-                  </td>
+                  <%/* El formulario manda el estado completo de las dos
+                       casillas, no un "sumar uno": así se ve lo mismo que se
+                       guarda y un clic equivocado se deshace desmarcando. */%>
+                  <form method="POST" action="/salidas/panel/registros/<%= r.id %>/pagos" class="pagos">
+                    <label class="pago">
+                      <input type="checkbox" name="pago_transporte" value="1" <%= r.pago_transporte ? "checked" : "" %> />
+                      Transporte
+                    </label>
+                    <label class="pago">
+                      <input type="checkbox" name="pago_poliza" value="1" <%= r.pago_poliza ? "checked" : "" %> />
+                      Póliza
+                    </label>
+                    <button type="submit" class="btn chico">Guardar</button>
+                  </form>
+                </div>
 
-                  <td>
-                    <%/* El formulario manda el estado completo de las dos
-                         casillas, no un "sumar uno": así se ve lo mismo que se
-                         guarda y un clic equivocado se deshace desmarcando. */%>
-                    <form method="POST" action="/salidas/panel/registros/<%= r.id %>/pagos" class="pagos">
-                      <label class="pago">
-                        <input type="checkbox" name="pago_transporte" value="1" <%= r.pago_transporte ? "checked" : "" %> />
-                        Transporte
-                      </label>
-                      <label class="pago">
-                        <input type="checkbox" name="pago_poliza" value="1" <%= r.pago_poliza ? "checked" : "" %> />
-                        Póliza
-                      </label>
-                      <button type="submit" class="btn chico">Guardar</button>
+                <%/* El chevron es la única pista visible de que la ficha se
+                     abre; el clic funciona en toda la tarjeta, pero eso solo se
+                     descubre después. También es lo que la abre con teclado. */%>
+                <button type="button" class="reg-abrir" aria-expanded="false"
+                        aria-controls="mas<%= r.id %>" aria-label="Nota y más opciones">▾</button>
+              </div>
+
+              <% if (r.nota) { %>
+                <div class="reg-nota-vista">✎ <%= r.nota %></div>
+              <% } %>
+
+              <div class="reg-mas" id="mas<%= r.id %>">
+                <div class="datos reg-datos">
+                  <div class="dato">
+                    <div class="k">Documento</div>
+                    <div class="v"><%= r.tipo_id %> <%= r.num_id %></div>
+                  </div>
+                  <div class="dato">
+                    <div class="k">Teléfono</div>
+                    <div class="v"><a href="tel:<%= r.telefono.replace(/\s/g, '') %>"><%= r.telefono %></a></div>
+                  </div>
+                  <div class="dato">
+                    <div class="k">Correo</div>
+                    <div class="v"><%= r.email %></div>
+                  </div>
+                </div>
+
+                <%/* La nota a lo ancho de la ficha: es texto libre y en una
+                     columna estrecha no se lee lo que uno mismo escribió. Los
+                     botones van abajo, en su propio renglón, para que ninguno
+                     quede a un pixel de la casilla de pago. */%>
+                <form method="POST" action="/salidas/panel/registros/<%= r.id %>/nota" id="nota<%= r.id %>">
+                  <div class="campo">
+                    <label for="ntxt<%= r.id %>">Nota (solo la ves tú)</label>
+                    <input type="text" name="nota" id="ntxt<%= r.id %>" maxlength="300"
+                           value="<%= r.nota || '' %>" placeholder="Paga el viernes, alérgico al maní…" />
+                  </div>
+                </form>
+
+                <div class="reg-acciones">
+                  <button type="submit" form="nota<%= r.id %>" class="btn ghost">Guardar la nota</button>
+
+                  <% if (r.confirmado) { %>
+                    <form method="POST" action="/salidas/panel/registros/<%= r.id %>/reenviar">
+                      <button type="submit" class="btn ghost" <%= correoActivo ? "" : "disabled" %>>
+                        Reenviar confirmación
+                      </button>
                     </form>
-
-                    <details style="margin-top:12px">
-                      <summary class="mini" style="cursor:pointer">Más</summary>
-
-                      <form method="POST" action="/salidas/panel/registros/<%= r.id %>/nota" style="margin-top:12px">
-                        <div class="campo" style="margin-bottom:10px">
-                          <label for="nota<%= r.id %>">Nota (solo la ves tú)</label>
-                          <input type="text" name="nota" id="nota<%= r.id %>" maxlength="300"
-                                 value="<%= r.nota || '' %>" placeholder="Paga el viernes, alérgico al maní…" />
-                        </div>
-                        <button type="submit" class="btn ghost chico">Guardar la nota</button>
-                      </form>
-
-                      <div class="acciones" style="margin-top:12px">
-                        <% if (r.confirmado) { %>
-                          <form method="POST" action="/salidas/panel/registros/<%= r.id %>/reenviar" style="margin:0">
-                            <button type="submit" class="btn ghost chico" <%= correoActivo ? "" : "disabled" %>>
-                              Reenviar confirmación
-                            </button>
-                          </form>
-                          <% if (r.avisado_at) { %>
-                            <span class="mini">Avisado</span>
-                          <% } else { %>
-                            <span class="mini">Sin avisar</span>
-                          <% } %>
-                        <% } else { %>
-                          <form method="POST" action="/salidas/panel/registros/<%= r.id %>/borrar" style="margin:0"
-                                onsubmit="return confirm('¿Sacar a <%= r.nombre %> de la lista? Su cupo vuelve al bus.')">
-                            <button type="submit" class="btn peligro chico">Sacar de la lista</button>
-                          </form>
-                        <% } %>
-                      </div>
-                    </details>
-                  </td>
-                </tr>
-              <% }); %>
-            </tbody>
-          </table>
+                    <span class="chip <%= r.avisado_at ? 'ok' : 'alerta' %>">
+                      <%= r.avisado_at ? "Avisado" : "Sin avisar" %>
+                    </span>
+                  <% } else { %>
+                    <form method="POST" action="/salidas/panel/registros/<%= r.id %>/borrar"
+                          onsubmit="return confirm('¿Sacar a <%= r.nombre %> de la lista? Su cupo vuelve al bus.')">
+                      <button type="submit" class="btn peligro">Sacar de la lista</button>
+                    </form>
+                  <% } %>
+                </div>
+              </div>
+            </article>
+          <% }); %>
         </div>
       <% } %>
     </section>
   <% }); %>
 </main>
+
+<%/* Abrir la ficha con un clic en cualquier parte de ella. Lo único que hay
+     que respetar es que dentro de la ficha viven casillas, botones y un campo
+     de texto: tocar cualquiera de esos es usarlos, no abrir ni cerrar. Sin
+     esto la página sigue funcionando —el chevron es un botón de verdad—, pero
+     hay que apuntarle. */%>
+<script>
+  document.querySelectorAll(".reg").forEach(function (ficha) {
+    const chevron = ficha.querySelector(".reg-abrir");
+
+    function alternar() {
+      const abierta = ficha.classList.toggle("abierta");
+      if (chevron) chevron.setAttribute("aria-expanded", abierta ? "true" : "false");
+    }
+
+    ficha.addEventListener("click", function (e) {
+      if (e.target.closest(".reg-abrir")) return alternar();
+      // Lo desplegado ya está abierto: ahí dentro nadie quiere cerrarlo sin
+      // querer mientras escribe una nota.
+      if (e.target.closest(".reg-mas")) return;
+      if (e.target.closest("a, button, input, select, textarea, label")) return;
+      alternar();
+    });
+  });
+</script>
 
 <%- include('../partials/footer') %>
