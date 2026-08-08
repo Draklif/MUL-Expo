@@ -115,7 +115,7 @@ const EVENTOS = [
 //   · las salidas pedagógicas, que no son un evento del semestre;
 //   · /patrocinios, que va por su cuenta (PATROCINIOS.abierto): a las marcas
 //     se les habla con meses de anticipación.
-const SOLO_EVENTO_ACTIVO = true;
+const SOLO_EVENTO_ACTIVO = false;
 
 // ---------------------------------------------------------------------
 //  VIRTUAL CHAMPIONS

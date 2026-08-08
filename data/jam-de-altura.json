@@ -48,7 +48,7 @@
       "El juego se hace durante las 48 horas. Reutilizar código propio o librerías está bien; llegar con el juego medio hecho, no.",
       "Los recursos de terceros (música, sprites, fuentes) se pueden usar si la licencia lo permite y se acreditan en la entrega.",
       "Una persona en un solo equipo. Inscribirse dos veces invalida las dos inscripciones.",
-      "El equipo es de máximo cuatro. Quien se inscriba solo queda en la lista y la organización lo ubica.",
+      "El equipo es de máximo cuatro. Si te inscribes solo, puedes ser ubicado en un equipo existente o, si así lo deseas, participar de manera individual.",
       "Se entrega con el código del equipo, desde esta página, antes de que el reloj llegue a cero.",
       "El juego tiene que abrirse desde un enlace público (itch.io, Drive, GitHub). Si no se puede jugar, no se puede evaluar."
     ]
@@ -90,7 +90,11 @@
       },
       {
         "p": "¿Esto tiene nota?",
-        "r": "Depende de la materia: la jam es del programa, no de una asignatura. Lo que sí da es certificado de participación, y los juegos que salen suelen terminar expuestos en la Expo Multimedia."
+        "r": "¡Sí! Pero solo con participar y entregar algo ya tienes nota, así que no te preocupes por eso y enfócate en crear algo genial."
+      },
+      {
+        "p": "No sé utilizar Unity, Unreal, Godot ni nada de eso. ¿Puedo participar?",
+        "r": "¡Para eso es la jam! No hace falta experiencia previa, solo ganas de aprender y de trabajar en equipo. La idea es que todos aporten lo que puedan y aprendan de los demás."
       }
     ]
   }

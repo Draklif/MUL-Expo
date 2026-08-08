@@ -956,6 +956,23 @@ details.faq .r { color: var(--ink-dim); padding: 0 0 16px 24px; max-width: 68ch;
 /* ---------------------------------------------------------------------
    Pie
    --------------------------------------------------------------------- */
+/* El pie, pegado abajo cuando la página es corta —un aviso de dos líneas, una
+   consulta sin resultados— y empujado por el contenido cuando es larga. El
+   :has() lo ata a las páginas que SÍ llevan pie: el certificado se centra solo
+   en la pantalla y los paneles no tienen pie, y ninguno de los dos tiene por
+   qué volverse una columna flexible por esto.
+
+   El dvh va después del vh a propósito: en el móvil descuenta la barra del
+   navegador, y el navegador que no lo entienda se queda con el vh de arriba. */
+body:has(> .jam-foot) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+body:has(> .jam-foot) > main { flex: 1 0 auto; }
+
 .jam-foot {
   border-top: 4px solid var(--borde);
   padding: 34px 20px 44px;
