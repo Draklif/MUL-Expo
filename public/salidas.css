@@ -209,7 +209,7 @@ img { max-width: 100%; }
 .grid {
   display: grid;
   gap: 18px;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   margin-top: 20px;
 }
 
@@ -358,7 +358,7 @@ a.tarjeta:hover { border-color: var(--monte); }
 .datos {
   display: grid;
   gap: 18px 26px;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr));
 }
 
 .dato .k {
@@ -574,7 +574,7 @@ textarea { min-height: 80px; resize: vertical; }
 .fila {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
 }
 
 fieldset { border: 0; margin: 0; padding: 0; }
@@ -640,7 +640,12 @@ body:has(> .sal-foot) {
   min-height: 100dvh;
 }
 
-body:has(> .sal-foot) > main { flex: 1 0 auto; }
+/* min-width: 0 y no el 'auto' de fábrica: el body es una columna flex, y un
+   hijo flex se niega por defecto a encogerse por debajo de su contenido, así
+   que basta un elemento ancho adentro para que estire la página entera y
+   aparezca scroll horizontal. Con esto, lo que no cabe desborda su propia caja
+   pero no arrastra al resto. */
+body:has(> .sal-foot) > main { flex: 1 0 auto; min-width: 0; }
 
 .sal-foot {
   border-top: 1px solid var(--linea-fuerte);
@@ -700,6 +705,14 @@ body:has(> .sal-foot) > main { flex: 1 0 auto; }
 .herramienta .sec-lead { margin-bottom: 18px; font-size: 14px; }
 
 .acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* Los chips de estado de una cabecera. */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+
+/* Cómo va la lista de asistencia. Va aparte de .acciones porque no son
+   acciones: son una cuenta, y en el celular las dos cosas quieren repartos
+   distintos —los botones se estiran a la mitad del ancho, las cuentas no—. */
+.recuento { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
 /* ---------------------------------------------------------------------
    LA LISTA DE REGISTRADOS: una ficha por persona
@@ -802,6 +815,7 @@ body:has(> .sal-foot) > main { flex: 1 0 auto; }
 
 .reg-marcas .chip { flex: 0 0 auto; }
 .reg-marcas .pagos { flex: 0 0 auto; flex-wrap: nowrap; }
+.reg-marcas .lista { flex: 0 0 auto; }
 
 /* La única pista de que la ficha se abre. El clic funciona en toda la ficha,
    pero eso hay que descubrirlo; esto se ve. */
@@ -894,11 +908,54 @@ body:has(> .sal-foot) > main { flex: 1 0 auto; }
      el marcado es el bloque de pagos, que pide el ancho entero. Mandándolo al
      final el chevron alcanza a subir al primer renglón, junto al nombre, en
      vez de quedarse solo en uno de treinta píxeles. */
-  .reg-marcas { order: 1; flex: 1 1 100%; flex-wrap: wrap; }
-  .reg-marcas .pagos { flex: 1 1 auto; flex-wrap: wrap; }
+  .reg-marcas { order: 1; flex: 1 1 100%; flex-wrap: wrap; gap: 8px; }
+
+  /* Dos renglones enteros y nada suelto a los lados: arriba las dos casillas y
+     el guardar en tercios exactos, abajo la lista en mitades. Repartir el ancho
+     en partes iguales, y no dejar que cada botón mida lo que mide su texto, es
+     lo que convierte tres controles en una botonera: en el celular se apunta
+     con el pulgar y lo que importa es que los blancos sean grandes e
+     iguales. */
+  /* Rejilla y no flex para partir en tercios: con `flex: 1 1 0` el navegador
+     redondea cada parte hacia arriba y la suma se pasa un píxel del contenedor,
+     que es un píxel de scroll horizontal en toda la página. La rejilla reparte
+     el sobrante entre las columnas en vez de repetirlo en cada una. */
+  .reg-marcas .pagos {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  /* A un tercio de un teléfono no le sobra un píxel, así que el rótulo va más
+     pequeño, centrado y sin la sangría de la casilla. */
+  .reg-marcas .pago {
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 5px;
+    font-size: 11.5px;
+  }
+
+  .reg-marcas .pago input { width: 16px; height: 16px; }
+  .reg-marcas .pagos .btn { padding: 10px 5px; font-size: 12px; }
+
+  .reg-marcas .lista {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reg-marcas .lista .pasa { padding: 11px 6px; }
 
   /* A la altura del nombre, no a media ficha. */
   .reg-abrir { align-self: flex-start; }
+
+  /* El documento, el teléfono y el correo, cada uno en su renglón. En dos
+     columnas de ciento cincuenta píxeles un correo institucional se parte en
+     tres pedazos y un número de documento queda pegado al de al lado: son
+     datos que se leen para copiarlos o para marcarlos, y para eso hace falta
+     verlos enteros y de un vistazo. */
+  .reg-datos { grid-template-columns: 1fr; gap: 14px; }
 }
 
 /* ---------------------------------------------------------------------
@@ -940,6 +997,52 @@ body:has(> .sal-foot) > main { flex: 1 0 auto; }
   border-color: var(--monte);
   background: var(--monte-claro);
   color: var(--monte);
+}
+
+/* ---------------------------------------------------------------------
+   PASAR LISTA
+   Dos botones pegados, como un interruptor de dos posiciones. No son
+   casillas como los pagos y es a propósito: un pago se marca una vez y se
+   queda, pero la asistencia son tres estados —sin pasar, vino, no vino— y
+   una casilla solo sabe decir dos.
+
+   Sin marcar los dos van en gris: el que todavía no se ha mirado NO puede
+   parecerse al que no vino. Esa distinción es toda la razón de que esto
+   exista, porque una lista a medio pasar diría que media clase se quedó
+   en tierra.
+   --------------------------------------------------------------------- */
+.lista { display: flex; margin: 0; }
+
+.pasa {
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1;
+  padding: 9px 13px;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  color: var(--tinta-mute);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Pegados: el primero redondea a la izquierda, el segundo a la derecha, y
+   el borde de en medio no se dibuja dos veces. */
+.pasa:first-child { border-radius: var(--radio) 0 0 var(--radio); }
+.pasa:last-child { border-radius: 0 var(--radio) var(--radio) 0; border-left: 0; }
+
+.pasa:hover { background: var(--papel-hondo); color: var(--tinta); }
+
+.pasa.vino {
+  background: var(--monte);
+  border-color: var(--monte);
+  color: #fff;
+}
+
+.pasa.falto {
+  background: var(--ladrillo);
+  border-color: var(--ladrillo);
+  color: #fff;
 }
 
 /* ---------------------------------------------------------------------
@@ -1001,12 +1104,43 @@ body:has(> .sal-foot) > main { flex: 1 0 auto; }
 
   .boleta .cabeza, .boleta .talon { padding-left: 18px; padding-right: 18px; }
 
-  /* Las cifras de la salida: tres y dos solo caben en un monitor. Aquí van de
-     a dos y se les quita la regla que separaba los dos renglones, que ya no
+  /* LA CABECERA DE LA SALIDA, EN EL CELULAR
+     Todo a renglones completos y nada a medio ancho con un hueco al lado. Un
+     chip suelto en mitad de una línea se lee como un cabo que sobró; ocupando
+     el renglón entero se lee como un rótulo.
+
+     Los chips llevan frases enteras —"Sale el viernes 11 de septiembre, 6:30
+     a. m."— así que aquí sí pueden envolver: son frases, no etiquetas. Los de
+     las fichas siguen en un renglón, que esos son dos palabras. */
+  .sec-top { flex-direction: column; align-items: stretch; }
+  .sec-top .chip { white-space: normal; }
+
+  .chips { display: grid; gap: 8px; }
+  .chips .chip { justify-content: center; text-align: center; }
+
+  /* Los dos botones, mitad y mitad. Rejilla y no flex: partir en partes
+     iguales con flex redondea cada una hacia arriba y la suma se pasa del
+     contenedor. */
+  .sec-top .acciones {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .sec-top .acciones .btn { width: 100%; }
+
+  /* Las cifras. En un monitor son tres arriba y dos abajo; aquí no caben, así
+     que van de a dos —los registrados y los confirmados, que se comparan entre
+     sí, y abajo los dos recaudos, que también—, y "faltan por pagar" se lleva
+     el renglón entero en medio: es la cuenta que se mira, y partida a la mitad
+     con otra al lado deja de saltar a la vista.
+
+     La regla punteada que separaba los dos bloques se quita: aquí ya no
      coincide con ninguna frontera. */
-  .datos.cifras { grid-template-columns: repeat(2, 1fr); }
+  .datos.cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .datos.cifras > .dato,
   .datos.cifras > .dato.recaudo { grid-column: auto; border-top: 0; padding-top: 0; }
+  .datos.cifras > .dato.faltan { grid-column: 1 / -1; }
 }
 
 /* La boleta con muesca necesita que el fondo de al lado sea el del papel. En
@@ -1014,4 +1148,9 @@ body:has(> .sal-foot) > main { flex: 1 0 auto; }
    cortadas a la mitad: se quitan antes que dejarlas a medias. */
 @media (max-width: 400px) {
   .boleta .talon::before, .boleta .talon::after { display: none; }
+
+  /* En un teléfono de 320 la barra del panel se pasa un píxel: la marca, los
+     dos enlaces y el botón de salir suman 289 en 288. Se le quita aire a los
+     enlaces, que es lo único que sobra ahí. */
+  .panel-top .sal-nav a { padding: 8px 7px; }
 }

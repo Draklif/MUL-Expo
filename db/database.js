@@ -499,6 +499,12 @@ db.exec(`
     confirmado_at     DATETIME,
     avisado_at        DATETIME,
     cobrado_por       INTEGER,
+    -- La asistencia del día de la salida. Tres estados y no dos: NULL es
+    -- "todavía no lo he mirado", que en la puerta del bus es distinto de
+    -- "no vino". Sin el nulo, una lista a medio pasar se lee como si media
+    -- clase se hubiera quedado en tierra.
+    asistio           INTEGER,
+    asistencia_at     DATETIME,
     nota              TEXT,
     created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
     -- Una persona, un cupo. El correo institucional es la identidad, igual
@@ -561,6 +567,10 @@ agregarColumna("jam_equipos", "solitario", "INTEGER NOT NULL DEFAULT 0");
 // certificado existe; es lo que evita repetirle el aviso cada vez que se
 // regeneran los certificados de la materia.
 agregarColumna("certificados", "avisado_at", "DATETIME");
+
+// La asistencia llegó después de que ya hubiera salidas con gente inscrita.
+agregarColumna("salida_registros", "asistio", "INTEGER");
+agregarColumna("salida_registros", "asistencia_at", "DATETIME");
 
 // ---------- Semestres ----------
 // La base tiene que tener al menos uno antes de poder repartir nada.

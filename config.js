@@ -335,6 +335,28 @@ const SALIDAS = {
         donde: "Oficina de Multimedia · lunes a viernes, 8:00 a. m. a 12:00 m.",
       },
     },
+    {
+      id: "museo-del-oro",
+      nombre: "Museo del Oro y Centro de Memoria",
+      lema: "Una mañana de patrimonio y narrativa, en Bogotá.",
+      lugar: "Museo del Oro · Bogotá",
+      objetivo:
+        "Ver cómo se cuenta una historia sin palabras: museografía, iluminación, recorrido y las piezas interactivas del museo. Es una salida de observación para Narrativa Visual y Diseño de Experiencias, y se vuelve con un registro fotográfico del montaje.",
+      asignaturas: ["Narrativa Visual", "Diseño de Experiencias"],
+      inscripciones: true,
+      salida: "2026-09-11 06:30",
+      regreso: "2026-09-11 18:00",
+      punto: "Portería principal · Universidad de Boyacá, sede Tunja",
+      cupo: 25,
+      costos: { transporte: 38000, poliza: 9000 },
+      consentimiento: "/documents/CONSENTIMIENTO.docx",
+      docente: {
+        nombre: "Jose Rentería",
+        email: "jmrenteria@uniboyaca.edu.co",
+        telefono: "320 000 0000",
+        donde: "Oficina de Multimedia · lunes a viernes, 8:00 a. m. a 12:00 m.",
+      },
+    },
   ],
 };
 

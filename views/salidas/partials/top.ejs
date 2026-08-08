@@ -7,10 +7,15 @@
      alcance del pulgar. Lo único que cambia es el CSS, así que no hay dos
      menús que mantener sincronizados.
 
-     Los dos primeros enlaces son de UNA salida, así que dependen de que la
-     página esté mirando alguna. En el listado no hay ninguna y el menú se
-     queda en dos: la lista y la consulta.
-     ───────────────────────────────────────────────────────────────── */%>
+     SIEMPRE son los mismos tres, con los mismos rótulos. Antes el de
+     "Registro" solo aparecía si la página estaba mirando una salida y el
+     primero se llamaba "La salida" o "Salidas" según el caso, así que el menú
+     cambiaba de forma y de nombre al pasar de una salida a "Mi código": tres
+     pestañas, dos pestañas, y la primera con otro texto. Un menú que se mueve
+     bajo el dedo se siente roto aunque cada página por separado esté bien.
+
+     Lo único que cambia es a dónde apunta "Registro": a la salida que se esté
+     mirando, o al listado para escoger una si todavía no hay ninguna. */%>
 <%
   const s = typeof salida !== "undefined" && salida ? salida : null;
 
@@ -26,19 +31,23 @@
   <div class="sal-top-in">
     <a href="/salidas" class="sal-marca">Salidas <em>pedagógicas</em></a>
 
-    <nav class="sal-nav tabs" aria-label="Secciones de la salida">
-      <a href="<%= s ? `/salidas/${s.id}` : '/salidas' %>"
+    <nav class="sal-nav tabs" aria-label="Secciones de las salidas">
+      <%/* Apunta al listado incluso estando dentro de una salida: desde una
+           salida, lo único que uno puede querer de esta pestaña es volver a
+           verlas todas. Se marca igual, porque una salida es parte de la
+           lista. */%>
+      <a href="/salidas"
          class="<%= activa === 'salida' || activa === 'salidas' ? 'on' : '' %>"
          <%- activa === 'salida' || activa === 'salidas' ? 'aria-current="page"' : '' %>>
-        <%- icono('salida') %><span><%= s ? "La salida" : "Salidas" %></span>
+        <%- icono('salida') %><span>Salidas</span>
       </a>
 
-      <% if (s) { %>
-        <a href="/salidas/<%= s.id %>/registro" class="<%= activa === 'registro' ? 'on' : '' %>"
-           <%- activa === 'registro' ? 'aria-current="page"' : '' %>>
-          <%- icono('registro') %><span>Registro</span>
-        </a>
-      <% } %>
+      <a href="<%= s ? `/salidas/${s.id}/registro` : '/salidas' %>"
+         class="<%= activa === 'registro' ? 'on' : '' %>"
+         <%= s ? '' : 'title="Elige primero a qué salida te vas a registrar"' %>
+         <%- activa === 'registro' ? 'aria-current="page"' : '' %>>
+        <%- icono('registro') %><span>Registro</span>
+      </a>
 
       <a href="/salidas/estado" class="<%= activa === 'estado' ? 'on' : '' %>"
          <%- activa === 'estado' ? 'aria-current="page"' : '' %>>

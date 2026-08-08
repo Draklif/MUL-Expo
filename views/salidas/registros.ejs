@@ -60,7 +60,7 @@
       <div>
         <p class="eyebrow"><%= salida.lugar %></p>
         <h2><%= salida.nombre %></h2>
-        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <div class="chips">
           <span class="chip <%= abierta ? 'ok' : 'no' %>">
             <%= abierta ? "Registros abiertos" : cerrada === "lleno" ? "Cupo lleno" : cerrada === "pasada" ? "Ya pasó" : "Registros cerrados" %>
           </span>
@@ -89,7 +89,7 @@
           <div class="k">Confirmados</div>
           <div class="v grande" style="color:var(--monte)"><%= cifras.confirmados %></div>
         </div>
-        <div class="dato">
+        <div class="dato faltan">
           <div class="k">Faltan por pagar</div>
           <div class="v grande" style="color:<%= cifras.faltan ? 'var(--ambar)' : 'var(--tinta-mute)' %>"><%= cifras.faltan %></div>
         </div>
@@ -125,9 +125,12 @@
         id: "confirmados",
         eyebrow: "Con todo pago",
         titulo: `Confirmados (${confirmados.length})`,
-        lead: "Estos ya recibieron su correo. Son los que suben al bus.",
+        lead: "Estos ya recibieron su correo. Son los que suben al bus, y a los que se les pasa lista el día de la salida.",
         lista: confirmados,
         vacio: "Todavía nadie ha pagado las dos cosas.",
+        // El recuento de la asistencia va SOLO en este bloque: es el único
+        // donde hay a quién pasarle lista.
+        asistencia: true,
       },
     ];
   %>
@@ -139,6 +142,25 @@
           <p class="eyebrow"><%= b.eyebrow %></p>
           <h2 style="font-size:24px"><%= b.titulo %></h2>
         </div>
+
+        <%/* Cómo va la lista, de un vistazo. "Sin pasar" es lo que dice si la
+             lista ya se pasó entera o va por la mitad, y por eso se muestra
+             aunque sea cero: su ausencia es la señal de que ya está. */%>
+        <% if (b.asistencia && b.lista.length) { %>
+          <div class="recuento">
+            <span class="chip <%= cifras.asistieron ? 'ok' : '' %>">
+              <%= cifras.asistieron %> <%= cifras.asistieron === 1 ? "asistió" : "asistieron" %>
+            </span>
+            <% if (cifras.faltaron) { %>
+              <span class="chip malo">
+                <%= cifras.faltaron %> no <%= cifras.faltaron === 1 ? "vino" : "vinieron" %>
+              </span>
+            <% } %>
+            <% if (cifras.sin_pasar) { %>
+              <span class="chip"><%= cifras.sin_pasar %> sin pasar</span>
+            <% } %>
+          </div>
+        <% } %>
       </div>
       <p class="sec-lead" style="margin:0 0 18px"><%= b.lead %></p>
 
@@ -186,6 +208,22 @@
                     </label>
                     <button type="submit" class="btn chico">Guardar</button>
                   </form>
+
+                  <%/* Pasar lista, solo a quien va en el bus. Un toque marca y
+                       el mismo toque otra vez desmarca: esto se usa de pie en
+                       la puerta del bus, mirando caras y no la pantalla, y el
+                       dedo se equivoca. Sin vuelta atrás, corregir obligaría a
+                       abrir la ficha con doce personas esperando para subir. */%>
+                  <% if (r.confirmado) { %>
+                    <form method="POST" action="/salidas/panel/registros/<%= r.id %>/asistencia" class="lista">
+                      <button type="submit" name="asistio" value="1"
+                              class="pasa <%= r.asistio === 1 ? 'vino' : '' %>"
+                              aria-pressed="<%= r.asistio === 1 ? 'true' : 'false' %>">Asistió</button>
+                      <button type="submit" name="asistio" value="0"
+                              class="pasa <%= r.asistio === 0 ? 'falto' : '' %>"
+                              aria-pressed="<%= r.asistio === 0 ? 'true' : 'false' %>">No vino</button>
+                    </form>
+                  <% } %>
                 </div>
 
                 <%/* El chevron es la única pista visible de que la ficha se

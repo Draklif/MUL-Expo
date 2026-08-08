@@ -288,7 +288,7 @@ img { max-width: 100%; image-rendering: pixelated; }
 .grid {
   display: grid;
   gap: 20px;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
   margin-top: 20px;
 }
 
@@ -799,7 +799,7 @@ textarea { min-height: 90px; resize: vertical; }
 .fila {
   display: grid;
   gap: 14px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
 }
 
 fieldset { border: 0; margin: 0; padding: 0; }
@@ -808,7 +808,7 @@ fieldset { border: 0; margin: 0; padding: 0; }
 .opciones {
   display: grid;
   gap: 18px;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   margin-bottom: 26px;
 }
 
@@ -817,7 +817,7 @@ fieldset { border: 0; margin: 0; padding: 0; }
    lee como si esa última fuera de otra categoría. Se les baja el mínimo en vez
    de dejar que se acomoden solas: o van las tres en fila, o van las tres
    apiladas, pero nunca 2+1. */
-.opciones.tres { grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 14px; }
+.opciones.tres { grid-template-columns: repeat(auto-fit, minmax(min(196px, 100%), 1fr)); gap: 14px; }
 .opciones.tres .opcion { padding: 15px; }
 .opciones.tres .t { font-size: 11px; }
 .opciones.tres .d { font-size: 12px; }
@@ -971,7 +971,12 @@ body:has(> .jam-foot) {
   min-height: 100dvh;
 }
 
-body:has(> .jam-foot) > main { flex: 1 0 auto; }
+/* min-width: 0 y no el 'auto' de fábrica: el body es una columna flex, y un
+   hijo flex se niega por defecto a encogerse por debajo de su contenido, así
+   que basta un elemento ancho adentro para que estire la página entera y
+   aparezca scroll horizontal. Con esto, lo que no cabe desborda su propia caja
+   pero no arrastra al resto. */
+body:has(> .jam-foot) > main { flex: 1 0 auto; min-width: 0; width: 100%; }
 
 .jam-foot {
   border-top: 4px solid var(--borde);

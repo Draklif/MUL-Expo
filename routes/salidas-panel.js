@@ -242,6 +242,39 @@ router.post("/panel/registros/:id/reenviar", async (req, res) => {
 
 // Una nota del docente: que va en silla de adelante, que es alérgico a algo,
 // que paga el viernes. Es del panel y no sale en ninguna página pública.
+/**
+ * Pasar lista el día de la salida.
+ *
+ * Un toque marca y el mismo toque otra vez desmarca. Eso no es un capricho: la
+ * lista se pasa de pie, en la puerta del bus, mirando caras y no la pantalla, y
+ * el dedo se equivoca. Sin la vuelta atrás, corregir un toque obligaría a
+ * abrir la ficha y buscar un botón de "limpiar", que es justo lo que nadie va a
+ * hacer con doce personas esperando para subir.
+ *
+ * Solo se le pasa lista a los confirmados: quien no pagó no sube, así que no es
+ * un ausente. La vista tampoco le pinta los botones, pero esto no se fía de la
+ * vista.
+ */
+router.post("/panel/registros/:id/asistencia", (req, res) => {
+  const registro = salidas.registro(req.params.id);
+  if (!registro) return res.redirect("/salidas/panel");
+
+  const volver = `/salidas/panel/${registro.salida}#r${registro.id}`;
+  if (!registro.confirmado) return res.redirect(`${volver}`);
+
+  const pedido = req.body.asistio === "1" ? 1 : 0;
+  // Tocar lo que ya estaba marcado lo devuelve a "sin pasar".
+  const nuevo = registro.asistio === pedido ? null : pedido;
+
+  db.prepare(
+    `UPDATE salida_registros
+        SET asistio = ?, asistencia_at = ${nuevo === null ? "NULL" : "CURRENT_TIMESTAMP"}
+      WHERE id = ?`
+  ).run(nuevo, registro.id);
+
+  res.redirect(volver);
+});
+
 router.post("/panel/registros/:id/nota", (req, res) => {
   const registro = salidas.registro(req.params.id);
   if (!registro) return res.redirect("/salidas/panel");
@@ -290,7 +323,7 @@ router.get("/panel/:id/lista.csv", (req, res) => {
   // columnas en vez de meter todo en la primera.
   const escapar = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
   const filas = [
-    ["Nombre", "Código", "Tipo documento", "Documento", "Teléfono", "Correo", "Transporte", "Póliza", "Estado", "Nota"],
+    ["Nombre", "Código", "Tipo documento", "Documento", "Teléfono", "Correo", "Transporte", "Póliza", "Estado", "Asistencia", "Nota"],
     ...salidas.registrosDe(salida.id).map((r) => [
       r.nombre,
       r.codigo_estudiante,
@@ -301,6 +334,7 @@ router.get("/panel/:id/lista.csv", (req, res) => {
       r.pago_transporte ? "Pagado" : "Pendiente",
       r.pago_poliza ? "Pagada" : "Pendiente",
       r.estado.label,
+      r.asistencia ? r.asistencia.label : "",
       r.nota || "",
     ]),
   ];

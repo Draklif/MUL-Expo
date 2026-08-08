@@ -245,7 +245,7 @@ img { max-width: 100%; }
 .grid {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr));
 }
 
 /* ---------------------------------------------------------------------
@@ -498,7 +498,7 @@ img { max-width: 100%; }
 .puertas {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
 }
 
 .puerta {
@@ -678,7 +678,7 @@ textarea { min-height: 96px; resize: vertical; }
 .fila {
   display: grid;
   gap: 16px;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
 }
 
 fieldset { border: 0; margin: 0; padding: 0; }
@@ -780,7 +780,7 @@ body:has(> .mf-foot) {
    un título en un solo renglón para que ensanche la página entera y aparezca
    scroll horizontal. Con esto, lo que no cabe desborda su caja pero no arrastra
    al resto. */
-body:has(> .mf-foot) > main { flex: 1 0 auto; min-width: 0; }
+body:has(> .mf-foot) > main { flex: 1 0 auto; min-width: 0; width: 100%; }
 
 .mf-foot {
   border-top: 1px solid var(--linea);
@@ -849,7 +849,7 @@ body:has(> .mf-foot) > main { flex: 1 0 auto; min-width: 0; }
 .datos {
   display: grid;
   gap: 18px 26px;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
 }
 
 .dato .k {
