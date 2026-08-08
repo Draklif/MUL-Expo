@@ -312,6 +312,23 @@
     "cierra": "Fecha de cierre por definir",
     "aviso_cerrado": "El registro de expositores ya se cerró. Si necesitas inscribir un proyecto, habla directamente con el docente de tu materia."
   },
+  "patrocinadores": {
+    "_comentario": "Las marcas que YA acompañan la Expo. Esta lista es la que manda: nadie aparece en la página por haber llenado el formulario. Publicar una marca son dos pasos: dejar el logo en public/images y agregar un objeto aquí con \"logo\": \"/images/archivo.png\". Abrir o cerrar el formulario NO se hace aquí: es PATROCINIOS.abierto en config.js.",
+    "titulo": "Con el apoyo de",
+    "nota": "Estudios y marcas que acompañan la muestra. Que una empresa del sector ponga su nombre al lado de los proyectos es parte de lo que hace que la Expo sea una vitrina y no un salón de clase.",
+    "cta_titulo": "¿Tu marca quiere estar?",
+    "cta_nota": "Buscamos estudios, empresas y medios que quieran acompañar la Expo: con un aporte, con premios, con una charla o simplemente contándolo. Déjanos tus datos y te escribimos para acordar los detalles.",
+    "aviso_cerrado": "Por ahora no estamos recibiendo propuestas de patrocinio. Si tu marca quiere acompañar la próxima Expo, escríbenos al correo del programa.",
+    "marcas": [
+      {
+        "nombre": "Metajuego Company",
+        "logo": "/images/metajuego.png",
+        "url": "",
+        "tipo": "Patrocinador",
+        "lema": "Estudio de videojuegos"
+      }
+    ]
+  },
   "jornada": {
     "_comentario": "Horarios de la Expo. Mientras no esté cerrada la franja, 'cierre_extendido' y el aviso de abajo dejan claro que la tarde está por confirmar. Cada sala tiene además su propio 'horario' dentro de 'salas'.",
     "titulo": "Itinerario tentativo",

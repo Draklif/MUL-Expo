@@ -1,0 +1,129 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     PATROCINIOS — el formulario para las marcas
+
+     Es el registro de expositores en pequeño, con dos diferencias que se
+     notan al llenarlo:
+
+       · el correo NO es institucional ni lleva pattern. Quien llena esto
+         viene de afuera y no tiene uno @uniboyaca.edu.co;
+       · no se pide el logo. Se acuerda por correo, y decirlo aquí evita que
+         alguien busque un botón de subir archivo que no existe.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('partials/head', { title: 'Patrocinar la Expo — Expo Multimedia', descripcion: 'Marcas, estudios y medios que quieran acompañar la Expo Multimedia.' }) %>
+
+<header class="pub-top">
+  <a href="/expo" class="pub-brand">Expo <em>Multimedia</em></a>
+  <nav class="pub-nav">
+    <a href="/expo">Volver a la Expo</a>
+    <a href="/expo#patrocinadores">Patrocinadores</a>
+  </nav>
+</header>
+
+<main class="pub pub-angosto">
+  <section class="pub-hero pub-hero-corto">
+    <p class="eyebrow">Para marcas y estudios</p>
+    <h1>Acompaña la <em>Expo</em></h1>
+    <p class="lead">
+      La Expo Multimedia es la muestra de los proyectos finales del programa:
+      videojuegos, animación, sonido, interactivos y audiovisual, todos en un
+      recorrido de un día. Si tu marca quiere estar ahí, déjanos tus datos y te
+      escribimos para acordar los detalles.
+    </p>
+  </section>
+
+  <% if (!abierto) { %>
+    <div class="alert err" style="margin-top:24px">
+      Por ahora no estamos recibiendo propuestas de patrocinio. Escríbenos al
+      correo del programa y lo hablamos para la próxima Expo.
+    </div>
+  <% } else { %>
+
+    <% if (errores.length) { %>
+      <div class="alert err" style="margin-top:24px">
+        <strong>Revisa esto antes de enviar:</strong>
+        <ul style="margin:6px 0 0; padding-left:18px">
+          <% errores.forEach(e => { %><li><%= e %></li><% }) %>
+        </ul>
+      </div>
+    <% } %>
+
+    <form method="POST" action="/patrocinios" class="card" style="margin-top:22px">
+      <p class="eyebrow">1 · La marca</p>
+
+      <div class="form-row">
+        <label for="marca">Nombre de la marca o empresa</label>
+        <input type="text" id="marca" name="marca" maxlength="80" required autocomplete="organization"
+               placeholder="Ej. Metajuego Company"
+               value="<%= valores.marca || '' %>" />
+      </div>
+
+      <div class="form-row">
+        <label for="sitio">Sitio web o redes <span class="opcional">(opcional)</span></label>
+        <input type="text" id="sitio" name="sitio" maxlength="200" autocomplete="url"
+               placeholder="metajuego.co · @metajuego"
+               value="<%= valores.sitio || '' %>" />
+      </div>
+
+      <div class="form-row">
+        <label for="tipo">¿De qué manera te gustaría acompañarnos?</label>
+        <select id="tipo" name="tipo" required>
+          <option value="">— elige una —</option>
+          <% tipos.forEach(t => { %>
+            <option value="<%= t %>" <%= valores.tipo === t ? 'selected' : '' %>><%= t %></option>
+          <% }) %>
+        </select>
+        <p class="hint">Es para saber por dónde empezar la conversación, no un compromiso.</p>
+      </div>
+
+      <div class="form-row">
+        <label for="mensaje">Cuéntanos un poco <span class="opcional">(opcional)</span></label>
+        <textarea id="mensaje" name="mensaje" rows="4" maxlength="600"
+                  placeholder="Qué hace tu marca y qué te gustaría aportar o recibir."><%= valores.mensaje || '' %></textarea>
+      </div>
+
+      <p class="eyebrow" style="margin-top:26px">2 · Quién contacta</p>
+
+      <div class="form-row">
+        <label for="contacto_nombre">Tu nombre</label>
+        <input type="text" id="contacto_nombre" name="contacto_nombre" maxlength="120" required autocomplete="name"
+               value="<%= valores.contacto_nombre || '' %>" />
+      </div>
+
+      <div class="form-row">
+        <label for="contacto_email">Tu correo</label>
+        <input type="email" id="contacto_email" name="contacto_email" maxlength="160" required autocomplete="email"
+               placeholder="hola@tumarca.com"
+               value="<%= valores.contacto_email || '' %>" />
+        <p class="hint">Cualquier correo sirve: aquí no pedimos el institucional.</p>
+      </div>
+
+      <div class="form-row">
+        <label for="telefono">Teléfono o WhatsApp <span class="opcional">(opcional)</span></label>
+        <input type="tel" id="telefono" name="telefono" maxlength="25" autocomplete="tel"
+               placeholder="300 000 0000"
+               value="<%= valores.telefono || '' %>" />
+      </div>
+
+      <button type="submit" class="btn block" style="margin-top:24px">Enviar propuesta</button>
+      <p class="hint" style="text-align:center; margin-top:10px">
+        Te respondemos a ese correo. No hay nada que consultar después: esto no
+        deja un código ni una página de estado.
+      </p>
+
+      <p class="aviso-nota">
+        El logo no se sube aquí. Cuando acordemos el patrocinio te lo pedimos por
+        correo, para pedirte la versión y el formato que se vean bien en la
+        página y en el material impreso.
+      </p>
+    </form>
+  <% } %>
+</main>
+
+<%- include('partials/pie', {
+      clase: 'pub-foot',
+      titulo: 'Expo Multimedia',
+      panel: '',
+      dentro: Boolean(docente),
+    }) %>
+
+<%- include('partials/footer') %>

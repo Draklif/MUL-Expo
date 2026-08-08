@@ -18,6 +18,18 @@ const { crearLimite } = require("../lib/limite");
 const router = express.Router();
 
 const EVENTO = eventos.porSlug("jam-de-altura");
+
+// Toda página de aquí abajo es pública, y por eso todas llevan el mismo
+// guardia delante: si la jam no es el evento de este semestre y
+// config.SOLO_EVENTO_ACTIVO está en true, la dirección no responde. Va ruta por
+// ruta y no con un router.use() porque este router se monta en "/" y por él
+// pasan también las peticiones de todo lo demás.
+//
+// El panel NO pasa por aquí: vive en routes/jam-panel.js y se entra con
+// contraseña, para poder preparar el evento que viene mientras la puerta
+// pública sigue cerrada.
+const publica = eventos.soloActivo("jam-de-altura");
+
 const MAX_NOMBRE_EQUIPO = 40;
 
 // Mismo freno que el resto de formularios públicos: solo cuentan las
@@ -59,7 +71,7 @@ function marco(req, extra = {}) {
 // ---------------------------------------------------------------------
 //  Landing: el reloj, el tema y quiénes están adentro
 // ---------------------------------------------------------------------
-router.get("/jam-de-altura", (req, res) => {
+router.get("/jam-de-altura", publica, (req, res) => {
   const base = marco(req);
   const id = base.edicion ? base.edicion.id : null;
 
@@ -77,7 +89,7 @@ router.get("/jam-de-altura", (req, res) => {
 // ---------------------------------------------------------------------
 //  Equipos
 // ---------------------------------------------------------------------
-router.get("/jam/equipos", (req, res) => {
+router.get("/jam/equipos", publica, (req, res) => {
   const base = marco(req);
   const id = base.edicion ? base.edicion.id : null;
 
@@ -91,7 +103,7 @@ router.get("/jam/equipos", (req, res) => {
   });
 });
 
-router.get("/jam/equipo/:id", (req, res) => {
+router.get("/jam/equipo/:id", publica, (req, res) => {
   const equipo = jam.equipoConIntegrantes(req.params.id);
   if (!equipo || equipo.estado !== "aprobado") return res.redirect("/jam-de-altura");
 
@@ -109,7 +121,7 @@ router.get("/jam/equipo/:id", (req, res) => {
 // Una sola petición trae todo lo que puede cambiar mientras alguien tiene la
 // página abierta: la hora del servidor, la fase, el tema si ya se reveló y el
 // tablón de anuncios.
-router.get("/jam/api/estado", (req, res) => {
+router.get("/jam/api/estado", publica, (req, res) => {
   const id = Number(req.query.edicion) || null;
   // Sin cache: el navegador no puede quedarse con un tema sin revelar de hace
   // media hora, que es justo el dato que la gente está esperando.
@@ -136,11 +148,11 @@ function vistaInscripcion(req, extra = {}) {
   };
 }
 
-router.get("/jam/inscripcion", (req, res) => {
+router.get("/jam/inscripcion", publica, (req, res) => {
   res.render("jam/inscripcion", vistaInscripcion(req));
 });
 
-router.post("/jam/inscripcion", (req, res) => {
+router.post("/jam/inscripcion", publica, (req, res) => {
   const edicion = jam.edicionVigente();
   const max = edicion ? edicion.max_integrantes : jam.MAX_INTEGRANTES;
 
@@ -366,7 +378,7 @@ function vistaEstado(req, { codigo, recienEnviada, error, ok }) {
   };
 }
 
-router.get("/jam/inscripcion/listo/:codigo", (req, res) => {
+router.get("/jam/inscripcion/listo/:codigo", publica, (req, res) => {
   const codigo = String(req.params.codigo || "").toUpperCase();
   if (!jam.buscarPorCodigo(codigo)) return res.redirect("/jam/inscripcion/estado");
   res.render(
@@ -385,7 +397,7 @@ const PROBLEMAS_ENTREGA = {
   error: "No encontramos ningún equipo con ese código.",
 };
 
-router.get("/jam/inscripcion/estado", (req, res) => {
+router.get("/jam/inscripcion/estado", publica, (req, res) => {
   const codigo = String(req.query.codigo || "").trim().toUpperCase();
   const problema = Object.keys(PROBLEMAS_ENTREGA).find((k) => req.query[k]);
 
@@ -414,7 +426,7 @@ router.get("/jam/inscripcion/estado", (req, res) => {
  * Se puede reenviar cuantas veces haga falta mientras la jam esté abierta —a
  * las cuatro de la mañana de un domingo siempre hay un enlace mal pegado—.
  */
-router.post("/jam/entrega/:codigo", (req, res) => {
+router.post("/jam/entrega/:codigo", publica, (req, res) => {
   const codigo = String(req.params.codigo || "").trim().toUpperCase();
   const equipo = jam.equipoPorCodigo(codigo);
   const volver = `/jam/inscripcion/estado?codigo=${encodeURIComponent(codigo)}`;

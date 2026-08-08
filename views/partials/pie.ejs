@@ -1,0 +1,38 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL PIE, uno solo para todo el sitio
+
+     Dice cuatro cosas y ninguna más: de qué evento es esta página, de qué
+     programa, de qué universidad, y por dónde entra un docente.
+
+     No lleva navegación. Un pie con enlaces es un menú de segunda que se
+     desactualiza solo —termina ofreciendo direcciones que ya no reciben a
+     nadie— y, peor, es por donde se descubren las páginas de eventos que no
+     son los de este semestre. Lo que se necesita para moverse está arriba,
+     en la cabecera de cada página.
+
+     El marcado es el mismo para las cuatro hojas y solo cambia la clase: la
+     Expo es .pub-foot, el torneo .vc-foot, la jam .jam-foot y las salidas
+     .sal-foot. Cada hoja lo viste como le corresponde; ninguna decide qué
+     dice.
+
+     Locals:
+       clase  — el prefijo de la hoja ("pub-foot", "vc-foot", …).
+       titulo — el nombre del evento, tal como se anuncia.
+       panel  — dónde vive su panel ("/vc", "/jam", "/salidas"; "" en la Expo).
+       dentro — si ya hay sesión abierta en ESE panel.
+     ───────────────────────────────────────────────────────────────── */%>
+<footer class="<%= clase %>">
+  <div class="<%= clase %>-in">
+    <div>
+      <strong><%= titulo %></strong>
+      <span><%= programa %> · <%= institucion %></span>
+    </div>
+    <div class="der">
+      <%/* El acceso va discreto y sin nombre de pila: estas páginas son para
+           quien viene a exponer, a jugar o a viajar, no para quien califica. */%>
+      <a href="<%= panel %><%= dentro ? '/panel' : '/acceso' %>" class="foot-acceso">
+        <%= dentro ? 'Ir al panel' : 'Acceso docentes' %>
+      </a>
+    </div>
+  </div>
+</footer>

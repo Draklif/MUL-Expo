@@ -132,15 +132,12 @@
   <% } %>
 </main>
 
-<footer class="pub-foot">
-  <div>
-    <strong>Expo Multimedia</strong>
-    <span>¿Ya te registraste? <a href="/registro/estado">Consulta tu código</a></span>
-  </div>
-  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
-    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
-  </a>
-</footer>
+<%- include('partials/pie', {
+      clase: 'pub-foot',
+      titulo: 'Expo Multimedia',
+      panel: '',
+      dentro: Boolean(docente),
+    }) %>
 
 <script>
   // Filas extra para equipos grandes

@@ -18,6 +18,18 @@ const { crearLimite } = require("../lib/limite");
 const router = express.Router();
 
 const EVENTO = eventos.porSlug("virtual-champions");
+
+// Toda página de aquí abajo es pública, y por eso todas llevan el mismo
+// guardia delante: si el torneo no es el evento de este semestre y
+// config.SOLO_EVENTO_ACTIVO está en true, la dirección no responde. Va ruta por
+// ruta y no con un router.use() porque este router se monta en "/" y por él
+// pasan también las peticiones de todo lo demás.
+//
+// El panel NO pasa por aquí: vive en routes/vc-panel.js y se entra con
+// contraseña, para poder preparar el evento que viene mientras la puerta
+// pública sigue cerrada.
+const publica = eventos.soloActivo("virtual-champions");
+
 const MAX_NOMBRE_EQUIPO = 40;
 
 // Mismo freno que el registro de la Expo: solo cuentan las inscripciones que
@@ -72,7 +84,7 @@ function marco(req, juegoId) {
 // ---------------------------------------------------------------------
 //  Landing
 // ---------------------------------------------------------------------
-router.get("/virtual-champions", (req, res) => {
+router.get("/virtual-champions", publica, (req, res) => {
   const base = marco(req);
   const torneoId = base.torneo ? base.torneo.id : null;
 
@@ -91,7 +103,7 @@ router.get("/virtual-champions", (req, res) => {
 // ---------------------------------------------------------------------
 //  Bracket, calendario y equipos
 // ---------------------------------------------------------------------
-router.get("/vc/:juego/bracket", (req, res) => {
+router.get("/vc/:juego/bracket", publica, (req, res) => {
   const base = marco(req, req.params.juego);
   res.render("vc/bracket", {
     ...base,
@@ -101,7 +113,7 @@ router.get("/vc/:juego/bracket", (req, res) => {
   });
 });
 
-router.get("/vc/:juego/calendario", (req, res) => {
+router.get("/vc/:juego/calendario", publica, (req, res) => {
   const base = marco(req, req.params.juego);
   const partidas = base.torneo ? vc.partidasDe(base.torneo.id) : [];
   res.render("vc/calendario", {
@@ -112,7 +124,7 @@ router.get("/vc/:juego/calendario", (req, res) => {
   });
 });
 
-router.get("/vc/:juego/equipos", (req, res) => {
+router.get("/vc/:juego/equipos", publica, (req, res) => {
   const base = marco(req, req.params.juego);
   res.render("vc/equipos", {
     ...base,
@@ -126,7 +138,7 @@ router.get("/vc/:juego/equipos", (req, res) => {
 // ---------------------------------------------------------------------
 //  Fichas
 // ---------------------------------------------------------------------
-router.get("/vc/equipo/:id", (req, res) => {
+router.get("/vc/equipo/:id", publica, (req, res) => {
   const equipo = vc.equipoConRoster(req.params.id);
   if (!equipo) return res.redirect("/virtual-champions");
 
@@ -140,7 +152,7 @@ router.get("/vc/equipo/:id", (req, res) => {
   });
 });
 
-router.get("/vc/partida/:id", (req, res) => {
+router.get("/vc/partida/:id", publica, (req, res) => {
   const partida = vc.partidaConTodo(req.params.id);
   if (!partida) return res.redirect("/virtual-champions");
 
@@ -159,7 +171,7 @@ router.get("/vc/partida/:id", (req, res) => {
 // Una sola petición devuelve todo lo que cambia: las partidas en vivo con sus
 // mapas y, si se pide una en concreto, esa. Así la página no tiene que pedir
 // dos veces por tick.
-router.get("/vc/api/vivo", (req, res) => {
+router.get("/vc/api/vivo", publica, (req, res) => {
   const torneoId = Number(req.query.torneo) || null;
   const partidaId = Number(req.query.partida) || null;
 
@@ -218,11 +230,11 @@ function vistaInscripcion(req, extra = {}) {
   };
 }
 
-router.get("/vc/inscripcion", (req, res) => {
+router.get("/vc/inscripcion", publica, (req, res) => {
   res.render("vc/inscripcion", vistaInscripcion(req));
 });
 
-router.post("/vc/inscripcion", (req, res) => {
+router.post("/vc/inscripcion", publica, (req, res) => {
   const valores = {
     torneo_id: String(req.body.torneo_id || ""),
     modo: req.body.modo === "solo" ? "solo" : "equipo",
@@ -440,7 +452,7 @@ function vistaEstado(req, { codigo, recienEnviada, error }) {
   };
 }
 
-router.get("/vc/inscripcion/listo/:codigo", (req, res) => {
+router.get("/vc/inscripcion/listo/:codigo", publica, (req, res) => {
   const codigo = String(req.params.codigo || "").toUpperCase();
   if (!vc.buscarPorCodigo(codigo)) return res.redirect("/vc/inscripcion/estado");
   res.render(
@@ -449,7 +461,7 @@ router.get("/vc/inscripcion/listo/:codigo", (req, res) => {
   );
 });
 
-router.get("/vc/inscripcion/estado", (req, res) => {
+router.get("/vc/inscripcion/estado", publica, (req, res) => {
   const codigo = String(req.query.codigo || "").trim().toUpperCase();
   res.render(
     "vc/inscripcion-estado",

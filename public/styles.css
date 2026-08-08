@@ -203,7 +203,8 @@ h3 { font-size: 17px; font-family: var(--font-body); font-weight: 600; }
 /* ------- Formularios ------- */
 label { font-size: 13px; color: var(--ink-dim); display: block; margin-bottom: 6px; font-weight: 500; }
 
-input[type=text], input[type=number], input[type=password], input[type=email], textarea, select {
+input[type=text], input[type=number], input[type=password], input[type=email],
+input[type=tel], textarea, select {
   width: 100%;
   background: var(--bg-elev);
   color: var(--ink);
@@ -1771,6 +1772,72 @@ details.criterio-detail .crit-grid {
 }
 .rubrica-col li:first-child { border-top: none; }
 
+/* ------- Patrocinadores -------
+   Una rejilla de logos ajenos, que es el contenido más impredecible de la
+   página: cada marca llega con su proporción, su color de fondo y su tamaño.
+   Por eso el logo no manda sobre la tarjeta —la tarjeta le da una caja fija y
+   él se acomoda dentro con object-fit—. Así una marca con un logo enorme no
+   deja de vecina a otra con uno diminuto.
+
+   La caja lleva su propio fondo claro: los logotipos se diseñan para papel
+   blanco y muchos vienen con su plato de color o en negro sobre transparente,
+   que sobre el fondo casi negro de esta página desaparecería. */
+/* auto-FILL y no auto-fit, que es lo que usan las otras rejillas de la hoja.
+   La diferencia solo se nota cuando hay pocas marcas, que es justo el caso de
+   una sección que empieza con una: auto-fit colapsa las columnas vacías y
+   estira la única tarjeta a los novecientos píxeles del contenedor, con el
+   logo perdido en el medio. auto-fill las conserva y la tarjeta mantiene su
+   tamaño, esté sola o acompañada. */
+.logos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+}
+
+.logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  text-align: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+a.logo:hover { border-color: var(--border-strong); text-decoration: none; }
+
+.logo-img {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 88px;
+  padding: 8px 10px;
+  background: #f4f4f7;
+  border-radius: var(--r);
+}
+
+.logo-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.logo-nombre {
+  font-family: var(--font-display);
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+.logo-tipo {
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
 /* ------- Plano interactivo del lugar ------- */
 .plano-wrap {
   display: grid;
@@ -1932,7 +1999,9 @@ details.criterio-detail .crit-grid {
 }
 
 /* ------- Pie público ------- */
-.pub-foot {
+/* El pie. El marcado sale de views/partials/pie.ejs y es el mismo en las
+   cuatro hojas del sitio; lo único que cambia es cómo lo viste cada una. */
+.pub-foot-in {
   max-width: 940px;
   margin: 40px auto 0;
   padding: 20px 22px 34px;
@@ -1950,18 +2019,7 @@ details.criterio-detail .crit-grid {
   display: block;
 }
 .pub-foot span { font-size: 12px; color: var(--ink-mute); }
-/* Los otros eventos del programa. Es el único paso de uno a otro: no hay
-   portada que los liste, así que vive al pie de todos. */
-.foot-eventos {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 4px 12px;
-  margin: 10px 0 0;
-  font-size: 12px;
-}
-.foot-eventos span { color: var(--ink-mute); }
-.foot-eventos a { color: var(--ink-dim); }
+.pub-foot .der { margin-left: auto; }
 .foot-acceso {
   font-size: 12px;
   color: var(--ink-mute);
@@ -1985,7 +2043,7 @@ details.criterio-detail .crit-grid {
   .pub-nav a { padding: 7px 9px; font-size: 12.5px; }
   .pub { padding: 0 16px 32px; }
   .pub-hero { padding: 40px 0 34px; }
-  .pub-foot { padding: 20px 16px 30px; margin-top: 28px; }
+  .pub-foot-in { padding: 20px 16px 30px; margin-top: 28px; }
   .sala { padding: 16px 17px 18px; }
 }
 

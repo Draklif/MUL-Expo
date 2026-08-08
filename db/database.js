@@ -421,6 +421,35 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_sal_reg ON salida_registros(salida, created_at);
+
+  -- =================================================================
+  --  PATROCINIOS
+  --  Marcas que escriben ofreciendo acompañar la Expo. Esto NO es la
+  --  lista de patrocinadores que se ve en la página: esa se cura a mano
+  --  en data/expo.json, junto con el logo. Aquí solo queda quién tocó
+  --  la puerta, que es un dato distinto y de otra naturaleza.
+  --
+  --  Sin código y sin estado, a diferencia de 'solicitudes': un código
+  --  sirve para consultar el estado, y aquí no hay panel que lo mueva.
+  --  La fila es la constancia; el correo al organizador es el aviso.
+  -- =================================================================
+  CREATE TABLE IF NOT EXISTS patrocinios (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    periodo_id      INTEGER,
+    marca           TEXT NOT NULL,
+    sitio           TEXT,
+    tipo            TEXT NOT NULL,
+    mensaje         TEXT,
+    contacto_nombre TEXT NOT NULL,
+    -- Sin COLLATE de dominio ni validación institucional: una marca de
+    -- afuera no tiene correo @uniboyaca.edu.co.
+    contacto_email  TEXT NOT NULL COLLATE NOCASE,
+    telefono        TEXT,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (periodo_id) REFERENCES periodos(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_patrocinios_periodo ON patrocinios(periodo_id, created_at);
 `);
 
 // ---------- Migraciones suaves ----------

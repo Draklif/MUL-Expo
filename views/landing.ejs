@@ -297,18 +297,67 @@
       </div>
     </div>
   </section>
+
+  <%/* ───── PATROCINADORES ─────
+       Va de últimas, que es donde van los créditos, y con la puerta para las
+       marcas nuevas dentro de la misma sección: quien mira los logos es
+       exactamente quien puede preguntarse cómo se pone el suyo ahí.
+
+       Lo que se ve sale del JSON y solo del JSON. Llenar el formulario no
+       publica a nadie: publicar es dejar el logo en public/images y agregar la
+       marca a "patrocinadores" en data/expo.json. */%>
+  <% if (patrocinadores) { %>
+    <section id="patrocinadores" class="pub-sec">
+      <% if (patrocinadores.marcas && patrocinadores.marcas.length) { %>
+        <p class="eyebrow">Nos acompañan</p>
+        <h2><%= patrocinadores.titulo || 'Con el apoyo de' %></h2>
+        <% if (patrocinadores.nota) { %>
+          <p class="sec-lead"><%= patrocinadores.nota %></p>
+        <% } %>
+
+        <div class="logos">
+          <% patrocinadores.marcas.forEach(function (m) { %>
+            <%/* Con enlace es un <a>; sin enlace no se finge uno que no lleva
+                 a ninguna parte. La tarjeta se ve igual en los dos casos. */%>
+            <% if (m.url) { %>
+              <a class="logo" href="<%= m.url %>" target="_blank" rel="noopener">
+            <% } else { %>
+              <div class="logo">
+            <% } %>
+              <span class="logo-img"><img src="<%= m.logo %>" alt="<%= m.nombre %>" loading="lazy" /></span>
+              <span class="logo-nombre"><%= m.nombre %></span>
+              <% if (m.tipo || m.lema) { %>
+                <span class="logo-tipo"><%= m.tipo || m.lema %></span>
+              <% } %>
+            <% if (m.url) { %></a><% } else { %></div><% } %>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <div class="cta-registro" style="margin-top:22px">
+        <div>
+          <p class="eyebrow">Para marcas y estudios</p>
+          <h2><%= patrocinadores.cta_titulo || '¿Tu marca quiere estar?' %></h2>
+          <p class="sec-lead" style="margin-bottom:0">
+            <%= patrociniosAbierto ? (patrocinadores.cta_nota || '') : (patrocinadores.aviso_cerrado || '') %>
+          </p>
+        </div>
+        <% if (patrociniosAbierto) { %>
+          <div class="cta-botones">
+            <a href="/patrocinios" class="btn">Quiero patrocinar</a>
+          </div>
+        <% } %>
+      </div>
+    </section>
+  <% } %>
 </main>
 
-<footer class="pub-foot">
-  <div>
-    <strong><%= evento.name %></strong>
-    <span><%= programa %></span>
-    <%- include('partials/otros-eventos') %>
-  </div>
-  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
-    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
-  </a>
-</footer>
+<%- include('partials/pie', {
+      clase: 'pub-foot',
+      titulo: evento.name,
+      panel: '',
+      dentro: Boolean(docente),
+    }) %>
 
 <script>
   // Plano interactivo: un espacio a la vez, se puede deseleccionar tocándolo otra vez.

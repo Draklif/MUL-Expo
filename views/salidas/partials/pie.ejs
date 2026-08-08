@@ -1,18 +1,6 @@
-<footer class="sal-foot">
-  <div class="sal-foot-in">
-    <div>
-      <strong>Salidas pedagógicas</strong><br />
-      <%= programa %> · <%= institucion %>
-    </div>
-    <div class="der">
-      <a href="/salidas">Todas las salidas</a>
-      <a href="/salidas/estado">Consultar código</a>
-      <%/* El acceso del docente va discreto y no en el menú: esta página es
-           para quien se va de salida. */%>
-      <a href="<%= docenteSalidas ? '/salidas/panel' : '/salidas/acceso' %>" class="foot-acceso">
-        <%= docenteSalidas ? 'Ir al panel' : 'Acceso docentes' %>
-      </a>
-    </div>
-  </div>
-  <%- include('../../partials/otros-eventos') %>
-</footer>
+<%- include('../../partials/pie', {
+      clase: 'sal-foot',
+      titulo: 'Salidas pedagógicas',
+      panel: '/salidas',
+      dentro: Boolean(docenteSalidas),
+    }) %>

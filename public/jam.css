@@ -974,25 +974,16 @@ details.faq .r { color: var(--ink-dim); padding: 0 0 16px 24px; max-width: 68ch;
 
 .jam-foot a { color: var(--ink-dim); }
 .jam-foot .der { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
-.jam-foot strong { font-family: var(--display); font-size: 11px; line-height: 2; }
+.jam-foot strong { display: block; font-family: var(--display); font-size: 11px; line-height: 2; }
+/* Más pequeña que el nombre del evento: la tipografía de píxeles ya pesa
+   bastante y sin esto la universidad le gana el renglón a la jam. */
+.jam-foot span { display: block; font-size: 11px; }
 
 /* El acceso de la organización va discreto: esta página es para quien viene
    a jugar. */
 .foot-acceso { color: var(--ink-mute); text-decoration: none; font-size: 12px; }
 .foot-acceso:hover { color: var(--acento); }
 
-.foot-eventos {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 18px 20px 0;
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--ink-mute);
-}
-
-.foot-eventos a { color: var(--ink-dim); }
 
 /* ---------------------------------------------------------------------
    Panel de la organización

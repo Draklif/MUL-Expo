@@ -97,6 +97,26 @@ const EVENTOS = [
   },
 ];
 
+// Con esto en true, las páginas públicas de los eventos que NO son el de este
+// semestre no responden: quien llegue a una sale rebotado a la raíz, que es
+// donde está el evento que sí está pasando. Es el complemento de `activo`: esa
+// bandera decide qué se muestra en la raíz, y esta decide que lo demás ni
+// siquiera se pueda visitar sabiéndose la dirección.
+//
+// Ponlo en false para probar en paz —la jam del semestre entrante, el torneo
+// que todavía no arranca— y vuélvelo a true antes de repartir el enlace.
+//
+// Lo que NO bloquea nunca, y a propósito:
+//
+//   · los paneles (/vc, /jam, /salidas y /panel). Se entra con contraseña, y
+//     el docente tiene que poder preparar el evento que viene;
+//   · los certificados. Su código QR está impreso y tiene que seguir abriendo
+//     dentro de tres años;
+//   · las salidas pedagógicas, que no son un evento del semestre;
+//   · /patrocinios, que va por su cuenta (PATROCINIOS.abierto): a las marcas
+//     se les habla con meses de anticipación.
+const SOLO_EVENTO_ACTIVO = true;
+
 // ---------------------------------------------------------------------
 //  VIRTUAL CHAMPIONS
 // ---------------------------------------------------------------------
@@ -282,6 +302,40 @@ const SALIDAS = {
   ],
 };
 
+// ---------------------------------------------------------------------
+//  PATROCINIOS DE LA EXPO
+// ---------------------------------------------------------------------
+// Las marcas que acompañan la Expo. Son DOS cosas separadas y conviene no
+// mezclarlas:
+//
+//   · las que YA acompañan y salen en la página se curan a mano en
+//     data/expo.json, con su logo en public/images. Ahí se decide qué se
+//     publica, y ahí y en ningún otro lado;
+//   · lo de aquí abajo es solo la puerta: el formulario donde una marca deja
+//     sus datos. Que llegue una solicitud no publica a nadie.
+//
+//   abierto   — true mientras el formulario reciba propuestas. Es una bandera
+//               PROPIA y no la de "inscripciones" del evento: los patrocinios
+//               se buscan con meses de anticipación y en otro calendario, así
+//               que cerrarle el registro a los estudiantes no tiene por qué
+//               cerrarle la puerta a un patrocinador.
+//   avisar_a  — a dónde llega cada solicitud. No hay panel donde revisarlas:
+//               esto es la bandeja de entrada.
+//   tipos     — lo que puede ofrecer una marca. El selector del formulario
+//               sale de esta lista; agregar o quitar una es todo lo que hace
+//               falta.
+const PATROCINIOS = {
+  abierto: true,
+  avisar_a: "jmrenteria@uniboyaca.edu.co",
+  tipos: [
+    "Patrocinio económico",
+    "Premios o insumos",
+    "Charla o taller",
+    "Difusión y medios",
+    "Otro",
+  ],
+};
+
 // Contraseña del panel de Virtual Champions. Es DISTINTA a la de la Expo a
 // propósito: los mismos docentes, pero dos herramientas separadas. Va en el
 // .env (PASSWORD_VC). Sin ella el panel del torneo queda cerrado, pero el
@@ -356,9 +410,11 @@ module.exports = {
   PERIODO,
   DOMINIO,
   EVENTOS,
+  SOLO_EVENTO_ACTIVO,
   VC,
   JAM,
   SALIDAS,
+  PATROCINIOS,
   PASSWORD,
   PASSWORD_VC,
   PASSWORD_JAM,

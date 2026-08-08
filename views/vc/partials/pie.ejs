@@ -1,17 +1,6 @@
-<footer class="vc-foot">
-  <div class="vc-foot-in">
-    <div>
-      <strong style="font-family:var(--display);text-transform:uppercase;letter-spacing:.08em">Virtual Champions</strong><br />
-      <%= programa %> · <%= institucion %>
-    </div>
-    <div class="der">
-      <a href="/vc/inscripcion<%= qJuego %>">Inscribirse</a>
-      <a href="/vc/inscripcion/estado<%= qJuego %>">Consultar código</a>
-      <%/* El acceso de la organización va discreto y no en el menú: esta
-           página es para quien viene a jugar o a mirar. */%>
-      <a href="<%= docenteVC ? '/vc/panel' : '/vc/acceso' %>" class="foot-acceso">
-        <%= docenteVC ? 'Ir al panel' : 'Acceso organización' %>
-      </a>
-    </div>
-  </div>
-</footer>
+<%- include('../../partials/pie', {
+      clase: 'vc-foot',
+      titulo: 'Virtual Champions',
+      panel: '/vc',
+      dentro: Boolean(docenteVC),
+    }) %>

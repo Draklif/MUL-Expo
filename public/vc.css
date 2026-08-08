@@ -1099,6 +1099,17 @@ details.faq .r { color: var(--ink-dim); padding-bottom: 14px; max-width: 68ch; }
 .vc-foot a { color: var(--ink-dim); }
 .vc-foot .der { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
 
+/* El nombre del torneo arriba y la institución debajo: dos renglones, sin
+   <br> en el marcado, que es el mismo para las cuatro hojas. */
+.vc-foot strong {
+  display: block;
+  font-family: var(--display);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--ink);
+}
+.vc-foot span { display: block; }
+
 /* El acceso de la organización va discreto, como el de la Expo. */
 .foot-acceso { color: var(--ink-mute); text-decoration: none; font-size: 12px; }
 .foot-acceso:hover { color: var(--juego); }

@@ -41,15 +41,11 @@
   </section>
 </main>
 
-<footer class="pub-foot">
-  <div>
-    <strong><%= ev.nombre %></strong>
-    <span><%= programa %></span>
-    <%- include('partials/otros-eventos') %>
-  </div>
-  <a href="<%= docente ? '/panel' : '/acceso' %>" class="foot-acceso">
-    <%= docente ? 'Ir al panel' : 'Acceso docentes' %>
-  </a>
-</footer>
+<%- include('partials/pie', {
+      clase: 'pub-foot',
+      titulo: ev.nombre,
+      panel: '',
+      dentro: Boolean(docente),
+    }) %>
 
 <%- include('partials/footer') %>

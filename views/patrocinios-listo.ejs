@@ -1,0 +1,37 @@
+<%/* Página de gracias y ya. Sin código grande y sin consulta de estado: no hay
+     código que dictar ni panel que mueva un estado, así que una página que
+     prometiera "consulta aquí cómo va" estaría mintiendo. */%>
+<%- include('partials/head', { title: 'Propuesta enviada — Expo Multimedia', descripcion: null }) %>
+
+<header class="pub-top">
+  <a href="/expo" class="pub-brand">Expo <em>Multimedia</em></a>
+  <nav class="pub-nav">
+    <a href="/expo">Volver a la Expo</a>
+    <a href="/expo#patrocinadores">Patrocinadores</a>
+  </nav>
+</header>
+
+<main class="pub pub-angosto">
+  <section class="pub-hero pub-hero-corto">
+    <p class="eyebrow">Propuesta enviada</p>
+    <h1>Gracias, ya la <em>tenemos</em></h1>
+    <p class="lead">
+      Le llegó a quien organiza la Expo. Te escribimos al correo que dejaste
+      para acordar los detalles —entre ellos el logo, que nos lo puedes mandar
+      respondiendo ese mismo correo—.
+    </p>
+    <p style="margin-top:18px">
+      Mientras tanto puedes mirar <a href="/expo#recorrido">qué se va a exponer</a>
+      o <a href="/expo#patrocinadores">quiénes nos acompañan</a>.
+    </p>
+  </section>
+</main>
+
+<%- include('partials/pie', {
+      clase: 'pub-foot',
+      titulo: 'Expo Multimedia',
+      panel: '',
+      dentro: Boolean(docente),
+    }) %>
+
+<%- include('partials/footer') %>

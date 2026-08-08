@@ -9,7 +9,7 @@ const crypto = require("crypto");
 const path = require("path");
 
 const db = require("./db/database");
-const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD, PERIODO } = require("./config");
+const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD, PATROCINIOS, PERIODO } = require("./config");
 const { contenidoEvento } = require("./lib/contenido");
 const eventos = require("./lib/eventos");
 const { DOMINIO, PATRON_HTML } = require("./lib/correos");
@@ -19,6 +19,7 @@ const materiasRouter = require("./routes/materias");
 const proyectosRouter = require("./routes/proyectos");
 const apiRouter = require("./routes/api");
 const registroRouter = require("./routes/registro");
+const patrociniosRouter = require("./routes/patrocinios");
 const certificadosRouter = require("./routes/certificados");
 const vcRouter = require("./routes/vc");
 const vcPanelRouter = require("./routes/vc-panel");
@@ -81,6 +82,14 @@ app.use((req, res, next) => {
   const vigente = eventos.activo();
   res.locals.EVENTOS = eventos.EVENTOS.map((e) => ({ ...e, url: eventos.url(e, vigente) }));
 
+  // Quiénes somos, para el pie de cualquier página. Salen del contenido del
+  // evento vigente y no de una constante en el código porque el JSON de cada
+  // evento puede decirlo a su manera; una vista que traiga el suyo lo pisa,
+  // que es lo que pasa en las landings.
+  const marca = eventos.contenidoDe(vigente.slug);
+  res.locals.programa = marca.programa;
+  res.locals.institucion = marca.institucion;
+
   res.locals.docente = req.session.docente || null;
   // Cada herramienta tiene su propia sesión: sirve para que el pie de cada
   // sitio público ofrezca "ir al panel" a quien ya entró y "acceso" al resto.
@@ -121,7 +130,19 @@ function renderEvento(res, evento, base) {
       ? { ...contenido.registro, abierto: eventos.inscripcionesAbiertas(evento.slug) }
       : null;
 
-    return res.render(evento.vista, { ...contenido, registro, base, slug: evento.slug });
+    // Lo mismo para el formulario de las marcas, y por lo mismo: el JSON pone
+    // los textos y config.PATROCINIOS decide si la puerta está abierta. Es una
+    // bandera aparte de la de inscripciones a propósito —los patrocinios se
+    // buscan en otro calendario— y solo aplica a la Expo.
+    const patrociniosAbierto = evento.slug === "expo" && Boolean(PATROCINIOS.abierto);
+
+    return res.render(evento.vista, {
+      ...contenido,
+      registro,
+      patrociniosAbierto,
+      base,
+      slug: evento.slug,
+    });
   }
   // Sin plantilla propia todavía: la página de aviso se arma con el config.
   res.render("evento-proximo", {
@@ -145,14 +166,22 @@ app.get("/", (req, res) => {
 });
 
 // Guía de montaje para los expositores de la Expo (pública)
-app.get("/expositores", (req, res) => {
+app.get("/expositores", eventos.soloActivo("expo"), (req, res) => {
   const contenido = eventos.contenidoDe("expo");
   if (!contenido.requisitos) return res.redirect("/expo");
   res.render("expositores", { ...contenido });
 });
 
-// Registro de expositores (público: lo llenan los estudiantes)
-app.use("/registro", registroRouter);
+// Registro de expositores (público: lo llenan los estudiantes). El guardia va
+// aquí, en el montaje, porque este router sí tiene su propia dirección: por él
+// no pasan las peticiones de nadie más.
+app.use("/registro", eventos.soloActivo("expo"), registroRouter);
+
+// Patrocinios de la Expo (público: lo llenan las marcas de afuera). Sin el
+// guardia de eventos a propósito: a un patrocinador se le habla con meses de
+// anticipación, así que esta puerta la abre y la cierra PATROCINIOS.abierto y
+// no el calendario del semestre.
+app.use("/", patrociniosRouter);
 
 // Virtual Champions. Va con router propio y no con la página automática de
 // eventos porque su contenido no está en un JSON sino en la base: los
@@ -228,7 +257,9 @@ eventos.EVENTOS.forEach((evento) => {
   // datos que necesitan. Registrarla otra vez aquí no la reemplazaría (gana la
   // primera), pero dejarlo explícito evita la duda al leerlo.
   if (evento.ruta) return;
-  app.get(`/${evento.slug}`, (req, res) => renderEvento(res, evento, `/${evento.slug}`));
+  app.get(`/${evento.slug}`, eventos.soloActivo(evento.slug), (req, res) =>
+    renderEvento(res, evento, `/${evento.slug}`)
+  );
 });
 
 // ---------- Arrancar ----------
