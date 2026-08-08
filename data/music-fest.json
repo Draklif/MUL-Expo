@@ -1,0 +1,121 @@
+{
+  "programa": "Ingeniería en Multimedia",
+  "institucion": "Universidad de Boyacá",
+  "evento": {
+    "name": "Multimedia Music Fest",
+    "tipo": "Festival cultural",
+    "estado": "confirmado",
+    "cuando": "Cierre de semestre",
+    "sede": "Plazoleta central",
+    "desc": "Una tarde con los grupos culturales de la universidad en vivo y la producción entera en manos de estudiantes: luces, sonido y visuales."
+  },
+  "hero": {
+    "eyebrow": "Una tarde, una tarima",
+    "titulo": "Multimedia Music Fest",
+    "lema": "Los grupos tocan. Nosotros hacemos que suene, se vea y se sienta.",
+    "entrada": "Entrada libre"
+  },
+  "que_es": {
+    "titulo": "Qué es esto",
+    "texto": "Un festival pequeño y hecho en casa: los grupos musicales y de baile de la universidad se suben a una tarima que montan, iluminan, mezclan y proyectan estudiantes del programa. Se organiza desde Edición de Audio y Video, pero el equipo de producción está abierto a cualquiera de Ingeniería en Multimedia que quiera pasar una tarde detrás de una consola de verdad.",
+    "puntos": [
+      "Una tarde, una tarima, entrada libre.",
+      "Los grupos ponen el show; el equipo de producción, todo lo demás.",
+      "Se trabaja con equipos reales y con el tiempo encima, que es como se aprende."
+    ]
+  },
+  "puertas": {
+    "_comentario": "Las dos formas de estar adentro. Los textos de las tarjetas de la landing y de la cabecera de cada formulario salen de aquí.",
+    "grupo": {
+      "titulo": "Tengo un grupo",
+      "lema": "Musical, baile o teatro",
+      "texto": "Grupos culturales de la universidad. Cuéntanos quiénes son, qué van a presentar y qué necesitan en tarima. La organización arma el cartel con lo que llegue.",
+      "boton": "Inscribir mi grupo"
+    },
+    "produccion": {
+      "titulo": "Quiero estar en producción",
+      "lema": "Luces, sonido y visuales",
+      "texto": "Estudiantes de Multimedia que quieran hacer el show posible. Eliges un área, cuentas qué sabes hacer y entras al equipo que monta, opera y desmonta.",
+      "boton": "Entrar al equipo"
+    }
+  },
+  "jornada": {
+    "_comentario": "El marco horario de la tarde. El itinerario de abajo va dentro de esta franja.",
+    "titulo": "Cómo va la tarde",
+    "estado": "Horarios por confirmar",
+    "apertura": "14:00",
+    "cierre": "20:00",
+    "nota": "Las horas son tentativas hasta que se cierre el cartel. Las pruebas de sonido son a puerta cerrada: el público entra a las 4:00."
+  },
+  "itinerario": [
+    {
+      "hora": "14:00",
+      "fin": "16:00",
+      "tipo": "Producción",
+      "escenario": "Tarima",
+      "titulo": "Montaje y pruebas de sonido",
+      "desc": "El equipo de producción arma tarima, luces y pantalla. Cada grupo pasa su prueba de sonido en el orden del cartel.",
+      "cerrado": true
+    },
+    {
+      "hora": "16:00",
+      "fin": "16:20",
+      "tipo": "Apertura",
+      "escenario": "Plazoleta",
+      "titulo": "Se abren las puertas",
+      "desc": "Entrada libre. Visuales en pantalla y música de sala mientras llega la gente."
+    },
+    {
+      "hora": "16:20",
+      "fin": "17:30",
+      "tipo": "Bloque",
+      "escenario": "Tarima",
+      "titulo": "Primer bloque",
+      "desc": "Los primeros grupos del cartel. Cada presentación es de veinte minutos con cambio de tarima en medio.",
+      "tentativo": true
+    },
+    {
+      "hora": "17:30",
+      "fin": "17:50",
+      "tipo": "Intermedio",
+      "escenario": "Plazoleta",
+      "titulo": "Intermedio",
+      "desc": "Cambio de escenografía y set de visuales en vivo."
+    },
+    {
+      "hora": "17:50",
+      "fin": "19:10",
+      "tipo": "Bloque",
+      "escenario": "Tarima",
+      "titulo": "Segundo bloque",
+      "desc": "Los grupos de baile y el resto del cartel.",
+      "tentativo": true
+    },
+    {
+      "hora": "19:10",
+      "fin": "19:50",
+      "tipo": "Cierre",
+      "escenario": "Tarima",
+      "titulo": "Cierre",
+      "desc": "El grupo que cierra la tarde, con el show completo de luces y pantalla."
+    },
+    {
+      "hora": "19:50",
+      "fin": "20:00",
+      "tipo": "Cierre",
+      "escenario": "Plazoleta",
+      "titulo": "Agradecimientos y desmontaje",
+      "desc": "Se agradece a los grupos y al equipo, y empieza el desmontaje. Quien montó, desmonta."
+    }
+  ],
+  "normas": {
+    "titulo": "Lo que hay que saber",
+    "puntos": [
+      "El cartel lo cierra la organización: inscribirse no es quedar dentro, y se avisa por correo en los dos casos.",
+      "Cada grupo llega con sus instrumentos. Backline, consola, luces y pantalla los pone el festival.",
+      "La prueba de sonido no se negocia: el grupo que no pasa por ella no toca.",
+      "El equipo de producción se compromete a la tarde entera, montaje y desmontaje incluidos. Es lo que se evalúa desde la asignatura.",
+      "Nada de pistas ni repertorio con contenido que no se pueda poner en un evento institucional."
+    ]
+  }
+}

@@ -1,0 +1,16 @@
+<%/* Cabecera del panel. Deliberadamente distinta a la pública: aquí no hay
+     cartel ni menú de festival, solo dónde estás, quién eres y la salida. */%>
+<header class="mf-top panel-top">
+  <div class="mf-top-in">
+    <a href="/music/panel" class="mf-marca">Panel <em class="fuego">Music Fest</em></a>
+    <nav class="mf-nav">
+      <a href="/music-fest">Ver el sitio</a>
+    </nav>
+    <div class="panel-quien">
+      <span class="mini"><%= docenteMusic.name %><%= periodoMusic ? " · " + periodoMusic.codigo : "" %></span>
+      <form method="POST" action="/music/salir">
+        <button type="submit" class="btn plano chico">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

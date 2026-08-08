@@ -1,0 +1,226 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL PANEL DEL FESTIVAL
+
+     Tres herramientas y en este orden, que es el orden en que se usan:
+
+       1. la edición —cuándo, dónde y si recibe—;
+       2. el cartel: confirmar grupos y ponerlos en orden de afiche;
+       3. el equipo de producción, mirando el reparto por área.
+
+     Los pendientes van primero en las dos listas: es lo único que pide una
+     decisión. Lo ya resuelto se consulta, no se atiende.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="mf">
+  <% if (aviso.ok) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Guardado.</p></div>
+  <% } %>
+  <% if (aviso.revisado) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Revisado, y le salió el correo.</p></div>
+  <% } %>
+  <% if (aviso.borrado) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Borrado.</p></div>
+  <% } %>
+
+  <% if (!edicion) { %>
+    <section class="mf-sec">
+      <h2>Todavía no hay festival</h2>
+      <p class="sec-lead">
+        La edición del semestre se abre sola al arrancar el servidor, con
+        <code>config.PERIODO</code>. Si no aparece ninguna, revisa que el semestre
+        esté creado y reinicia.
+      </p>
+    </section>
+  <% } else { %>
+
+    <%/* ───── CABECERA ───── */%>
+    <section class="mf-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow"><%= edicion.periodo_codigo || 'Sin semestre' %></p>
+          <h2><%= edicion.nombre %></h2>
+        </div>
+        <div class="acciones">
+          <a href="/music/panel/lista.csv" class="btn plano chico">Descargar la lista (CSV)</a>
+          <a href="/music-fest" class="btn plano chico">Ver el cartel público</a>
+        </div>
+      </div>
+
+      <div class="herramienta">
+        <div class="datos">
+          <div class="dato">
+            <div class="k">En el cartel</div>
+            <div class="v"><%= cifras.actos.confirmados %><% if (edicion.cupo_actos) { %><span class="mini"> / <%= edicion.cupo_actos %></span><% } %></div>
+          </div>
+          <div class="dato">
+            <div class="k">Grupos por revisar</div>
+            <div class="v" style="color:<%= cifras.actos.pendientes ? 'var(--alerta)' : 'var(--ink-mute)' %>"><%= cifras.actos.pendientes %></div>
+          </div>
+          <div class="dato">
+            <div class="k">En producción</div>
+            <div class="v"><%= cifras.produccion.confirmados %><% if (edicion.cupo_produccion) { %><span class="mini"> / <%= edicion.cupo_produccion %></span><% } %></div>
+          </div>
+          <div class="dato">
+            <div class="k">Por revisar</div>
+            <div class="v" style="color:<%= cifras.produccion.pendientes ? 'var(--alerta)' : 'var(--ink-mute)' %>"><%= cifras.produccion.pendientes %></div>
+          </div>
+          <div class="dato">
+            <div class="k">Gente ese día</div>
+            <div class="v"><%= cifras.gente %></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%/* ───── LA EDICIÓN ───── */%>
+    <section class="mf-sec" id="edicion">
+      <p class="eyebrow">Lo básico</p>
+      <h2 style="font-size:28px">Cuándo, dónde y si recibe</h2>
+
+      <div class="herramienta" style="margin-top:18px">
+        <p class="sec-lead">
+          La fecha y el lugar salen en la cabecera del cartel público. El
+          itinerario de la tarde —a qué hora toca cada quien— no se escribe
+          aquí: va en <code>data/music-fest.json</code>, que se edita y se
+          recarga sin reiniciar.
+        </p>
+
+        <form method="POST" action="/music/panel/edicion">
+          <div class="fila">
+            <div class="campo">
+              <label for="fecha">Cuándo</label>
+              <input type="text" id="fecha" name="fecha" maxlength="60"
+                     placeholder="Viernes 21 de noviembre"
+                     value="<%= edicion.fecha || '' %>" />
+            </div>
+            <div class="campo">
+              <label for="lugar">Dónde</label>
+              <input type="text" id="lugar" name="lugar" maxlength="120"
+                     placeholder="Plazoleta central"
+                     value="<%= edicion.lugar || '' %>" />
+            </div>
+            <div class="campo">
+              <label for="estado">Estado</label>
+              <select id="estado" name="estado">
+                <option value="inscripcion" <%= edicion.estado === 'inscripcion' ? 'selected' : '' %>>Recibiendo inscripciones</option>
+                <option value="cartel" <%= edicion.estado === 'cartel' ? 'selected' : '' %>>Cartel cerrado</option>
+                <option value="finalizada" <%= edicion.estado === 'finalizada' ? 'selected' : '' %>>Finalizada</option>
+              </select>
+            </div>
+          </div>
+
+          <label class="opcion" style="margin-bottom:16px">
+            <input type="checkbox" name="inscripcion_abierta" value="1" <%= edicion.inscripcion_abierta ? 'checked' : '' %> />
+            <span>
+              <strong>Inscripciones abiertas</strong>
+              Mientras esté marcado, las dos puertas reciben gente. Recuerda que
+              config.js manda por encima de esto: el festival tiene que ser el
+              evento del semestre con <code>inscripciones: true</code>.
+            </span>
+          </label>
+
+          <button type="submit" class="btn">Guardar</button>
+        </form>
+      </div>
+    </section>
+
+    <%/* ───── EL CARTEL ───── */%>
+    <section class="mf-sec" id="cartel">
+      <p class="eyebrow">Los grupos</p>
+      <h2 style="font-size:28px">El cartel</h2>
+      <p class="sec-lead" style="margin-bottom:20px">
+        Confirmar un grupo lo pone en el afiche público y le manda el correo. El
+        orden es el del cartel —el que cierra la tarde va de primero y más
+        grande—, no la hora: eso está en el itinerario del JSON.
+      </p>
+
+      <% if (pendientes.length) { %>
+        <h3 style="margin-bottom:14px"><%= pendientes.length %> por revisar</h3>
+        <% pendientes.forEach(function (a) { %>
+          <%- include('partials/ficha-acto', { a: a, orden: null, correoActivo: correoActivo }) %>
+        <% }); %>
+      <% } %>
+
+      <h3 style="margin:26px 0 14px">
+        En el cartel <span class="mini">(<%= confirmados.length %>)</span>
+      </h3>
+
+      <% if (!confirmados.length) { %>
+        <div class="vacio">Todavía no hay ningún grupo confirmado.</div>
+      <% } else { %>
+        <% confirmados.forEach(function (a, i) { %>
+          <%- include('partials/ficha-acto', { a: a, orden: i + 1, correoActivo: correoActivo }) %>
+        <% }); %>
+      <% } %>
+
+      <% if (rechazados.length) { %>
+        <details style="margin-top:20px">
+          <summary class="mini" style="cursor:pointer"><%= rechazados.length %> no admitidos</summary>
+          <div style="margin-top:14px">
+            <% rechazados.forEach(function (a) { %>
+              <%- include('partials/ficha-acto', { a: a, orden: null, correoActivo: correoActivo }) %>
+            <% }); %>
+          </div>
+        </details>
+      <% } %>
+    </section>
+
+    <%/* ───── EL EQUIPO ───── */%>
+    <section class="mf-sec" id="equipo">
+      <p class="eyebrow">Detrás de la tarima</p>
+      <h2 style="font-size:28px">Equipo de producción</h2>
+
+      <div class="herramienta" style="margin-top:18px">
+        <p class="sec-lead">
+          El reparto por área. Es lo que dice si el festival va a tener a alguien
+          en la consola de sonido o si todo el mundo se apuntó a visuales.
+        </p>
+        <div class="datos">
+          <% porArea.forEach(function (a) { %>
+            <div class="dato">
+              <div class="k"><%= a.nombre %></div>
+              <div class="v" style="color:<%= a.confirmados ? 'var(--ink)' : 'var(--malo)' %>"><%= a.confirmados %></div>
+              <% if (a.pendientes) { %>
+                <div class="mini"><%= a.pendientes %> por revisar</div>
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+
+      <% if (prodPendientes.length) { %>
+        <h3 style="margin:26px 0 14px"><%= prodPendientes.length %> por revisar</h3>
+        <% prodPendientes.forEach(function (p) { %>
+          <%- include('partials/ficha-persona', { p: p, correoActivo: correoActivo }) %>
+        <% }); %>
+      <% } %>
+
+      <h3 style="margin:26px 0 14px">
+        En el equipo <span class="mini">(<%= prodConfirmados.length %>)</span>
+      </h3>
+
+      <% if (!prodConfirmados.length) { %>
+        <div class="vacio">Todavía no hay nadie confirmado en producción.</div>
+      <% } else { %>
+        <% prodConfirmados.forEach(function (p) { %>
+          <%- include('partials/ficha-persona', { p: p, correoActivo: correoActivo }) %>
+        <% }); %>
+      <% } %>
+
+      <% if (prodRechazados.length) { %>
+        <details style="margin-top:20px">
+          <summary class="mini" style="cursor:pointer"><%= prodRechazados.length %> no admitidos</summary>
+          <div style="margin-top:14px">
+            <% prodRechazados.forEach(function (p) { %>
+              <%- include('partials/ficha-persona', { p: p, correoActivo: correoActivo }) %>
+            <% }); %>
+          </div>
+        </details>
+      <% } %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('../partials/footer') %>

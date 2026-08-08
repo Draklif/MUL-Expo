@@ -1,0 +1,87 @@
+<%/* Un grupo en el panel. Un solo marcado para las tres listas —por revisar, en
+     el cartel y no admitidos—: lo que cambia es qué botones tienen sentido, y
+     eso lo decide el estado, no una copia distinta de la ficha.
+
+     'orden' llega con número solo en el cartel: es la posición en el afiche y
+     por eso las flechas salen ahí y no en las otras dos listas. */%>
+<article class="ficha" id="a<%= a.id %>">
+  <div class="ficha-cab">
+    <div class="ficha-quien">
+      <h4>
+        <% if (orden) { %><span class="fuego"><%= String(orden).padStart(2, '0') %></span> <% } %>
+        <%= a.nombre %>
+      </h4>
+      <div class="ficha-meta">
+        <span><b>Código</b><%= a.codigo %></span>
+        <span><b>Tipo</b><%= a.tipo %></span>
+        <% if (a.genero) { %><span><b>Género</b><%= a.genero %></span><% } %>
+        <span><b>En tarima</b><%= a.integrantes %></span>
+      </div>
+    </div>
+    <span class="chip <%= a.estado_info.cls %>"><%= a.estado_info.label %></span>
+  </div>
+
+  <div class="ficha-cuerpo">
+    <% if (a.propuesta) { %><p><%= a.propuesta %></p><% } %>
+    <% if (a.necesidades) { %>
+      <p class="mini"><b>Necesita:</b> <%= a.necesidades %></p>
+    <% } %>
+    <p class="mini">
+      <%= a.contacto_nombre %> ·
+      <a href="mailto:<%= a.contacto_email %>"><%= a.contacto_email %></a>
+      <% if (a.telefono) { %> · <a href="tel:<%= a.telefono.replace(/\s/g, '') %>"><%= a.telefono %></a><% } %>
+      <% if (a.enlace) { %> · <a href="<%= a.enlace %>" target="_blank" rel="noopener">enlace</a><% } %>
+    </p>
+    <% if (a.nota_docente) { %>
+      <p class="mini">✎ <%= a.nota_docente %></p>
+    <% } %>
+  </div>
+
+  <div class="ficha-acciones">
+    <% if (orden) { %>
+      <form method="POST" action="/music/panel/actos/<%= a.id %>/mover">
+        <input type="hidden" name="dir" value="sube" />
+        <button type="submit" class="btn plano chico" title="Subir en el cartel">↑</button>
+      </form>
+      <form method="POST" action="/music/panel/actos/<%= a.id %>/mover">
+        <input type="hidden" name="dir" value="baja" />
+        <button type="submit" class="btn plano chico" title="Bajar en el cartel">↓</button>
+      </form>
+    <% } %>
+
+    <% if (a.estado !== 'confirmado') { %>
+      <form method="POST" action="/music/panel/actos/<%= a.id %>/revisar">
+        <input type="hidden" name="estado" value="confirmado" />
+        <button type="submit" class="btn chico">Al cartel</button>
+      </form>
+    <% } %>
+
+    <% if (a.estado !== 'rechazado') { %>
+      <%/* El rechazo va detrás de un desplegable y con nota: decir que no sin
+           decir por qué es lo que después llega como un reclamo. */%>
+      <details>
+        <summary class="mini" style="cursor:pointer">No admitir</summary>
+        <form method="POST" action="/music/panel/actos/<%= a.id %>/revisar" style="margin-top:10px">
+          <input type="hidden" name="estado" value="rechazado" />
+          <div class="campo" style="margin-bottom:10px">
+            <label for="nota<%= a.id %>">Por qué (le llega en el correo)</label>
+            <input type="text" name="nota_docente" id="nota<%= a.id %>" maxlength="400"
+                   value="<%= a.nota_docente || '' %>" />
+          </div>
+          <button type="submit" class="btn malo chico">No admitir</button>
+        </form>
+      </details>
+    <% } %>
+
+    <% if (a.avisado_at) { %>
+      <span class="mini">Avisado</span>
+    <% } else if (!correoActivo) { %>
+      <span class="mini">Correos apagados</span>
+    <% } %>
+
+    <form method="POST" action="/music/panel/actos/<%= a.id %>/borrar" style="margin-left:auto"
+          onsubmit="return confirm('¿Borrar la inscripción de este grupo? No se puede deshacer.')">
+      <button type="submit" class="btn plano chico">Borrar</button>
+    </form>
+  </div>
+</article>

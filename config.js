@@ -56,7 +56,7 @@ const EVENTOS = [
   {
     slug: "expo",
     nombre: "Expo Multimedia",
-    activo: true,
+    activo: false,
     inscripciones: true,
     fecha: "",
     lema: "Todos los proyectos finales del semestre, en un solo recorrido.",
@@ -88,12 +88,13 @@ const EVENTOS = [
   {
     slug: "music-fest",
     nombre: "Multimedia Music Fest",
-    activo: false,
-    inscripciones: false,
+    activo: true,
+    inscripciones: true,
     fecha: "",
-    lema: "",
-    datos: "",
-    vista: "",
+    lema: "Los grupos culturales del programa en vivo, con la producción entera en manos de los estudiantes.",
+    datos: "music-fest.json",
+    vista: "music/landing",
+    ruta: true,
   },
 ];
 
@@ -207,6 +208,41 @@ const JAM = {
     "Producción",
   ],
 };
+
+// ---------------------------------------------------------------------
+//  MULTIMEDIA MUSIC FEST
+// ---------------------------------------------------------------------
+// Una tarde de música y baile con los grupos culturales de la universidad, y
+// con la producción —luces, sonido y visuales— en manos de estudiantes del
+// programa. Se organiza desde Edición de Audio y Video, pero el equipo no se
+// limita a esa asignatura: quien quiera pararse detrás de la consola puede.
+//
+// Hay UNA edición por semestre y se abre sola al arrancar, como la jam.
+//
+//   cupo_actos      — cuántos grupos caben en el cartel. Una tarde no da para
+//                     más, y un cartel sin tope termina en veinte grupos de
+//                     diez minutos cada uno. null = sin tope.
+//   cupo_produccion — cuántas manos caben detrás. null = sin tope.
+//   tipos           — qué sube a la tarima. El selector del formulario sale
+//                     de aquí.
+//   areas           — de qué se encarga el equipo. Cada área es una consola
+//                     distinta y por eso se elige una, no varias: la persona
+//                     que mezcla no está moviendo luces al mismo tiempo.
+//                     Agregar o quitar una es todo lo que hace falta.
+const MUSIC = {
+  cupo_actos: 8,
+  cupo_produccion: 15,
+  tipos: ["Grupo musical", "Grupo de baile", "Grupo de teatro"],
+  areas: [
+    { id: "sonido", nombre: "Sonido", desc: "Consola, microfoneo, monitores y la mezcla de sala." },
+    { id: "luces", nombre: "Luces", desc: "Diseño de iluminación y operación durante el show." },
+    { id: "visuales", nombre: "Visuales", desc: "Contenido en pantalla, VJ y cámaras." },
+  ],
+};
+
+// Contraseña del panel del Music Fest (PASSWORD_MUSIC en el .env). Quinta
+// herramienta, quinta clave, por la misma razón que las otras cuatro.
+const PASSWORD_MUSIC = String(process.env.PASSWORD_MUSIC || "").trim();
 
 // ---------------------------------------------------------------------
 //  SALIDAS PEDAGÓGICAS
@@ -413,11 +449,13 @@ module.exports = {
   SOLO_EVENTO_ACTIVO,
   VC,
   JAM,
+  MUSIC,
   SALIDAS,
   PATROCINIOS,
   PASSWORD,
   PASSWORD_VC,
   PASSWORD_JAM,
+  PASSWORD_MUSIC,
   PASSWORD_SALIDAS,
   DOCENTES,
   CORREO,

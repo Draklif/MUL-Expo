@@ -1,0 +1,102 @@
+<%/* Una sola pantalla para dos momentos —acabo de inscribirme / vengo a
+     consultar— y para las dos puertas. Quien teclea un código no tiene por qué
+     acordarse de si se inscribió como grupo o como producción, así que la
+     búsqueda mira en los dos lados y aquí solo cambia lo que se enseña. */%>
+<%- include('../partials/head', { title: title, descripcion: null, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="mf angosto">
+  <% if (recienHecho) { %>
+    <section class="mf-hero">
+      <p class="eyebrow">Inscripción enviada</p>
+      <h1 class="fuego" style="font-size:clamp(36px,8vw,68px)">Quedaste inscrito</h1>
+      <p class="lema">
+        Guarda este código: es con lo que consultas en qué va tu inscripción.
+      </p>
+      <p class="codigo-grande"><%= codigo %></p>
+      <% if (correoActivo) { %>
+        <p class="mini" style="text-align:center">
+          También te lo mandamos por correo. Si no aparece en unos minutos,
+          revisa el correo no deseado.
+        </p>
+      <% } %>
+    </section>
+  <% } else { %>
+    <section class="mf-hero">
+      <p class="eyebrow">Consulta</p>
+      <h1 class="fuego" style="font-size:clamp(36px,8vw,68px)">Mi código</h1>
+      <p class="lema">Escribe el código que te llegó al inscribirte.</p>
+
+      <form method="GET" action="/music/inscripcion/estado" class="fila" style="margin-top:26px">
+        <div class="campo" style="margin:0">
+          <label for="codigo">Tu código</label>
+          <input type="text" id="codigo" name="codigo" maxlength="8" required autocomplete="off"
+                 placeholder="ABC234" style="text-transform:uppercase"
+                 value="<%= codigo || '' %>" />
+        </div>
+        <div class="campo" style="margin:0;display:flex;align-items:flex-end">
+          <button type="submit" class="btn block">Consultar</button>
+        </div>
+      </form>
+
+      <% if (error) { %>
+        <div class="aviso malo" style="margin-top:22px"><p style="margin:0"><%= error %></p></div>
+      <% } %>
+    </section>
+  <% } %>
+
+  <% if (hallado) { %>
+    <%
+      const esGrupo = hallado.que === "acto";
+      const r = esGrupo ? hallado.acto : hallado.persona;
+    %>
+    <section class="mf-sec" style="padding-top:20px">
+      <div class="ficha">
+        <div class="ficha-cab">
+          <div class="ficha-quien">
+            <h4><%= esGrupo ? r.nombre : r.nombre %></h4>
+            <div class="ficha-meta">
+              <span><b>Código</b><%= r.codigo %></span>
+              <span><b><%= esGrupo ? 'Tipo' : 'Área' %></b><%= esGrupo ? r.tipo : (r.area_info || {}).nombre %></span>
+              <% if (esGrupo && r.genero) { %><span><b>Género</b><%= r.genero %></span><% } %>
+              <% if (!esGrupo && r.semestre) { %><span><b>Semestre</b><%= r.semestre %>.°</span><% } %>
+            </div>
+          </div>
+          <span class="chip <%= r.estado_info.cls %>"><%= r.estado_info.label %></span>
+        </div>
+
+        <div class="ficha-cuerpo">
+          <% if (r.estado === 'pendiente') { %>
+            <p>
+              <%= esGrupo
+                    ? 'La organización está armando el cartel. Te escribimos al correo de contacto en cuanto haya decisión.'
+                    : 'La organización está armando el equipo. Te escribimos al correo en cuanto haya decisión.' %>
+            </p>
+          <% } else if (r.estado === 'confirmado') { %>
+            <p>
+              <%= esGrupo
+                    ? 'Están en el cartel. Nos vemos en la prueba de sonido: el grupo que no pasa por ella no toca.'
+                    : 'Estás en el equipo de producción. El compromiso es la tarde entera: montaje, show y desmontaje.' %>
+            </p>
+          <% } else { %>
+            <p>Esta vez no quedaron dentro.</p>
+            <% if (r.nota_docente) { %>
+              <p><strong>Lo que dice la organización:</strong> <%= r.nota_docente %></p>
+            <% } %>
+          <% } %>
+
+          <% if (esGrupo && r.propuesta) { %>
+            <p class="mini" style="margin-top:12px"><%= r.propuesta %></p>
+          <% } %>
+        </div>
+      </div>
+
+      <p class="mini" style="margin-top:18px">
+        <a href="/music-fest#itinerario">Mira cómo va la tarde</a> mientras tanto.
+      </p>
+    </section>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

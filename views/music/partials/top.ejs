@@ -1,0 +1,20 @@
+<%/* Cabecera del festival. Cuatro enlaces y punto: el cartel, las dos puertas
+     y la consulta del código. El acceso de la organización no va aquí —vive
+     discreto en el pie—, porque esta página es para quien viene a tocar, a
+     mover luces o a mirar. */%>
+<header class="mf-top">
+  <div class="mf-top-in">
+    <a href="/music-fest" class="mf-marca">Multimedia <em class="fuego">Music Fest</em></a>
+
+    <nav class="mf-nav tabs" aria-label="Secciones del festival">
+      <a href="/music-fest" class="<%= activa === 'inicio' ? 'on' : '' %>"
+         <%- activa === 'inicio' ? 'aria-current="page"' : '' %>>Cartel</a>
+      <a href="/music/grupos" class="<%= activa === 'grupos' ? 'on' : '' %>"
+         <%- activa === 'grupos' ? 'aria-current="page"' : '' %>>Grupos</a>
+      <a href="/music/produccion" class="<%= activa === 'produccion' ? 'on' : '' %>"
+         <%- activa === 'produccion' ? 'aria-current="page"' : '' %>>Producción</a>
+      <a href="/music/inscripcion/estado" class="<%= activa === 'estado' ? 'on' : '' %>"
+         <%- activa === 'estado' ? 'aria-current="page"' : '' %>>Mi código</a>
+    </nav>
+  </div>
+</header>

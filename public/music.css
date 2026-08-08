@@ -1,0 +1,932 @@
+/* =====================================================================
+   MULTIMEDIA MUSIC FEST
+   Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
+
+   Las cuatro caras que ya existían tienen que distinguirse a un metro de
+   la pantalla, y esta también:
+
+     Expo Multimedia   — editorial, serif, papel.
+     Virtual Champions — negro, condensada, esquinas cortadas, esports.
+     Jam de Altura     — píxel, verde consola sobre violeta.
+     Salidas           — papel, claro, formulario institucional.
+     Music Fest        — esto: CARTEL. Un afiche de festival.
+
+   Y es a propósito. Un festival se anuncia con un afiche pegado en una
+   pared, y un afiche no explica: grita un nombre enorme, apila los demás
+   en escalera y deja que el color haga el resto. De ahí las decisiones:
+
+     · el nombre del festival y los del cartel van en Anton, una sola
+       grosura, condensada y siempre en mayúsculas. No hay negrita ni
+       cursiva porque un afiche no tiene tonos de voz: tiene tamaños;
+
+     · el color es un degradado de tres —magenta, naranja y cian— que
+       recorre los títulos y los bordes. Nunca se usa plano: siempre
+       corriendo de una esquina a otra, que es lo que le da el movimiento
+       que tiene un cartel de festival;
+
+     · el cartel de verdad (.cartel) es la pieza clave y se usa UNA vez por
+       página. Los nombres bajan de tamaño según el orden que puso la
+       organización, centrados, separados solo por aire y sin fecha al lado:
+       la hora está en el itinerario, más abajo, que es donde se busca.
+
+   LO QUE NO HACE: brillos de neón. Esa es la casa del torneo y confundir
+   las dos era el riesgo de este encargo.
+   ===================================================================== */
+
+:root {
+  --bg: #0a0710;
+  --bg-elev: #14101f;
+  --bg-card: #1b152a;
+  --bg-hover: #241c38;
+
+  --linea: #2e2740;
+  --linea-fuerte: #483d66;
+
+  --ink: #f7f3ff;
+  --ink-dim: #b9aed2;
+  --ink-mute: #7d7391;
+
+  --magenta: #ff2d78;
+  --naranja: #ff8a3d;
+  --cian: #35e5e0;
+  --ok: #4ade80;
+  --alerta: #ffc861;
+  --malo: #ff5470;
+
+  /* El degradado de la casa. Se usa en texto recortado y en bordes.
+     Va de magenta a naranja y NO pasa por el cian: entre naranja y cian hay un
+     verde oliva que ensucia todo lo que cruce ese punto, y en un titular de
+     dos renglones eso cae justo en la mitad de una palabra. El cian se usa
+     aparte y siempre plano —enlaces, chips, el rótulo de cada grupo—, que es
+     donde sí funciona: frío contra el calor de todo lo demás. */
+  --fuego: linear-gradient(100deg, var(--magenta), var(--naranja));
+
+  --display: "Anton", "Arial Narrow", Impact, sans-serif;
+  --body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --mono: "SFMono-Regular", Consolas, monospace;
+
+  --radio: 4px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 15.5px;
+  line-height: 1.65;
+  /* Dos manchas de color muy abiertas y muy tenues, arriba y a media página:
+     es lo que evita que un fondo casi negro se lea como un vacío. */
+  background-image:
+    radial-gradient(900px 500px at 15% -10%, rgba(255, 45, 120, .20), transparent 70%),
+    radial-gradient(800px 460px at 95% 8%, rgba(53, 229, 224, .13), transparent 70%);
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+}
+
+a { color: var(--cian); }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 0.94;
+  letter-spacing: .005em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+h1 { font-size: clamp(44px, 11vw, 122px); }
+h2 { font-size: clamp(26px, 5vw, 46px); }
+h3 { font-size: clamp(19px, 2.6vw, 26px); }
+h4 { font-size: 15px; }
+
+p { margin: 0 0 1em; }
+img { max-width: 100%; }
+
+/* Texto recortado sobre el degradado. Es el gesto que más se repite, así que
+   va en una clase y no copiado en cada regla. */
+.fuego {
+  background: var(--fuego);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------------------------------------------------------------------
+   Piezas base
+   --------------------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--magenta);
+  margin: 0 0 14px;
+}
+
+.sec-lead {
+  color: var(--ink-dim);
+  max-width: 62ch;
+  margin: 14px 0 0;
+  font-size: 16px;
+}
+
+.mini { font-size: 12.5px; color: var(--ink-mute); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--body);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 7px 12px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .03);
+  color: var(--ink-dim);
+  white-space: nowrap;
+}
+
+.chip.ok     { color: var(--ok);      border-color: rgba(74, 222, 128, .5); }
+.chip.pend   { color: var(--alerta);  border-color: rgba(255, 200, 97, .5); }
+.chip.no     { color: var(--ink-mute); }
+.chip.mag    { color: var(--magenta); border-color: rgba(255, 45, 120, .55); }
+.chip.cian   { color: var(--cian);    border-color: rgba(53, 229, 224, .45); }
+
+/* ---------------------------------------------------------------------
+   Botones
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: var(--display);
+  font-size: 15px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 16px 26px;
+  border: 0;
+  border-radius: var(--radio);
+  background: var(--fuego);
+  color: #14050f;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .1s ease, filter .15s ease;
+}
+
+.btn:hover { filter: brightness(1.12); }
+.btn:active { transform: translateY(1px); }
+
+/* El fantasma lleva el degradado en el borde y no en el fondo: un borde
+   degradado no existe en CSS, así que se pinta el fondo del degradado y se
+   recorta el centro con un segundo fondo del color de la página. */
+.btn.ghost {
+  background:
+    linear-gradient(var(--bg), var(--bg)) padding-box,
+    var(--fuego) border-box;
+  border: 1px solid transparent;
+  color: var(--ink);
+}
+
+.btn.ghost:hover { background:
+    linear-gradient(var(--bg-elev), var(--bg-elev)) padding-box,
+    var(--fuego) border-box; }
+
+.btn.plano {
+  background: var(--bg-card);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--ink);
+}
+
+.btn.plano:hover { background: var(--bg-hover); }
+
+.btn.malo { background: none; border: 1px solid var(--malo); color: var(--malo); }
+.btn.malo:hover { background: rgba(255, 84, 112, .12); }
+
+.btn.chico { font-size: 12px; padding: 10px 15px; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .4; pointer-events: none; }
+
+/* ---------------------------------------------------------------------
+   Estructura
+   --------------------------------------------------------------------- */
+.mf { max-width: 1120px; margin: 0 auto; padding: 0 22px 90px; }
+.mf.angosto { max-width: 680px; }
+
+.mf-sec { padding: 62px 0 0; }
+
+.sec-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 22px;
+}
+
+.tarjeta {
+  background: var(--bg-card);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 22px;
+}
+
+.grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+/* ---------------------------------------------------------------------
+   Cabecera
+   --------------------------------------------------------------------- */
+.mf-top {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgba(10, 7, 16, .88);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--linea);
+}
+
+/* Un renglón y punto: una barra pegajosa que envuelve se come media pantalla
+   en cada scroll. Lo que no cabe se esconde abajo, no se apila. */
+.mf-top-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 64px;
+  flex-wrap: nowrap;
+}
+
+.mf-marca {
+  font-family: var(--display);
+  font-size: 19px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.mf-marca em { font-style: normal; }
+
+.mf-nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.mf-nav a {
+  font-family: var(--body);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  text-decoration: none;
+  padding: 9px 13px;
+  border-radius: var(--radio);
+  white-space: nowrap;
+}
+
+.mf-nav a:hover { color: var(--ink); background: rgba(255, 255, 255, .05); }
+.mf-nav a.on { color: var(--magenta); }
+
+/* ---------------------------------------------------------------------
+   El hero: el nombre a tamaño de afiche
+   --------------------------------------------------------------------- */
+.mf-hero { padding: 64px 0 46px; }
+
+.mf-hero h1 { margin: 0 0 18px; }
+
+.mf-hero .lema {
+  font-size: clamp(17px, 2.4vw, 23px);
+  color: var(--ink-dim);
+  max-width: 46ch;
+  margin: 0;
+}
+
+.hero-datos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 34px;
+  margin: 32px 0 0;
+  padding: 22px 0 0;
+  border-top: 1px solid var(--linea);
+}
+
+.hero-datos > div { min-width: 0; }
+
+.hero-datos span {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 5px;
+}
+
+.hero-datos strong {
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+}
+
+.hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 30px; }
+
+/* ---------------------------------------------------------------------
+   EL CARTEL — la pieza clave
+   Una escalera de renglones: el cabeza de cartel solo y enorme arriba, y
+   cada renglón siguiente con más nombres y más pequeños. El orden lo pone
+   la organización en el panel; el reparto en renglones, la vista.
+   --------------------------------------------------------------------- */
+/* Un renglón por escalón. El reparto —quién va en cuál— lo hace la vista
+   (views/music/landing.ejs) y no el envoltorio del navegador: aquí solo se
+   pinta cada renglón centrado y con su tamaño. */
+.cartel {
+  display: grid;
+  gap: 4px;
+  text-align: center;
+  padding: 12px 0 6px;
+}
+
+.cartel-fila {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  /* El hueco es lo único que separa un nombre de otro. Hubo rombos y se
+     quitaron: al envolver, el rombo se quedaba al final del renglón colgando
+     de nada. Va en em y no en píxeles para que encoja con su escalón. */
+  gap: 0 .7em;
+}
+
+/* El renglón va apretado porque es un cartel y los nombres tienen que
+   amontonarse. Un aviso para quien edite esto: en Anton el acento de una
+   mayúscula (la Ó de KILÓMETRO) se dibuja muy alto y ligeramente a la
+   izquierda, así que a tamaño grande parece suelto. Es del tipo de letra y no
+   del interlineado —se ve igual con 1.02 que con 1.25—, así que no se gana
+   nada aflojando el renglón. */
+.cartel span {
+  font-family: var(--display);
+  text-transform: uppercase;
+  line-height: 1.06;
+  letter-spacing: .01em;
+  color: var(--ink);
+}
+
+/* La escalera. Cuatro escalones: el cabeza de cartel solo, dos, tres y el
+   resto. El tamaño va en el RENGLÓN y lo heredan sus nombres: eso es lo que
+   garantiza que nunca haya dos tamaños en la misma línea, que era justo lo
+   que se rompía cuando cada nombre traía el suyo. */
+.cartel-fila.n1 { font-size: clamp(32px, 7vw, 76px); }
+.cartel-fila.n2 { font-size: clamp(25px, 4.9vw, 54px); }
+.cartel-fila.n3 { font-size: clamp(20px, 3.5vw, 38px); }
+.cartel-fila.n4 { font-size: clamp(16px, 2.4vw, 27px); }
+
+.cartel-vacio {
+  text-align: center;
+  color: var(--ink-mute);
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: var(--radio);
+  padding: 46px 22px;
+}
+
+/* La ficha de cada grupo, debajo del cartel. */
+.acto {
+  background: var(--bg-card);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 18px 20px;
+  min-width: 0;
+}
+
+.acto h3 { margin: 0 0 6px; }
+.acto .acto-tipo {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--cian);
+  margin-bottom: 10px;
+}
+.acto p { margin: 0; color: var(--ink-dim); font-size: 14px; }
+.acto .acto-pie {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--linea);
+  font-size: 12.5px;
+  color: var(--ink-mute);
+}
+
+/* ---------------------------------------------------------------------
+   Las dos puertas
+   --------------------------------------------------------------------- */
+.puertas {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.puerta {
+  display: flex;
+  flex-direction: column;
+  background:
+    linear-gradient(var(--bg-card), var(--bg-card)) padding-box,
+    var(--fuego) border-box;
+  border: 1px solid transparent;
+  border-radius: var(--radio);
+  padding: 26px 24px 24px;
+}
+
+.puerta h3 { margin: 0 0 4px; font-size: clamp(24px, 3.4vw, 34px); }
+
+.puerta .lema {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--magenta);
+  margin-bottom: 14px;
+}
+
+.puerta p { color: var(--ink-dim); font-size: 14.5px; }
+.puerta .btn { margin-top: auto; align-self: flex-start; }
+.puerta .cerrada { color: var(--ink-mute); font-size: 13px; margin: 0; }
+
+/* Las áreas de producción, dentro de su puerta. */
+.areas { list-style: none; margin: 0 0 18px; padding: 0; }
+
+.areas li {
+  padding: 9px 0;
+  border-top: 1px dotted var(--linea-fuerte);
+  font-size: 13.5px;
+  color: var(--ink-dim);
+}
+
+.areas li strong {
+  font-family: var(--display);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  color: var(--ink);
+  margin-right: 8px;
+}
+
+/* ---------------------------------------------------------------------
+   El itinerario
+   Sale del JSON, no de la base: la base dice quién está adentro y esto
+   dice a qué hora. Misma idea que el itinerario de la Expo.
+   --------------------------------------------------------------------- */
+.franjas { display: grid; gap: 2px; }
+
+.franja {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 20px;
+  padding: 18px 0;
+  border-top: 1px solid var(--linea);
+}
+
+.franja-hora {
+  font-family: var(--display);
+  font-size: 24px;
+  text-transform: uppercase;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.franja-hora span {
+  display: block;
+  font-family: var(--body);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: none;
+  color: var(--ink-mute);
+  margin-top: 6px;
+}
+
+.franja-que { min-width: 0; }
+
+.franja-tipo {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--magenta);
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.franja-tipo .donde { color: var(--ink-mute); letter-spacing: .1em; }
+
+.franja h4 {
+  font-size: clamp(17px, 2.2vw, 22px);
+  margin: 0 0 6px;
+}
+
+.franja p { margin: 0; color: var(--ink-dim); font-size: 14px; }
+
+/* Lo que pasa a puerta cerrada se apaga: está en el itinerario porque el
+   equipo de producción sí tiene que verlo, pero el público no va a eso. */
+.franja.cerrado .franja-hora,
+.franja.cerrado h4 { color: var(--ink-mute); }
+.franja.cerrado .franja-tipo { color: var(--ink-mute); }
+
+/* ---------------------------------------------------------------------
+   Normas
+   --------------------------------------------------------------------- */
+.normas { list-style: none; margin: 0; padding: 0; counter-reset: n; }
+
+.normas li {
+  counter-increment: n;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 14px;
+  padding: 14px 0;
+  border-top: 1px solid var(--linea);
+  color: var(--ink-dim);
+}
+
+.normas li::before {
+  content: counter(n, decimal-leading-zero);
+  font-family: var(--display);
+  font-size: 20px;
+  line-height: 1;
+  background: var(--fuego);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  margin: 0 0 8px;
+}
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="tel"], input[type="number"], input[type="url"],
+select, textarea {
+  width: 100%;
+  background: var(--bg-elev);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 16px;   /* 16px evita el zoom de iOS */
+  padding: 13px 15px;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--magenta);
+  box-shadow: 0 0 0 3px rgba(255, 45, 120, .18);
+}
+
+input::placeholder, textarea::placeholder { color: var(--ink-mute); }
+textarea { min-height: 96px; resize: vertical; }
+
+.campo { margin-bottom: 20px; }
+.campo .ayuda { font-size: 12.5px; color: var(--ink-mute); margin: 8px 0 0; }
+.opcional { color: var(--ink-mute); font-weight: 400; letter-spacing: 0; text-transform: none; }
+
+.fila {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+fieldset { border: 0; margin: 0; padding: 0; }
+
+/* Elegir área es elegir una consola, así que se ven las tres a la vez y no
+   escondidas en un desplegable: la mitad de la decisión es leer qué hace
+   cada una. */
+.opciones { display: grid; gap: 10px; }
+
+.opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  padding: 15px 17px;
+  background: var(--bg-elev);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  cursor: pointer;
+  margin: 0;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--ink-dim);
+}
+
+.opcion input { width: 18px; height: 18px; margin: 2px 0 0; accent-color: var(--magenta); flex: 0 0 auto; }
+
+.opcion strong {
+  display: block;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 17px;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+  color: var(--ink);
+  margin-bottom: 3px;
+}
+
+.opcion:has(input:checked) {
+  border-color: var(--magenta);
+  background: rgba(255, 45, 120, .09);
+  color: var(--ink);
+}
+
+/* ---------------------------------------------------------------------
+   Avisos
+   --------------------------------------------------------------------- */
+.aviso {
+  border: 1px solid var(--linea-fuerte);
+  border-left: 3px solid var(--ink-mute);
+  border-radius: 0 var(--radio) var(--radio) 0;
+  background: var(--bg-card);
+  padding: 16px 18px;
+  margin: 0 0 22px;
+}
+
+.aviso.bueno { border-left-color: var(--ok); }
+.aviso.malo  { border-left-color: var(--malo); }
+.aviso p:last-child { margin-bottom: 0; }
+.aviso ul { margin: 8px 0 0; padding-left: 20px; }
+.aviso li { margin-bottom: 5px; }
+
+.codigo-grande {
+  font-family: var(--mono);
+  font-size: clamp(30px, 8vw, 46px);
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-indent: .22em;
+  text-align: center;
+  padding: 26px 16px;
+  margin: 22px 0;
+  background: var(--bg-elev);
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: var(--radio);
+}
+
+.vacio {
+  text-align: center;
+  color: var(--ink-mute);
+  padding: 44px 20px;
+  margin: 18px 0;
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: var(--radio);
+}
+
+/* ---------------------------------------------------------------------
+   Pie
+   --------------------------------------------------------------------- */
+body:has(> .mf-foot) {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+body:has(> .mf-foot) > main { flex: 1 0 auto; }
+
+.mf-foot {
+  border-top: 1px solid var(--linea);
+  padding: 34px 22px 46px;
+  color: var(--ink-mute);
+  font-size: 13px;
+}
+
+.mf-foot-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.mf-foot a { color: var(--ink-dim); }
+.mf-foot .der { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+
+.mf-foot strong {
+  display: block;
+  font-family: var(--display);
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.mf-foot span { display: block; }
+
+.foot-acceso { color: var(--ink-mute); text-decoration: none; font-size: 12px; }
+.foot-acceso:hover { color: var(--magenta); }
+
+/* ---------------------------------------------------------------------
+   Panel de la organización
+   --------------------------------------------------------------------- */
+.panel-top { background: var(--bg-elev); }
+
+.panel-quien {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-left: 12px;
+  min-width: 0;
+}
+
+.panel-quien .mini { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-quien form { margin: 0; flex: 0 0 auto; }
+
+.herramienta {
+  padding: 22px;
+  margin-bottom: 22px;
+  background: var(--bg-card);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+}
+
+.herramienta > h3 { margin-bottom: 8px; }
+.herramienta .sec-lead { margin-bottom: 18px; font-size: 14px; }
+
+.acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* Las cifras del panel. */
+.datos {
+  display: grid;
+  gap: 18px 26px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.dato .k {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 6px;
+}
+
+.dato .v {
+  font-family: var(--display);
+  font-size: 30px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+/* Una ficha por inscripción, en el panel. Misma idea que las del panel de
+   salidas: la tarjeta le da la caja al contenido y no al revés, así que un
+   nombre de grupo larguísimo no mueve los botones de sitio. */
+.ficha {
+  background: var(--bg-elev);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+}
+
+.ficha-cab {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.ficha-quien { flex: 1 1 220px; min-width: 0; }
+
+.ficha-quien h4 {
+  font-size: 19px;
+  margin: 0 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.ficha-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px 14px;
+  font-size: 12.5px;
+  color: var(--ink-mute);
+}
+
+.ficha-meta b {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.ficha-cuerpo { margin-top: 12px; font-size: 14px; color: var(--ink-dim); }
+.ficha-cuerpo p { margin: 0 0 8px; }
+.ficha-cuerpo p:last-child { margin: 0; }
+
+.ficha-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dotted var(--linea-fuerte);
+}
+
+.ficha-acciones form { margin: 0; }
+
+/* ---------------------------------------------------------------------
+   CELULAR
+   --------------------------------------------------------------------- */
+@media (max-width: 760px) {
+  .mf { padding: 0 16px 70px; }
+  .mf-top-in { gap: 10px; padding: 0 16px; min-height: 56px; }
+  .mf-marca { font-size: 16px; }
+  .mf-hero { padding: 40px 0 32px; }
+  .mf-sec { padding: 46px 0 0; }
+
+  /* OJO: sin esto la barra de abajo no baja. `backdrop-filter` convierte a la
+     cabecera en bloque contenedor de sus descendientes fijos, así que el
+     `bottom: 0` del menú se mide contra la cabecera y no contra la pantalla, y
+     las pestañas terminan pegadas arriba. En el celular el desenfoque no hace
+     falta —el fondo va opaco— y quitarlo es lo que suelta el menú. */
+  .mf-top { backdrop-filter: none; background: var(--bg); }
+
+  /* El menú se va abajo, como en el torneo, la jam y las salidas. Cuatro
+     enlaces no caben al lado de la marca y encogerlos hasta que quepan los
+     deja ilegibles; al borde inferior llegan el pulgar y la costumbre. Es el
+     mismo marcado: lo único que cambia es dónde se pinta. */
+  .mf-nav.tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    gap: 0;
+    flex-wrap: nowrap;
+    background: rgba(10, 7, 16, .96);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--linea-fuerte);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mf-nav.tabs a {
+    flex: 1 1 0;
+    min-width: 0;
+    text-align: center;
+    padding: 13px 4px;
+    font-size: 10.5px;
+    letter-spacing: .08em;
+    border-radius: 0;
+    border-top: 2px solid transparent;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mf-nav.tabs a.on { border-top-color: var(--magenta); background: rgba(255, 45, 120, .12); }
+
+  /* Sin esto la barra tapa el pie. Solo en las páginas que la llevan: el panel
+     no la tiene y no tiene por qué quedar con un hueco. */
+  body:has(.mf-nav.tabs) { padding-bottom: calc(50px + env(safe-area-inset-bottom, 0px)); }
+
+  /* La hora encima y no al lado: en 360 píxeles una columna de 96 se come un
+     tercio del renglón y deja el título en tres líneas. */
+  .franja { grid-template-columns: 1fr; gap: 8px; }
+  .franja-hora { font-size: 20px; display: flex; align-items: baseline; gap: 10px; }
+  .franja-hora span { margin: 0; }
+}

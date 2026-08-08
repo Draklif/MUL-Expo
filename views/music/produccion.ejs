@@ -1,0 +1,114 @@
+<%- include('../partials/head', { title: title, descripcion: 'Entra al equipo de producción del Multimedia Music Fest: luces, sonido y visuales.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="mf angosto">
+  <section class="mf-hero">
+    <p class="eyebrow"><%= puertas ? puertas.produccion.lema : 'Luces, sonido y visuales' %></p>
+    <h1 class="fuego" style="font-size:clamp(36px,8vw,72px)">Entra al equipo</h1>
+    <p class="lema"><%= puertas ? puertas.produccion.texto : '' %></p>
+  </section>
+
+  <% if (!abierta) { %>
+    <div class="aviso malo">
+      <p style="margin:0">
+        Las inscripciones del festival están cerradas. El equipo de producción
+        de esta edición ya está armado.
+      </p>
+    </div>
+  <% } else if (!hayCupoProduccion) { %>
+    <div class="aviso malo">
+      <p style="margin:0">
+        El equipo de producción ya está completo para esta edición. Detrás de
+        una consola tampoco cabe todo el mundo.
+      </p>
+    </div>
+  <% } else { %>
+
+    <% if (errores.length) { %>
+      <div class="aviso malo">
+        <p style="margin:0"><strong>Revisa esto antes de enviar:</strong></p>
+        <ul>
+          <% errores.forEach(function (e) { %><li><%= e %></li><% }); %>
+        </ul>
+      </div>
+    <% } %>
+
+    <form method="POST" action="/music/produccion">
+      <p class="eyebrow" style="margin-top:8px">1 · De qué te encargas</p>
+
+      <%/* Las tres áreas a la vista y no en un desplegable: la mitad de la
+           decisión es leer qué hace cada una, y eso no se puede leer dentro de
+           un <select> cerrado. */%>
+      <div class="campo">
+        <div class="opciones">
+          <% areas.forEach(function (a) { %>
+            <label class="opcion">
+              <input type="radio" name="area" value="<%= a.id %>" required
+                     <%= valores.area === a.id ? 'checked' : '' %> />
+              <span>
+                <strong><%= a.nombre %></strong>
+                <%= a.desc %>
+              </span>
+            </label>
+          <% }); %>
+        </div>
+        <p class="ayuda">
+          Se elige una sola: quien mezcla el sonido no está moviendo luces al
+          mismo tiempo. Si sabes de varias, cuéntalo abajo.
+        </p>
+      </div>
+
+      <div class="campo">
+        <label for="experiencia">Qué sabes hacer <span class="opcional">(opcional)</span></label>
+        <textarea id="experiencia" name="experiencia" maxlength="500"
+                  placeholder="Qué has hecho antes, con qué equipos o programas te defiendes, y qué te gustaría aprender aquí."><%= valores.experiencia || '' %></textarea>
+        <p class="ayuda">
+          No hace falta experiencia previa: hace falta que estés la tarde entera.
+          Esto es para armar los turnos, no para descartar a nadie.
+        </p>
+      </div>
+
+      <p class="eyebrow" style="margin-top:30px">2 · Quién eres</p>
+
+      <div class="campo">
+        <label for="nombre">Tu nombre completo</label>
+        <input type="text" id="nombre" name="nombre" maxlength="120" required autocomplete="name"
+               value="<%= valores.nombre || '' %>" />
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <label for="email">Tu correo institucional</label>
+          <input type="email" id="email" name="email" maxlength="160" required autocomplete="email"
+                 placeholder="tunombre@<%= DOMINIO %>"
+                 pattern="<%= PATRON_CORREO %>"
+                 title="Usa tu correo @<%= DOMINIO %>"
+                 value="<%= valores.email || '' %>" />
+        </div>
+
+        <div class="campo">
+          <label for="semestre">Semestre</label>
+          <input type="number" id="semestre" name="semestre" min="1" max="10" required
+                 value="<%= valores.semestre || '' %>" />
+        </div>
+      </div>
+
+      <div class="campo">
+        <label for="telefono">Teléfono o WhatsApp <span class="opcional">(opcional)</span></label>
+        <input type="tel" id="telefono" name="telefono" maxlength="25" autocomplete="tel"
+               placeholder="300 000 0000"
+               value="<%= valores.telefono || '' %>" />
+        <p class="ayuda">Para el grupo del equipo y para llamarte el día del montaje.</p>
+      </div>
+
+      <button type="submit" class="btn block" style="margin-top:8px">Entrar al equipo</button>
+      <p class="ayuda" style="text-align:center">
+        Te queda un código y te llega por correo. La organización arma el equipo
+        y te avisa.
+      </p>
+    </form>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

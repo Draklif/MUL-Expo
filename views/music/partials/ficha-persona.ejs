@@ -1,0 +1,62 @@
+<%/* Una persona del equipo de producción en el panel. Misma idea que la ficha
+     de los grupos: un solo marcado para las tres listas y los botones que
+     tengan sentido según el estado. */%>
+<article class="ficha" id="p<%= p.id %>">
+  <div class="ficha-cab">
+    <div class="ficha-quien">
+      <h4><%= p.nombre %></h4>
+      <div class="ficha-meta">
+        <span><b>Código</b><%= p.codigo %></span>
+        <span><b>Área</b><%= (p.area_info || {}).nombre || p.area %></span>
+        <% if (p.semestre) { %><span><b>Semestre</b><%= p.semestre %>.°</span><% } %>
+      </div>
+    </div>
+    <span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span>
+  </div>
+
+  <div class="ficha-cuerpo">
+    <% if (p.experiencia) { %><p><%= p.experiencia %></p><% } %>
+    <p class="mini">
+      <a href="mailto:<%= p.email %>"><%= p.email %></a>
+      <% if (p.telefono) { %> · <a href="tel:<%= p.telefono.replace(/\s/g, '') %>"><%= p.telefono %></a><% } %>
+    </p>
+    <% if (p.nota_docente) { %>
+      <p class="mini">✎ <%= p.nota_docente %></p>
+    <% } %>
+  </div>
+
+  <div class="ficha-acciones">
+    <% if (p.estado !== 'confirmado') { %>
+      <form method="POST" action="/music/panel/produccion/<%= p.id %>/revisar">
+        <input type="hidden" name="estado" value="confirmado" />
+        <button type="submit" class="btn chico">Al equipo</button>
+      </form>
+    <% } %>
+
+    <% if (p.estado !== 'rechazado') { %>
+      <details>
+        <summary class="mini" style="cursor:pointer">No admitir</summary>
+        <form method="POST" action="/music/panel/produccion/<%= p.id %>/revisar" style="margin-top:10px">
+          <input type="hidden" name="estado" value="rechazado" />
+          <div class="campo" style="margin-bottom:10px">
+            <label for="npro<%= p.id %>">Por qué (le llega en el correo)</label>
+            <input type="text" name="nota_docente" id="npro<%= p.id %>" maxlength="400"
+                   value="<%= p.nota_docente || '' %>" />
+          </div>
+          <button type="submit" class="btn malo chico">No admitir</button>
+        </form>
+      </details>
+    <% } %>
+
+    <% if (p.avisado_at) { %>
+      <span class="mini">Avisado</span>
+    <% } else if (!correoActivo) { %>
+      <span class="mini">Correos apagados</span>
+    <% } %>
+
+    <form method="POST" action="/music/panel/produccion/<%= p.id %>/borrar" style="margin-left:auto"
+          onsubmit="return confirm('¿Borrar esta inscripción? No se puede deshacer.')">
+      <button type="submit" class="btn plano chico">Borrar</button>
+    </form>
+  </div>
+</article>

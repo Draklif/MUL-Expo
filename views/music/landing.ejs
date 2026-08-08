@@ -1,0 +1,262 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL CARTEL DEL MUSIC FEST
+
+     La página se lee como un afiche: primero el nombre a tamaño de pared,
+     después quién toca, después a qué hora y al final cómo entrar.
+
+     Y hay un reparto que conviene tener claro al editarla:
+
+       · el CARTEL sale de la base —quién se inscribió y la organización
+         confirmó en el panel—;
+       · el ITINERARIO sale de data/music-fest.json y se escribe a mano,
+         igual que el de la Expo. La base sabe quién está adentro; el
+         cronograma de la tarde lo decide una persona con el reloj delante.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: evento.name + ' — ' + programa, descripcion: evento.desc, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="mf">
+
+  <%/* ───── EL NOMBRE ───── */%>
+  <section class="mf-hero">
+    <p class="eyebrow"><%= (hero && hero.eyebrow) || evento.tipo %></p>
+    <h1 class="fuego"><%= (hero && hero.titulo) || evento.name %></h1>
+    <p class="lema"><%= (hero && hero.lema) || evento.desc %></p>
+
+    <div class="hero-datos">
+      <div>
+        <span>Cuándo</span>
+        <strong><%= (edicion && edicion.fecha) || evento.cuando || 'Por confirmar' %></strong>
+      </div>
+      <div>
+        <span>Dónde</span>
+        <strong><%= (edicion && edicion.lugar) || evento.sede || 'Por confirmar' %></strong>
+      </div>
+      <div>
+        <span>Entrada</span>
+        <strong><%= (hero && hero.entrada) || 'Libre' %></strong>
+      </div>
+      <% if (cifras && cifras.actos.confirmados) { %>
+        <div>
+          <span>En el cartel</span>
+          <strong><%= cifras.actos.confirmados %> <%= cifras.actos.confirmados === 1 ? 'grupo' : 'grupos' %></strong>
+        </div>
+      <% } %>
+    </div>
+
+    <div class="hero-ctas">
+      <% if (abierta && hayCupoActos) { %>
+        <a href="/music/grupos" class="btn">Inscribir mi grupo</a>
+      <% } %>
+      <% if (abierta && hayCupoProduccion) { %>
+        <a href="/music/produccion" class="btn ghost">Entrar a producción</a>
+      <% } %>
+      <% if (!abierta) { %>
+        <a href="#itinerario" class="btn ghost">Ver la tarde</a>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── EL CARTEL ─────
+       La escalera va por RENGLONES y no por nombre: el cabeza de cartel solo
+       en el primero, dos en el segundo, tres en el tercero y el resto abajo.
+       Todos los de un renglón miden lo mismo y cada renglón es más pequeño que
+       el anterior, que es como está armado cualquier afiche de festival.
+
+       Antes el tamaño se le ponía a cada nombre por su posición en la lista y
+       era el envoltorio del flex el que decidía dónde caía: bastaba con que un
+       nombre fuera largo para que un mediano terminara al lado de dos chicos y
+       la escalera se viera rota. Repartiendo los renglones aquí, el tamaño y el
+       salto de línea los decide lo mismo.
+
+       El reparto se adapta al cartel que haya: con tres grupos son dos
+       renglones, con veinte el último se envuelve solo y todos ahí miden
+       igual, que es exactamente lo que hace un cartel de verdad. */%>
+  <%
+    const ESCALONES = [1, 2, 3];
+    const filas = [];
+    let puestos = 0;
+    for (const cuantos of ESCALONES) {
+      if (puestos >= actos.length) break;
+      filas.push(actos.slice(puestos, puestos + cuantos));
+      puestos += cuantos;
+    }
+    if (puestos < actos.length) filas.push(actos.slice(puestos));
+  %>
+  <section id="cartel" class="mf-sec">
+    <p class="eyebrow">Quiénes tocan</p>
+    <h2>El cartel</h2>
+
+    <% if (!actos.length) { %>
+      <div class="cartel-vacio" style="margin-top:22px">
+        <% if (abierta) { %>
+          El cartel se está armando. Si tienes un grupo, esta es la hora de inscribirlo.
+        <% } else { %>
+          Todavía no hay cartel para esta edición.
+        <% } %>
+      </div>
+    <% } else { %>
+      <div class="cartel">
+        <% filas.forEach(function (fila, i) { %>
+          <div class="cartel-fila n<%= Math.min(i + 1, 4) %>">
+            <% fila.forEach(function (a) { %><span><%= a.nombre %></span><% }); %>
+          </div>
+        <% }); %>
+      </div>
+
+      <div class="grid" style="margin-top:34px">
+        <% actos.forEach(function (a) { %>
+          <article class="acto">
+            <p class="acto-tipo"><%= a.tipo %><%= a.genero ? ' · ' + a.genero : '' %></p>
+            <h3><%= a.nombre %></h3>
+            <% if (a.propuesta) { %><p><%= a.propuesta %></p><% } %>
+            <p class="acto-pie">
+              <%= a.integrantes %> <%= a.integrantes === 1 ? 'persona' : 'personas' %> en tarima
+            </p>
+          </article>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ───── EL ITINERARIO ───── */%>
+  <% if (itinerario && itinerario.length) { %>
+    <section id="itinerario" class="mf-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow"><%= (jornada && jornada.estado) || 'Cómo va la tarde' %></p>
+          <h2><%= (jornada && jornada.titulo) || 'Itinerario' %></h2>
+        </div>
+        <% if (jornada && jornada.apertura) { %>
+          <span class="chip cian"><%= jornada.apertura %> – <%= jornada.cierre %></span>
+        <% } %>
+      </div>
+
+      <% if (jornada && jornada.nota) { %>
+        <p class="sec-lead" style="margin:0 0 24px"><%= jornada.nota %></p>
+      <% } %>
+
+      <div class="franjas">
+        <% itinerario.forEach(function (b) { %>
+          <div class="franja <%= b.cerrado ? 'cerrado' : '' %>">
+            <div class="franja-hora">
+              <%= b.hora %>
+              <% if (b.fin) { %><span>hasta <%= b.fin %></span><% } %>
+            </div>
+            <div class="franja-que">
+              <p class="franja-tipo">
+                <%= b.tipo %>
+                <% if (b.escenario) { %><span class="donde"><%= b.escenario %></span><% } %>
+                <% if (b.cerrado) { %><span class="chip">A puerta cerrada</span><% } %>
+                <% if (b.tentativo) { %><span class="chip pend">Tentativo</span><% } %>
+              </p>
+              <h4><%= b.titulo %></h4>
+              <% if (b.desc) { %><p><%= b.desc %></p><% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <%/* ───── LAS DOS PUERTAS ───── */%>
+  <% if (puertas) { %>
+    <section id="inscripcion" class="mf-sec">
+      <p class="eyebrow">Cómo estar adentro</p>
+      <h2>Dos formas de entrar</h2>
+      <p class="sec-lead" style="margin-bottom:24px">
+        Un festival son dos equipos: el que se sube a la tarima y el que hace
+        que se vea y se escuche. Los dos se inscriben aquí.
+      </p>
+
+      <div class="puertas">
+        <article class="puerta">
+          <p class="lema"><%= puertas.grupo.lema %></p>
+          <h3><%= puertas.grupo.titulo %></h3>
+          <p><%= puertas.grupo.texto %></p>
+          <% if (abierta && hayCupoActos) { %>
+            <a href="/music/grupos" class="btn"><%= puertas.grupo.boton %></a>
+          <% } else { %>
+            <p class="cerrada">
+              <%= !abierta ? 'Las inscripciones están cerradas.' : 'El cartel ya está lleno para esta edición.' %>
+            </p>
+          <% } %>
+        </article>
+
+        <article class="puerta">
+          <p class="lema"><%= puertas.produccion.lema %></p>
+          <h3><%= puertas.produccion.titulo %></h3>
+          <p><%= puertas.produccion.texto %></p>
+
+          <ul class="areas">
+            <% areas.forEach(function (a) { %>
+              <li><strong><%= a.nombre %></strong><%= a.desc %></li>
+            <% }); %>
+          </ul>
+
+          <% if (abierta && hayCupoProduccion) { %>
+            <a href="/music/produccion" class="btn ghost"><%= puertas.produccion.boton %></a>
+          <% } else { %>
+            <p class="cerrada">
+              <%= !abierta ? 'Las inscripciones están cerradas.' : 'El equipo ya está completo para esta edición.' %>
+            </p>
+          <% } %>
+        </article>
+      </div>
+    </section>
+  <% } %>
+
+  <%/* ───── QUÉ ES ───── */%>
+  <% if (que_es) { %>
+    <section id="que-es" class="mf-sec">
+      <p class="eyebrow">El festival</p>
+      <h2><%= que_es.titulo %></h2>
+      <p class="sec-lead"><%= que_es.texto %></p>
+
+      <% if (que_es.puntos && que_es.puntos.length) { %>
+        <div class="grid" style="margin-top:26px">
+          <% que_es.puntos.forEach(function (p) { %>
+            <div class="tarjeta"><%= p %></div>
+          <% }); %>
+        </div>
+      <% } %>
+    </section>
+  <% } %>
+
+  <%/* ───── NORMAS ───── */%>
+  <% if (normas && normas.puntos && normas.puntos.length) { %>
+    <section id="normas" class="mf-sec">
+      <p class="eyebrow">Antes de inscribirte</p>
+      <h2><%= normas.titulo %></h2>
+      <ol class="normas" style="margin-top:22px">
+        <% normas.puntos.forEach(function (n) { %><li><span><%= n %></span></li><% }); %>
+      </ol>
+    </section>
+  <% } %>
+
+  <%/* ───── EL EQUIPO ─────
+       Va de últimas y con nombres, no con cifras: la gente que monta el
+       festival merece salir en la página tanto como la que se sube a la
+       tarima, que es literalmente de lo que se trata este evento. */%>
+  <% if (equipo && equipo.length) { %>
+    <section id="equipo" class="mf-sec">
+      <p class="eyebrow">Detrás</p>
+      <h2>El equipo de producción</h2>
+
+      <div class="grid" style="margin-top:22px">
+        <% areas.forEach(function (a) { %>
+          <% const suyos = equipo.filter(function (p) { return p.area === a.id; }); %>
+          <% if (suyos.length) { %>
+            <article class="acto">
+              <p class="acto-tipo"><%= a.nombre %></p>
+              <p><%= suyos.map(function (p) { return p.nombre; }).join(' · ') %></p>
+            </article>
+          <% } %>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

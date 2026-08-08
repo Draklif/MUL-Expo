@@ -1,0 +1,43 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+
+<main class="mf angosto" style="max-width:440px;padding-top:70px">
+  <p class="eyebrow">Multimedia Music Fest</p>
+  <h2 class="fuego">Acceso organización</h2>
+  <p class="sec-lead" style="margin-bottom:30px">
+    El panel del festival va con su propia contraseña: no es la de la Expo, ni
+    la del torneo, ni la de la jam.
+  </p>
+
+  <% if (!configurado) { %>
+    <div class="aviso malo">
+      <p style="margin:0">
+        El panel todavía no está habilitado. Falta <code>PASSWORD_MUSIC</code> en
+        el archivo <code>.env</code> del servidor.
+      </p>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <form method="POST" action="/music/acceso">
+    <div class="campo">
+      <label for="email">Correo institucional</label>
+      <input type="email" name="email" id="email" required autofocus
+             pattern="<%= PATRON_CORREO %>" value="<%= email %>"
+             placeholder="tunombre@<%= DOMINIO %>" />
+    </div>
+    <div class="campo">
+      <label for="password">Contraseña del festival</label>
+      <input type="password" name="password" id="password" required />
+    </div>
+    <button type="submit" class="btn block">Entrar</button>
+  </form>
+
+  <p style="margin-top:30px;text-align:center">
+    <a href="/music-fest" class="foot-acceso">Volver al festival</a>
+  </p>
+</main>
+
+<%- include('../partials/footer') %>

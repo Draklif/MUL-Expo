@@ -1,6 +1,6 @@
 const { DatabaseSync } = require("node:sqlite");
 const path = require("path");
-const { DOCENTES, PERIODO, VC, JAM } = require("../config");
+const { DOCENTES, PERIODO, VC, JAM, MUSIC } = require("../config");
 
 const db = new DatabaseSync(path.join(__dirname, "expo.db"));
 db.exec("PRAGMA journal_mode = WAL");
@@ -379,6 +379,94 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_jam_anun_edicion ON jam_anuncios(edicion_id, created_at);
 
   -- =================================================================
+  --  MULTIMEDIA MUSIC FEST
+  --  Una tarde de música y baile. Se inscriben DOS cosas distintas y por
+  --  eso son dos tablas y no una con una columna "tipo": un grupo sube a
+  --  la tarima y una persona se para detrás de una consola. No comparten
+  --  ni los campos ni el cupo ni la conversación.
+  --
+  --  Lo que NO está aquí es el itinerario de la tarde: ese se cura a mano
+  --  en data/music-fest.json, igual que el de la Expo. La base dice
+  --  quién está adentro; el JSON, a qué hora toca cada quien.
+  -- =================================================================
+  CREATE TABLE IF NOT EXISTS music_ediciones (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    periodo_id          INTEGER,
+    nombre              TEXT NOT NULL,
+    estado              TEXT NOT NULL DEFAULT 'inscripcion',
+    inscripcion_abierta INTEGER NOT NULL DEFAULT 1,
+    fecha               TEXT,
+    lugar               TEXT,
+    cupo_actos          INTEGER,
+    cupo_produccion     INTEGER,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (periodo_id) REFERENCES periodos(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_music_ed_periodo ON music_ediciones(periodo_id);
+
+  -- Los grupos que suben a la tarima. Mismo código de 6 caracteres que el
+  -- resto del sitio: se dicta, se teclea y con él se consulta el estado.
+  --
+  -- 'orden' es el lugar en el cartel, no la hora: un cartel de festival se
+  -- lee de mayor a menor y el que cierra la tarde va de primero y más
+  -- grande. La hora exacta vive en el itinerario del JSON.
+  CREATE TABLE IF NOT EXISTS music_actos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id      INTEGER NOT NULL,
+    codigo          TEXT NOT NULL UNIQUE,
+    nombre          TEXT NOT NULL,
+    tipo            TEXT NOT NULL,
+    genero          TEXT,
+    integrantes     INTEGER NOT NULL DEFAULT 1,
+    propuesta       TEXT,
+    necesidades     TEXT,
+    enlace          TEXT,
+    contacto_nombre TEXT NOT NULL,
+    contacto_email  TEXT NOT NULL COLLATE NOCASE,
+    telefono        TEXT,
+    estado          TEXT NOT NULL DEFAULT 'pendiente',
+    nota_docente    TEXT,
+    revisado_por    INTEGER,
+    revisado_at     DATETIME,
+    avisado_at      DATETIME,
+    orden           INTEGER NOT NULL DEFAULT 0,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (edicion_id, contacto_email),
+    FOREIGN KEY (edicion_id)   REFERENCES music_ediciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (revisado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_music_actos_ed ON music_actos(edicion_id, estado, orden);
+
+  -- El equipo de producción: una persona, un área. Se elige una y no varias
+  -- porque quien mezcla el sonido no está moviendo luces al mismo tiempo.
+  -- El correo institucional es la identidad y por eso no se repite dentro
+  -- de una edición.
+  CREATE TABLE IF NOT EXISTS music_produccion (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id   INTEGER NOT NULL,
+    codigo       TEXT NOT NULL UNIQUE,
+    nombre       TEXT NOT NULL,
+    email        TEXT NOT NULL COLLATE NOCASE,
+    telefono     TEXT,
+    semestre     TEXT,
+    area         TEXT NOT NULL,
+    experiencia  TEXT,
+    estado       TEXT NOT NULL DEFAULT 'pendiente',
+    nota_docente TEXT,
+    revisado_por INTEGER,
+    revisado_at  DATETIME,
+    avisado_at   DATETIME,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (edicion_id, email),
+    FOREIGN KEY (edicion_id)   REFERENCES music_ediciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (revisado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_music_prod_ed ON music_produccion(edicion_id, area, estado);
+
+  -- =================================================================
   --  SALIDAS PEDAGÓGICAS
   --  Una salida no es un evento del programa y no tiene tabla propia:
   --  vive entera en config.SALIDAS —a dónde se va, cuándo, cuánto
@@ -565,6 +653,20 @@ try {
       JAM.cupo_equipos || null
     );
     console.log(`  ✓ Edición de la Jam abierta en ${PERIODO}.`);
+  }
+
+  if (!db.prepare("SELECT 1 FROM music_ediciones WHERE periodo_id = ?").get(periodoActual.id)) {
+    db.prepare(
+      `INSERT INTO music_ediciones
+         (periodo_id, nombre, estado, inscripcion_abierta, cupo_actos, cupo_produccion)
+       VALUES (?, ?, 'inscripcion', 1, ?, ?)`
+    ).run(
+      periodoActual.id,
+      `Multimedia Music Fest · ${PERIODO}`,
+      MUSIC.cupo_actos || null,
+      MUSIC.cupo_produccion || null
+    );
+    console.log(`  ✓ Edición del Music Fest abierta en ${PERIODO}.`);
   }
 
   db.exec("COMMIT");
