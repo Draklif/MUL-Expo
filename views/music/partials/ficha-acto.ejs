@@ -56,6 +56,27 @@
       </form>
     <% } %>
 
+    <%/* Lo que sale en la página pública se puede emparejar desde aquí: un
+         grupo escribe "rock" y otro "ROCK ALTERNATIVO/PROGRESIVO". El nombre y
+         el contacto no se tocan —eso es de ellos—. */%>
+    <details>
+      <summary class="mini" style="cursor:pointer">Editar lo que se ve</summary>
+      <form method="POST" action="/music/panel/actos/<%= a.id %>/editar" style="margin-top:10px">
+        <div class="campo" style="margin-bottom:10px">
+          <label for="gen<%= a.id %>">Género</label>
+          <input type="text" id="gen<%= a.id %>" name="genero" maxlength="60"
+                 placeholder="Rock andino, salsa, danza contemporánea…"
+                 value="<%= a.genero || '' %>" />
+        </div>
+        <div class="campo" style="margin-bottom:10px">
+          <label for="desc<%= a.id %>">Descripción</label>
+          <textarea id="desc<%= a.id %>" name="propuesta" maxlength="500"
+                    placeholder="Lo que se lee debajo del nombre en el cartel."><%= a.propuesta || '' %></textarea>
+        </div>
+        <button type="submit" class="btn plano chico">Guardar</button>
+      </form>
+    </details>
+
     <% if (a.estado !== 'rechazado') { %>
       <%/* El rechazo va detrás de un desplegable y con nota: decir que no sin
            decir por qué es lo que después llega como un reclamo. */%>

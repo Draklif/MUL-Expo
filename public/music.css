@@ -315,7 +315,24 @@ img { max-width: 100%; }
    --------------------------------------------------------------------- */
 .mf-hero { padding: 64px 0 46px; }
 
-.mf-hero h1 { margin: 0 0 18px; }
+/* El nombre del festival ocupa el ancho de la página, en un solo renglón. Un
+   cartel no parte su nombre en dos.
+
+   El tamaño lo mide el guion del final de views/music/landing.ejs: calcula
+   cuánto mide el texto y lo escala hasta llenar la caja. No se hace con vw a
+   ojo porque el nombre sale del JSON y puede cambiar —cada letra que se le
+   agregue lo desbordaría—, ni estirando la letra con SVG, que deformaría una
+   condensada que justamente vive de sus proporciones.
+
+   Lo de aquí abajo es lo que se ve mientras el guion no ha corrido o si no
+   corre nunca: un tamaño prudente que puede envolver, pero jamás desbordar. */
+.mf-hero h1 {
+  margin: 0 0 18px;
+  font-size: clamp(34px, 8.5vw, 108px);
+}
+
+/* Con el guion ya aplicado: un renglón y el tamaño puesto a mano. */
+.mf-hero h1.ajustado { white-space: nowrap; }
 
 .mf-hero .lema {
   font-size: clamp(17px, 2.4vw, 23px);
@@ -361,6 +378,41 @@ img { max-width: 100%; }
    cada renglón siguiente con más nombres y más pequeños. El orden lo pone
    la organización en el panel; el reparto en renglones, la vista.
    --------------------------------------------------------------------- */
+/* El afiche entero: rótulo, escalera y pie, encerrados entre dos reglas. Es lo
+   que los convierte en UNA pieza. Antes el rótulo iba alineado a la izquierda
+   como el de las demás secciones y la escalera centrada debajo, y eso se leía
+   como dos bloques sin relación. */
+.afiche {
+  text-align: center;
+  padding: 30px 0 26px;
+  margin-top: 10px;
+  border-top: 1px solid var(--linea);
+  border-bottom: 1px solid var(--linea);
+}
+
+/* Pequeño y espaciado a propósito: aquí el titular son los nombres, y un
+   "EL CARTEL" a tamaño de sección competiría con ellos. */
+.afiche-rotulo {
+  font-family: var(--body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--magenta);
+  margin: 0 0 20px;
+}
+
+.afiche-pie {
+  margin: 22px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+
+.afiche-pie span { color: var(--linea-fuerte); margin: 0 6px; }
+
 /* Un renglón por escalón. El reparto —quién va en cuál— lo hace la vista
    (views/music/landing.ejs) y no el envoltorio del navegador: aquí solo se
    pinta cada renglón centrado y con su tamaño. */
@@ -723,7 +775,12 @@ body:has(> .mf-foot) {
   min-height: 100dvh;
 }
 
-body:has(> .mf-foot) > main { flex: 1 0 auto; }
+/* min-width: 0 y no el 'auto' de fábrica: el body es una columna flex, y un
+   hijo flex se niega por defecto a encogerse por debajo de su contenido. Basta
+   un título en un solo renglón para que ensanche la página entera y aparezca
+   scroll horizontal. Con esto, lo que no cabe desborda su caja pero no arrastra
+   al resto. */
+body:has(> .mf-foot) > main { flex: 1 0 auto; min-width: 0; }
 
 .mf-foot {
   border-top: 1px solid var(--linea);
@@ -868,6 +925,14 @@ body:has(> .mf-foot) > main { flex: 1 0 auto; }
 }
 
 .ficha-acciones form { margin: 0; }
+
+/* Cerrado, un desplegable es un botón más y va en la fila. Abierto es un
+   formulario, y un formulario metido en una fila de botones queda en una
+   columna de doscientos píxeles donde no se lee ni lo que uno escribe: al
+   abrirse se lleva el renglón entero. */
+.ficha-acciones details { min-width: 0; }
+.ficha-acciones details[open] { flex: 1 1 100%; }
+.ficha-acciones details[open] > summary { margin-bottom: 4px; }
 
 /* ---------------------------------------------------------------------
    CELULAR

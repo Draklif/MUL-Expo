@@ -189,6 +189,30 @@ router.post("/panel/actos/:id/revisar", (req, res) => {
 });
 
 /**
+ * Retocar lo que el grupo escribió de sí mismo.
+ *
+ * Son los dos campos que salen en la página pública —el género y la
+ * descripción— y por eso son los dos que se pueden ajustar: un grupo escribe
+ * "rock" con minúscula y otro "ROCK ALTERNATIVO/PROGRESIVO", y el cartel se ve
+ * mejor si eso lo empareja alguien. No se toca el nombre ni el contacto: eso
+ * es de ellos, y cambiárselo sin avisar es otra cosa.
+ *
+ * No manda correo: corregirle una coma a alguien no es una noticia.
+ */
+router.post("/panel/actos/:id/editar", (req, res) => {
+  const acto = music.acto(req.params.id);
+  if (!acto) return res.redirect("/music/panel");
+
+  db.prepare("UPDATE music_actos SET genero = ?, propuesta = ? WHERE id = ?").run(
+    String(req.body.genero || "").trim().slice(0, 60) || null,
+    String(req.body.propuesta || "").trim().slice(0, 500) || null,
+    acto.id
+  );
+
+  res.redirect("/music/panel?ok=1#cartel");
+});
+
+/**
  * Mover un grupo en el cartel. Sube y baja de a uno intercambiando el orden
  * con el vecino: es la única forma de ordenar una lista corta sin arrastrar
  * nada con el dedo, que en un celular no funciona.

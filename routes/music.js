@@ -55,7 +55,12 @@ function marco(extra = {}) {
 
   return {
     ...contenido(),
-    evento: EVENTO,
+    // OJO: aquí NO va `evento: EVENTO`. El config y el JSON tienen los dos una
+    // clave "evento" y son cosas distintas: la del config es la del semestre
+    // (slug, activo, inscripciones) y la del JSON es la del contenido (name,
+    // tipo, desc, cuándo, dónde). Ponerla encima dejaba el título de la pestaña
+    // en "undefined — Ingeniería en Multimedia", porque en el config el nombre
+    // se llama `nombre` y la vista pedía `name`.
     slug: "music-fest",
     edicion,
     abierta: music.inscripcionAbierta(edicion),

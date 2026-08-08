@@ -12,7 +12,10 @@
          igual que el de la Expo. La base sabe quién está adentro; el
          cronograma de la tarde lo decide una persona con el reloj delante.
      ───────────────────────────────────────────────────────────────── */%>
-<%- include('../partials/head', { title: evento.name + ' — ' + programa, descripcion: evento.desc, css: css, themeColor: themeColor }) %>
+<%/* El nombre sale del mismo sitio que el titular de la página, para que la
+     pestaña y el afiche no puedan decir cosas distintas. */%>
+<% const nombreFest = (hero && hero.titulo) || evento.name || 'Multimedia Music Fest'; %>
+<%- include('../partials/head', { title: nombreFest + ' — ' + programa, descripcion: evento.desc, css: css, themeColor: themeColor }) %>
 <%- include('partials/top') %>
 
 <main class="mf">
@@ -20,7 +23,7 @@
   <%/* ───── EL NOMBRE ───── */%>
   <section class="mf-hero">
     <p class="eyebrow"><%= (hero && hero.eyebrow) || evento.tipo %></p>
-    <h1 class="fuego"><%= (hero && hero.titulo) || evento.name %></h1>
+    <h1 class="fuego"><%= nombreFest %></h1>
     <p class="lema"><%= (hero && hero.lema) || evento.desc %></p>
 
     <div class="hero-datos">
@@ -83,11 +86,16 @@
     }
     if (puestos < actos.length) filas.push(actos.slice(puestos));
   %>
+  <%/* El rótulo va CENTRADO y pegado a la escalera, no a la izquierda como el
+       de las demás secciones. Un título alineado a un lado encima de un bloque
+       centrado se lee como si fueran dos cosas distintas —y eso es justo lo que
+       pasaba con "Quiénes tocan / El cartel" colgando a la izquierda—. Aquí el
+       rótulo es el pie de foto del afiche, así que va con él: mismo eje, poco
+       aire en medio y las dos reglas que encierran el bloque entero. */%>
   <section id="cartel" class="mf-sec">
-    <p class="eyebrow">Quiénes tocan</p>
-    <h2>El cartel</h2>
-
     <% if (!actos.length) { %>
+      <p class="eyebrow" style="text-align:center">Quiénes tocan</p>
+      <h2 style="text-align:center">El cartel</h2>
       <div class="cartel-vacio" style="margin-top:22px">
         <% if (abierta) { %>
           El cartel se está armando. Si tienes un grupo, esta es la hora de inscribirlo.
@@ -96,12 +104,26 @@
         <% } %>
       </div>
     <% } else { %>
-      <div class="cartel">
-        <% filas.forEach(function (fila, i) { %>
-          <div class="cartel-fila n<%= Math.min(i + 1, 4) %>">
-            <% fila.forEach(function (a) { %><span><%= a.nombre %></span><% }); %>
-          </div>
-        <% }); %>
+      <div class="afiche">
+        <h2 class="afiche-rotulo">Quiénes tocan</h2>
+
+        <div class="cartel">
+          <% filas.forEach(function (fila, i) { %>
+            <div class="cartel-fila n<%= Math.min(i + 1, 4) %>">
+              <% fila.forEach(function (a) { %><span><%= a.nombre %></span><% }); %>
+            </div>
+          <% }); %>
+        </div>
+
+        <%/* El pie del afiche: la fecha y el sitio otra vez, debajo de los
+             nombres, que es donde los lleva cualquier cartel de festival. */%>
+        <p class="afiche-pie">
+          <%= (edicion && edicion.fecha) || evento.cuando || 'Fecha por confirmar' %>
+          <span>·</span>
+          <%= (edicion && edicion.lugar) || evento.sede || 'Lugar por confirmar' %>
+          <span>·</span>
+          <%= (hero && hero.entrada) || 'Entrada libre' %>
+        </p>
       </div>
 
       <div class="grid" style="margin-top:34px">
@@ -257,6 +279,77 @@
     </section>
   <% } %>
 </main>
+
+<script>
+  // EL NOMBRE, DE BORDE A BORDE
+  //
+  // Se mide el texto a un tamaño de referencia y se escala hasta que llene el
+  // ancho de la caja. Es la única forma de que quepa siempre en un renglón sin
+  // saber de antemano cuánto mide el nombre: sale de data/music-fest.json y
+  // cambiarlo por uno más largo no puede romper la página.
+  //
+  // La alternativa —un tamaño en vw calculado a ojo— aguanta exactamente el
+  // nombre de hoy y desborda con el de mañana, y eso en esta hoja está
+  // prohibido: si no cabe, se encoge.
+  (function () {
+    var titulo = document.querySelector(".mf-hero h1");
+    if (!titulo) return;
+
+    var REFERENCIA = 100;  // se mide a 100px y se regla de tres
+    var MINIMO = 20;       // por debajo de esto no se lee: mejor que envuelva
+
+    function ajustar() {
+      var caja = titulo.parentElement;
+      if (!caja) return;
+
+      // Primero se suelta el título y SOLO ENTONCES se mide la caja. Medirla
+      // con el título ya grande y en un renglón devuelve un ancho que el
+      // propio título infló, y la cuenta se muerde la cola: el resultado es
+      // siempre "cabe justo", con cualquier tamaño.
+      titulo.classList.remove("ajustado");
+      titulo.style.fontSize = "";
+      var libre = caja.clientWidth;
+      if (!libre) return;
+
+      // width:max-content mientras se mide, para que la caja se ciña al texto.
+      // Sin esto se mide la CAJA y no las letras: en una pantalla ancha el
+      // título es más angosto que su contenedor, la cuenta da "ya cabe" y el
+      // nombre se queda pequeño por más que sobre sitio.
+      titulo.classList.add("ajustado");
+      titulo.style.width = "max-content";
+      titulo.style.fontSize = REFERENCIA + "px";
+      var ancho = titulo.getBoundingClientRect().width;
+      titulo.style.width = "";
+      if (!ancho) return;
+
+      var cabe = Math.floor((libre / ancho) * REFERENCIA);
+      if (cabe < MINIMO) {
+        // Un nombre larguísimo en un teléfono: antes que dejarlo ilegible se
+        // le devuelve el permiso de envolver.
+        titulo.classList.remove("ajustado");
+        titulo.style.fontSize = "";
+        return;
+      }
+
+      titulo.classList.add("ajustado");
+      titulo.style.fontSize = cabe + "px";
+    }
+
+    titulo.classList.add("ajustado");
+    ajustar();
+
+    // Las tipografías llegan después del primer pintado: medir antes de que
+    // Anton esté cargada da el ancho de la de reserva, que es otra letra y
+    // otro ancho.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustar);
+
+    var pendiente;
+    window.addEventListener("resize", function () {
+      cancelAnimationFrame(pendiente);
+      pendiente = requestAnimationFrame(ajustar);
+    });
+  })();
+</script>
 
 <%- include('partials/pie') %>
 <%- include('../partials/footer') %>
