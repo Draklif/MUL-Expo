@@ -404,6 +404,50 @@ img { max-width: 100%; }
   border-bottom: 1px solid var(--linea);
 }
 
+/* LAS EDICIONES VIEJAS, en un renglón cada una.
+   Una banda enseña completas las últimas ediciones —tres carteles, tres
+   tarjetas— y de ahí para atrás cada semestre se queda con esto: cuándo, las
+   cifras y la cosa que lo distingue. Un solo marcado para las cuatro bandas;
+   el color y la letra los pone cada una por las variables, como todo aquí.
+
+   Es una rejilla y no un flex con separadores: así el semestre, las cifras y
+   el nombre quedan en tres columnas alineadas de renglón a renglón, que es lo
+   que hace legible una lista de ocho años. */
+.b-viejas {
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.b-viejas li {
+  display: grid;
+  /* La columna del medio da para "6 equipos · 5 juegos entregados" de un solo
+     renglón: partida en dos, la lista dobla de alto sin decir nada más. */
+  grid-template-columns: minmax(0, 190px) minmax(0, 260px) minmax(0, 1fr);
+  gap: 4px 20px;
+  align-items: baseline;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--linea);
+  font-size: 13.5px;
+}
+.b-viejas .cuando {
+  font-size: 12px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--mute);
+}
+.b-viejas .que { color: var(--dim); }
+.b-viejas .marca { color: var(--acento); min-width: 0; overflow-wrap: anywhere; }
+
+/* "Y cuatro semestres más". El archivo completo no vive aquí —esta página es
+   el índice del programa, no su historia—, pero decir cuántos hubo es lo que
+   evita que parezca que el programa empezó hace tres semestres. */
+.b-mas {
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--mute);
+}
+.b-mas a { color: var(--acento); border-bottom: 1px solid currentColor; }
+
 /* El pie de la banda: el enlace a su sitio. */
 .b-pie {
   margin: clamp(30px, 4vw, 46px) 0 0;
@@ -594,22 +638,27 @@ img { max-width: 100%; }
   margin-bottom: 3px;
 }
 
-.vc-anteriores { margin: 0; padding: 0; list-style: none; }
-.vc-anteriores li {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  padding: 11px 0;
-  border-bottom: 1px solid var(--linea);
-  font-size: 13.5px;
-}
-.vc-anteriores .cuando {
+/* El torneo escribe hasta las fechas en condensada. */
+.b-vc .b-viejas .cuando {
   font-family: var(--f-cond);
   font-variation-settings: "wdth" 75, "wght" 600;
-  text-transform: uppercase;
   letter-spacing: .06em;
+  color: var(--dim);
 }
-.vc-anteriores .que { color: var(--dim); }
+
+/* La jam y el festival: sus renglones viejos siguen hablando su idioma —mono
+   la una, mayúsculas la otra— para que la lista no se sienta pegada de otra
+   página. */
+.b-jam .b-viejas li { border-bottom-color: rgba(124, 247, 74, .12); }
+.b-jam .b-viejas .cuando { font-family: var(--f-pixel); font-size: 9px; }
+.b-mf .b-viejas .marca {
+  font-family: var(--f-anton);
+  font-weight: 400;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: .01em;
+  color: var(--tinta);
+}
 
 /* =====================================================================
    BANDA 3 · JAM DE ALTURA — píxel
@@ -946,12 +995,25 @@ img { max-width: 100%; }
   border: 1px solid var(--linea);
   border-radius: 5px;
   box-shadow: 0 2px 0 rgba(32, 29, 22, .06);
+
+  /* Columna flexible para poder mandar el botón al fondo. Las boletas ya
+     miden lo mismo —son celdas de una rejilla y se estiran a la fila—, pero
+     sin esto el "Registrarme" quedaba a media altura en la que tuviera menos
+     asignaturas, y dos botones a distinta altura se leen como dos tarjetas
+     de distinto tamaño aunque midan igual. */
+  display: flex;
+  flex-direction: column;
+
+  /* Dónde muerde el tiquete. Es la altura de la cabecera —nombre de dos
+     renglones más el lugar—, que ahora es fija, así que la muesca cae en el
+     mismo sitio en todas. */
+  --muesca: 100px;
 }
 .sal-boleta::before,
 .sal-boleta::after {
   content: "";
   position: absolute;
-  top: 62px;
+  top: var(--muesca);
   width: 13px;
   height: 26px;
   background: #f6f2e9;
@@ -961,23 +1023,41 @@ img { max-width: 100%; }
 .sal-boleta::after { right: -1px; border-right: 0; border-radius: 13px 0 0 13px; }
 .sal-boleta.apagada { background: #f3eee4; }
 
+/* LA CABECERA DE LA BOLETA — el nombre y el estado.
+   Era un flex que envolvía, y ahí estaba el error: un nombre de dos renglones
+   mandaba el "Abierta" a una línea propia debajo, empujaba el lugar y dejaba
+   la boleta descuadrada contra la de al lado. Con una rejilla de dos columnas
+   el estado tiene la suya —no la puede perder por largo que sea el nombre— y
+   el nombre envuelve dentro de la suya sin mover nada. */
 .sal-top {
-  display: flex;
-  align-items: baseline;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
-  flex-wrap: wrap;
+  align-items: start;
 }
 .sal-top h3 {
   margin: 0;
   font-family: var(--f-cond);
   font-variation-settings: "wdth" 100, "wght" 700;
   font-size: 21px;
-  line-height: 1.15;
+  line-height: var(--alto-nombre, 1.15);
   min-width: 0;
   overflow-wrap: anywhere;
+  /* Dos renglones SIEMPRE: reservados aunque el nombre ocupe uno solo, para
+     que todas las boletas arranquen el cuerpo a la misma altura y la muesca
+     del tiquete quede a la misma altura en las dos. Uno más largo se corta
+     con puntos suspensivos —el nombre completo está en su página—. */
+  min-height: calc(21px * 1.15 * 2);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .sal-chip {
-  margin-left: auto;
+  /* Pegado arriba y no a la línea base: la referencia es el borde de la
+     boleta, no el primer renglón del nombre, que puede no existir mañana. */
+  align-self: start;
+  margin-top: 2px;
   font-size: 11px;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -988,17 +1068,36 @@ img { max-width: 100%; }
 .sal-chip.ok { background: #e4f0e8; color: var(--acento); }
 .sal-chip.no { background: #efe9dc; color: var(--mute); }
 
+/* El lugar va en un renglón y solo uno: es un rótulo, no una frase. Si no
+   cabe, puntos suspensivos —nunca un segundo renglón que desplace todo lo de
+   abajo—. */
 .sal-lugar {
   margin: 4px 0 0;
   font-size: 13px;
   letter-spacing: .04em;
   text-transform: uppercase;
   color: var(--mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* EL OBJETIVO, a cuatro renglones fijos.
+   Los objetivos los escribe cada docente en el config y miden lo que miden:
+   uno de dos líneas y otro de seis dejaban las dos boletas con los datos a
+   distinta altura, que es lo que se veía torcido. Aquí se reservan cuatro
+   renglones y se recorta lo que sobre; el texto entero está en la página de
+   la salida, que es a donde lleva el botón. */
 .sal-objetivo {
   margin: 14px 0 0;
   font-size: 14px;
+  line-height: 1.55;
   color: var(--dim);
+  min-height: calc(14px * 1.55 * 4);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
 }
 
 .sal-datos { margin: 16px 0 0; }
@@ -1033,9 +1132,14 @@ img { max-width: 100%; }
   color: var(--dim);
 }
 
+/* El botón, siempre al fondo de la boleta. El margen automático se come el
+   aire que sobre; el padding es el mínimo que se respeta cuando no sobra
+   nada. Y align-self, porque un hijo de columna flexible se estira a lo ancho
+   por defecto y el subrayado se iría de lado a lado de la tarjeta. */
 .sal-ir {
-  display: inline-block;
-  margin: 18px 0 0;
+  align-self: flex-start;
+  margin-top: auto;
+  padding-top: 18px;
   font-size: 14px;
   font-weight: 600;
   color: var(--acento);
@@ -1056,7 +1160,9 @@ img { max-width: 100%; }
 .sal-pasadas li { border-bottom: 1px dashed var(--linea); }
 .sal-pasadas a {
   display: grid;
-  grid-template-columns: minmax(0, 170px) minmax(0, 1.2fr) minmax(0, 1fr) auto;
+  /* La primera columna carga la fecha con año ("viernes 12 de septiembre de
+     2025"): más angosta, se parte en dos renglones y la lista se despeina. */
+  grid-template-columns: minmax(0, 240px) minmax(0, 1.1fr) minmax(0, 1fr) auto;
   gap: 8px 18px;
   align-items: baseline;
   padding: 13px 0;
@@ -1149,6 +1255,7 @@ img { max-width: 100%; }
   .b-tabla .cifras span { display: inline; margin-right: 14px; }
 
   .sal-pasadas a { grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 14px 0; }
+  .b-viejas li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
 
 @media (max-width: 560px) {

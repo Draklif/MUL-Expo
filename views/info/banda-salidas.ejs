@@ -82,14 +82,24 @@
       <p class="sal-vacio">Ahora mismo no hay ninguna salida programada.</p>
     <% } %>
 
+    <%/* El archivo crece un renglón por salida y no se puede quedar corto —es
+         la memoria del programa— pero tampoco puede ser la mitad de la página:
+         pasadas ocho, se cuentan y quien quiera verlas todas tiene /salidas.
+
+         Y aquí las fechas llevan AÑO. En "lo que viene" sobra —una salida que
+         viene es de este año— pero en el archivo "viernes 12 de septiembre"
+         sin año, con cuatro años acumulados, no ubica a nadie. */%>
+    <% const TOPE = 8; %>
     <% if (salidas.pasadas.length) { %>
       <div class="sal-grupo">
         <p class="b-rotulo">A dónde se ha ido</p>
         <ul class="sal-pasadas">
-          <% salidas.pasadas.forEach(function (s) { %>
+          <% salidas.pasadas.slice(0, TOPE).forEach(function (s) { %>
             <li>
               <a href="/salidas/<%= s.id %>">
-                <span class="cuando"><%= s.sale ? s.sale.dia : '' %></span>
+                <span class="cuando">
+                  <%= s.sale ? s.sale.dia + ' de ' + s.sale.fecha.slice(0, 4) : '' %>
+                </span>
                 <span class="que"><%= s.nombre %></span>
                 <span class="donde"><%= s.lugar %></span>
                 <% if (s.viajaron) { %>
@@ -99,6 +109,13 @@
             </li>
           <% }); %>
         </ul>
+
+        <% if (salidas.pasadas.length > TOPE) { %>
+          <p class="b-mas">
+            Y <%= salidas.pasadas.length - TOPE %> salidas más, en
+            <a href="/salidas">el listado completo</a>.
+          </p>
+        <% } %>
       </div>
     <% } %>
 

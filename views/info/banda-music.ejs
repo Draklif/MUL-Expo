@@ -35,9 +35,14 @@
       </ul>
     </div>
 
+    <%/* Tres carteles y no más. Un cartel ocupa lo que ocupa —esa es su
+         gracia— y apilar ocho convierte la banda en un muro que nadie termina
+         de bajar. Los demás años se cuentan en un renglón, con su cabeza de
+         cartel, que es lo que se recuerda de un festival. */%>
+    <% const TOPE = 3, RESTO = 6; %>
     <% if (ev.historial.length) { %>
       <div class="b-historial">
-        <% ev.historial.forEach(function (ed) { %>
+        <% ev.historial.slice(0, TOPE).forEach(function (ed) { %>
           <%
             // Los renglones del cartel: uno, dos y el resto. Igual que en la
             // landing del festival y por la misma razón.
@@ -81,6 +86,25 @@
             <% } %>
           </article>
         <% }); %>
+
+        <% if (ev.historial.length > TOPE) { %>
+          <ul class="b-viejas">
+            <% ev.historial.slice(TOPE, TOPE + RESTO).forEach(function (ed) { %>
+              <li>
+                <span class="cuando"><%= ed.semestre %></span>
+                <span class="que"><%= ed.resumen %></span>
+                <% if (ed.marca) { %><span class="marca"><%= ed.marca %></span><% } %>
+              </li>
+            <% }); %>
+          </ul>
+
+          <% if (ev.historial.length > TOPE + RESTO) { %>
+            <p class="b-mas">
+              Y <%= ev.historial.length - TOPE - RESTO %> ediciones más, desde
+              <%= ev.historial[ev.historial.length - 1].semestre %>.
+            </p>
+          <% } %>
+        <% } %>
       </div>
     <% } %>
 

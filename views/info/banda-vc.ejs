@@ -71,19 +71,28 @@
       <% }); %>
     </div>
 
+    <%/* Las cajas de arriba ya enseñan el último torneo de cada juego, así que
+         aquí solo van los semestres anteriores, en un renglón: las cifras y
+         quién ganó, que es lo que se recuerda de un torneo. */%>
+    <% const TOPE = 6; %>
     <% if (ev.anteriores.length) { %>
       <div class="b-historial">
         <p class="b-rotulo">Ediciones anteriores</p>
-        <ul class="vc-anteriores">
-          <% ev.anteriores.forEach(function (ed) { %>
+        <ul class="b-viejas">
+          <% ev.anteriores.slice(0, TOPE).forEach(function (ed) { %>
             <li>
               <span class="cuando"><%= ed.semestre %></span>
-              <span class="que">
-                <% ed.cifras.forEach(function (c, i) { %><%= i ? ' · ' : '' %><%= c.n %> <%= c.que %><% }); %>
-              </span>
+              <span class="que"><%= ed.resumen %></span>
+              <% if (ed.nombres.length) { %>
+                <span class="marca"><%= ed.nombres.join(" · ") %></span>
+              <% } %>
             </li>
           <% }); %>
         </ul>
+
+        <% if (ev.anteriores.length > TOPE) { %>
+          <p class="b-mas">Y <%= ev.anteriores.length - TOPE %> ediciones más.</p>
+        <% } %>
       </div>
     <% } %>
 

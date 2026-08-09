@@ -364,6 +364,75 @@ const SALIDAS = {
   ],
 
   salidas: [
+    // ---- DATOS DE PRUEBA: las tres salidas pasadas que llenan el archivo de
+    // /info ("a dónde se ha ido"). Se borran quitando estos tres objetos.
+    {
+      id: "sofa-2024",
+      nombre: "SOFA 2024",
+      lema: "El Salón del Ocio y la Fantasía, en Bogotá.",
+      lugar: "Corferias · Bogotá",
+      objetivo:
+        "La primera salida del programa a la feria: videojuegos nacionales, animación y las empresas que contratan multimedia.",
+      asignaturas: ["Diseño de Videojuegos", "Animación 3D"],
+      inscripciones: false,
+      salida: "2024-10-18 05:00",
+      regreso: "2024-10-18 23:00",
+      punto: "Portería principal · Universidad de Boyacá, sede Tunja",
+      cupo: 40,
+      costos: { transporte: 45000, poliza: 8000 },
+      consentimiento: "/documents/CONSENTIMIENTO.docx",
+      docente: {
+        nombre: "Jose Rentería",
+        email: "jmrenteria@uniboyaca.edu.co",
+        telefono: "320 000 0000",
+        donde: "Oficina de Multimedia · lunes a viernes, 8:00 a. m. a 12:00 m.",
+      },
+    },
+    {
+      id: "chicaque-2025",
+      nombre: "Parque Chicaque",
+      lema: "Captura de exteriores en el bosque de niebla.",
+      lugar: "Chicaque · San Antonio del Tequendama",
+      objetivo:
+        "Salida de captura: fotogrametría de troncos y piedra, grabación de ambientes y referencia de luz natural para los proyectos de tiempo real.",
+      asignaturas: ["Producción Multimedia", "Animación 3D"],
+      inscripciones: false,
+      salida: "2025-04-25 06:00",
+      regreso: "2025-04-25 19:00",
+      punto: "Portería principal · Universidad de Boyacá, sede Tunja",
+      cupo: 25,
+      costos: { transporte: 42000, poliza: 8000 },
+      consentimiento: "/documents/CONSENTIMIENTO.docx",
+      docente: {
+        nombre: "Manuel Corredor",
+        email: "mancorredor@uniboyaca.edu.co",
+        telefono: "320 000 0000",
+        donde: "Oficina de Multimedia · lunes a viernes, 8:00 a. m. a 12:00 m.",
+      },
+    },
+    {
+      id: "canal-capital",
+      nombre: "Canal Capital",
+      lema: "Un día en un canal de televisión de verdad.",
+      lugar: "Canal Capital · Bogotá",
+      objetivo:
+        "Recorrido por estudios, control maestro, switcher y sala de edición. Se ve cómo se produce en vivo y con qué equipo, que es lo que no cabe en un salón.",
+      asignaturas: ["Edición de Audio y Video"],
+      inscripciones: false,
+      salida: "2025-09-12 06:00",
+      regreso: "2025-09-12 18:00",
+      punto: "Portería principal · Universidad de Boyacá, sede Tunja",
+      cupo: 20,
+      costos: { transporte: 40000, poliza: 8000 },
+      consentimiento: "/documents/CONSENTIMIENTO.docx",
+      docente: {
+        nombre: "Juan Niño",
+        email: "juaestnino@uniboyaca.edu.co",
+        telefono: "320 000 0000",
+        donde: "Oficina de Multimedia · lunes a viernes, 8:00 a. m. a 12:00 m.",
+      },
+    },
+    // ---- fin de los datos de prueba
     {
       id: "sofa-2026",
       nombre: "SOFA 2026",

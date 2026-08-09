@@ -63,12 +63,15 @@
       </div>
     <% } %>
 
+    <%/* Un renglón por semestre cuesta poco, así que aquí caben más que en las
+         otras bandas; pasadas seis, las viejas se cuentan y ya. */%>
+    <% const TOPE = 6; %>
     <% if (ev.historial.length) { %>
       <div class="b-historial">
         <p class="b-rotulo">Lo que se ha expuesto</p>
         <table class="b-tabla">
           <tbody>
-            <% ev.historial.forEach(function (ed) { %>
+            <% ev.historial.slice(0, TOPE).forEach(function (ed) { %>
               <tr>
                 <th scope="row"><%= ed.semestre %></th>
                 <td class="cifras">
@@ -85,6 +88,13 @@
             <% }); %>
           </tbody>
         </table>
+
+        <% if (ev.historial.length > TOPE) { %>
+          <p class="b-mas">
+            Y <%= ev.historial.length - TOPE %> semestres más, desde
+            <%= ev.historial[ev.historial.length - 1].semestre %>.
+          </p>
+        <% } %>
       </div>
     <% } %>
 

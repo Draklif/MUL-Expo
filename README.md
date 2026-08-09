@@ -229,6 +229,26 @@ Un evento sin historial todavía sale igual, con lo que se sabe de él; y un
 evento nuevo en `config.EVENTOS` que aún no tenga banda propia cae en la
 genérica y aparece desde el minuto uno.
 
+**Cuando ya hay años acumulados.** Cada banda enseña completas solo las
+últimas ediciones y de ahí para atrás cada semestre se queda en un renglón —las
+cifras y la cosa que lo distingue: el tema de la jam, el cabeza de cartel, quién
+ganó—. Pasado ese segundo tope, se dicen cuántas más hubo y desde cuándo:
+
+| Banda | Completas | En un renglón | Después |
+|---|---|---|---|
+| Expo | 6 semestres en la tabla | — | "Y N semestres más, desde…" |
+| Virtual Champions | el último torneo de cada juego | 6 semestres | "Y N ediciones más" |
+| Jam de Altura | 3 ediciones | 6 | "Y N ediciones más, desde…" |
+| Music Fest | 3 carteles | 6 | "Y N ediciones más, desde…" |
+| Salidas | las que vienen, todas | 8 pasadas | manda a `/salidas` |
+
+Los topes están en cada `views/info/banda-*.ejs` (`TOPE` y `RESTO`) y no en un
+sitio común: lo que cabe depende de lo que ocupa cada pieza —un cartel del
+festival ocupa lo que ocupa, un renglón de tabla no—. Con esto la página se
+estabiliza: probada con **catorce semestres** de historia mide ~8.300 px, casi
+lo mismo que con ocho, y de ahí en adelante solo cambian los números de las
+líneas de "y N más".
+
 **Con `SOLO_EVENTO_ACTIVO: true`**, los eventos que no son el del semestre se
 siguen contando —fueron parte de lo que hizo el programa— pero **sin enlace**:
 un botón que rebota al visitante de vuelta sin explicarle nada es peor que no
