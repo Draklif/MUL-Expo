@@ -1,0 +1,100 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     BANDA DE LA EXPO — editorial
+
+     La cara de la Expo es la de una revista: serif, hilos finos, dos
+     columnas y mucho aire. Aquí se repite en pequeño, sin inventar nada:
+     el titular en Fraunces con la segunda palabra en cursiva, el texto a
+     una columna angosta y las cifras de cada semestre en una tabla de
+     hilos, que es como un anuario imprime lo que pasó.
+     ───────────────────────────────────────────────────────────────── */%>
+<% const partes = ev.nombre.split(" "); %>
+<section class="banda b-expo" id="expo">
+  <div class="banda-in">
+
+    <header class="b-cab">
+      <p class="b-tipo"><%= ev.tipo || 'Muestra académica' %></p>
+      <h2><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></h2>
+      <p class="b-lema"><%= ev.lema %></p>
+    </header>
+
+    <div class="b-cols">
+      <div class="b-texto">
+        <% if (ev.desc) { %><p><%= ev.desc %></p><% } %>
+        <% if (ev.entradilla) { %><p><%= ev.entradilla %></p><% } %>
+      </div>
+
+      <dl class="b-datos">
+        <div>
+          <dt>Cuándo</dt>
+          <dd><%= ev.cuando || 'Por confirmar' %></dd>
+        </div>
+        <div>
+          <dt>Dónde</dt>
+          <dd><%= ev.sede || 'Campus' %></dd>
+        </div>
+        <div>
+          <dt>Este semestre</dt>
+          <dd>
+            <% if (ev.vigente) { %>
+              <%= ev.inscripciones ? 'Recibiendo proyectos' : 'En curso, registro cerrado' %>
+            <% } else { %>
+              No es el evento del semestre
+            <% } %>
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    <%/* EL RECORRIDO. Es lo que hace distinta a la Expo de "todo el mundo
+         expone su trabajo": no es una sala, son salas temáticas que agrupan
+         asignaturas afines. Salen de data/expo.json con su color, el mismo
+         que tienen en la página de la Expo. */%>
+    <% if (ev.salas && ev.salas.length) { %>
+      <div class="b-historial">
+        <p class="b-rotulo">El recorrido</p>
+        <ul class="expo-salas">
+          <% ev.salas.forEach(function (s) { %>
+            <li class="cat-<%= s.categoria %>">
+              <strong><%= s.nombre %></strong>
+              <% if (s.lema) { %><span><%= s.lema %></span><% } %>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+    <% } %>
+
+    <% if (ev.historial.length) { %>
+      <div class="b-historial">
+        <p class="b-rotulo">Lo que se ha expuesto</p>
+        <table class="b-tabla">
+          <tbody>
+            <% ev.historial.forEach(function (ed) { %>
+              <tr>
+                <th scope="row"><%= ed.semestre %></th>
+                <td class="cifras">
+                  <% ed.cifras.forEach(function (c) { %>
+                    <span><strong><%= c.n %></strong> <%= c.que %></span>
+                  <% }); %>
+                </td>
+                <td class="podio">
+                  <% ed.podio.forEach(function (p) { %>
+                    <span class="<%= p.cls %>"><em><%= p.label %></em> <%= p.quien %></span>
+                  <% }); %>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    <% } %>
+
+    <div class="b-pie">
+      <% if (ev.url) { %>
+        <a class="b-ir" href="<%= ev.url %>">Ir a la Expo</a>
+      <% } else { %>
+        <p class="b-cerrada">Su página vuelve a abrir cuando sea el evento del semestre.</p>
+      <% } %>
+    </div>
+
+  </div>
+</section>

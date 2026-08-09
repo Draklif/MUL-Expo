@@ -1,0 +1,96 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     BANDA DEL MUSIC FEST — cartel
+
+     Un afiche no explica: grita un nombre y apila los demás en escalera.
+     Aquí se hace lo mismo en pequeño —Anton en mayúsculas, el degradado de
+     magenta a cian corriendo por el título y una escalera con el cartel de
+     cada edición—, porque el cartel ES la memoria del festival: los nombres
+     de los grupos que se subieron a la tarima.
+
+     La escalera se arma por RENGLONES, como en la landing del festival: el
+     primero solo, dos en el segundo y el resto abajo. Repartir aquí los
+     renglones es lo que impide que un nombre largo rompa la proporción.
+     ───────────────────────────────────────────────────────────────── */%>
+<section class="banda b-mf" id="music-fest">
+  <div class="banda-in">
+
+    <header class="b-cab">
+      <p class="b-tipo"><%= ev.tipo || 'Festival cultural' %></p>
+      <h2 class="fuego"><%= ev.nombre %></h2>
+      <p class="b-lema"><%= ev.lema %></p>
+    </header>
+
+    <div class="b-cols">
+      <div class="b-texto">
+        <% if (ev.desc) { %><p><%= ev.desc %></p><% } %>
+      </div>
+
+      <ul class="mf-areas">
+        <%/* Las áreas de producción salen de config: son las consolas que hay
+             detrás, y es lo que hace distinto a este festival de cualquier
+             tarde de música. */%>
+        <% MUSIC.areas.forEach(function (a) { %>
+          <li><strong><%= a.nombre %></strong><span><%= a.desc %></span></li>
+        <% }); %>
+      </ul>
+    </div>
+
+    <% if (ev.historial.length) { %>
+      <div class="b-historial">
+        <% ev.historial.forEach(function (ed) { %>
+          <%
+            // Los renglones del cartel: uno, dos y el resto. Igual que en la
+            // landing del festival y por la misma razón.
+            const ESCALONES = [1, 2];
+            const filas = [];
+            let puestos = 0;
+            for (const cuantos of ESCALONES) {
+              if (puestos >= ed.nombres.length) break;
+              filas.push(ed.nombres.slice(puestos, puestos + cuantos));
+              puestos += cuantos;
+            }
+            if (puestos < ed.nombres.length) filas.push(ed.nombres.slice(puestos));
+          %>
+          <article class="mf-edicion">
+            <p class="mf-cuando">
+              <%= ed.semestre %>
+              <% if (ed.fecha) { %><span>· <%= ed.fecha %></span><% } %>
+              <% if (ed.lugar) { %><span>· <%= ed.lugar %></span><% } %>
+            </p>
+
+            <% if (filas.length) { %>
+              <div class="mf-cartel">
+                <% filas.forEach(function (fila, i) { %>
+                  <div class="mf-fila n<%= Math.min(i + 1, 3) %>">
+                    <% fila.forEach(function (n) { %><span><%= n %></span><% }); %>
+                  </div>
+                <% }); %>
+              </div>
+            <% } %>
+
+            <p class="mf-cifras">
+              <% ed.cifras.forEach(function (c, i) { %><%= i ? ' · ' : '' %><%= c.n %> <%= c.que %><% }); %>
+            </p>
+
+            <% if (ed.podio.length) { %>
+              <ul class="mf-podio">
+                <% ed.podio.forEach(function (p) { %>
+                  <li class="<%= p.cls %>"><span><%= p.label %></span><%= p.quien %></li>
+                <% }); %>
+              </ul>
+            <% } %>
+          </article>
+        <% }); %>
+      </div>
+    <% } %>
+
+    <div class="b-pie">
+      <% if (ev.url) { %>
+        <a class="b-ir" href="<%= ev.url %>">Ir al festival</a>
+      <% } else { %>
+        <p class="b-cerrada">El cartel vuelve a abrir cuando sea el evento del semestre.</p>
+      <% } %>
+    </div>
+
+  </div>
+</section>

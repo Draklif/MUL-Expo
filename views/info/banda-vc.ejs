@@ -1,0 +1,99 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     BANDA DE VIRTUAL CHAMPIONS — esports
+
+     Negro casi puro, condensada en mayúsculas y las esquinas cortadas en
+     diagonal, que es la firma del torneo. El color no lo pone esta banda:
+     lo pone cada juego desde config.VC.juegos y entra por --juego, igual
+     que en su hoja. Así, agregar un juego nuevo al torneo lo agrega aquí
+     con su color sin tocar ni una regla.
+
+     Los juegos se enseñan SIEMPRE (salen del config, existan o no torneos
+     todavía) y el campeón solo cuando alguien lo declaró en el panel.
+     ───────────────────────────────────────────────────────────────── */%>
+<% const partes = ev.nombre.split(" "); %>
+<section class="banda b-vc" id="virtual-champions">
+  <div class="banda-in">
+
+    <header class="b-cab">
+      <p class="b-tipo"><%= ev.tipo || 'Torneo de esports' %></p>
+      <h2><%= partes[0] %> <em><%= partes.slice(1).join(" ") %></em></h2>
+      <p class="b-lema"><%= ev.lema %></p>
+    </header>
+
+    <div class="b-cols">
+      <div class="b-texto">
+        <% if (ev.desc) { %><p><%= ev.desc %></p><% } %>
+        <% if (ev.entradilla) { %><p><%= ev.entradilla %></p><% } %>
+      </div>
+
+      <ul class="b-marcas">
+        <li>
+          <span class="n"><%= VC.juegos.length %></span>
+          <span class="q"><%= VC.juegos.length === 1 ? 'juego' : 'juegos' %></span>
+        </li>
+        <li>
+          <span class="n">BO<%= VC.formato_final %></span>
+          <span class="q">la final</span>
+        </li>
+        <li>
+          <span class="n"><%= VC.final_presencial ? 'En vivo' : 'En línea' %></span>
+          <span class="q">se juega la final</span>
+        </li>
+      </ul>
+    </div>
+
+    <%/* LOS JUEGOS. Uno por caja, cada una con su color y su corte. Es la
+         pieza que hace que esta banda se reconozca sin leer el titular. */%>
+    <div class="vc-juegos">
+      <% VC.juegos.forEach(function (j) { %>
+        <%/* El último torneo de este juego, si lo hubo: el histórico viene
+             agrupado por semestre y aquí se busca el juego adentro. */%>
+        <%
+          let ultimo = null;
+          let cuando = null;
+          for (const ed of ev.historial) {
+            const suyo = (ed.juegos || []).find(function (x) { return x.id === j.id; });
+            if (suyo) { ultimo = suyo; cuando = ed.semestre; break; }
+          }
+        %>
+        <article class="vc-juego" style="--juego: <%= j.acento %>">
+          <p class="vc-nombre"><%= j.nombre %></p>
+          <p class="vc-formato"><%= j.titulares %>v<%= j.titulares %> · <%= j.roles.length %> roles</p>
+          <% if (ultimo) { %>
+            <p class="vc-cifra"><%= ultimo.equipos %> <%= ultimo.equipos === 1 ? 'equipo' : 'equipos' %> · <%= cuando %></p>
+            <% if (ultimo.campeon) { %>
+              <p class="vc-campeon"><span>Campeón</span><%= ultimo.campeon %></p>
+            <% } %>
+          <% } else { %>
+            <p class="vc-cifra">Todavía sin torneo jugado</p>
+          <% } %>
+        </article>
+      <% }); %>
+    </div>
+
+    <% if (ev.anteriores.length) { %>
+      <div class="b-historial">
+        <p class="b-rotulo">Ediciones anteriores</p>
+        <ul class="vc-anteriores">
+          <% ev.anteriores.forEach(function (ed) { %>
+            <li>
+              <span class="cuando"><%= ed.semestre %></span>
+              <span class="que">
+                <% ed.cifras.forEach(function (c, i) { %><%= i ? ' · ' : '' %><%= c.n %> <%= c.que %><% }); %>
+              </span>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+    <% } %>
+
+    <div class="b-pie">
+      <% if (ev.url) { %>
+        <a class="b-ir" href="<%= ev.url %>">Ir al torneo</a>
+      <% } else { %>
+        <p class="b-cerrada">El bracket vuelve a abrir cuando sea el evento del semestre.</p>
+      <% } %>
+    </div>
+
+  </div>
+</section>

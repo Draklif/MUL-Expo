@@ -97,7 +97,8 @@ Abre `http://localhost:3000` en el navegador del PC.
 
 | Ruta | Quién entra | Qué es |
 |---|---|---|
-| `/` | Cualquiera, sin login | El [evento vigente](#los-eventos): el que esté más próximo a suceder |
+| `/` | Cualquiera, sin login | El [evento vigente](#los-eventos); si no hay ninguno activo, manda a `/info` |
+| `/info` | Cualquiera, sin login | El [índice del programa](#el-índice-del-programa-info): todos los eventos y las salidas |
 | `/expo` | Cualquiera, sin login | Página pública de la Expo: el recorrido, el plano, los horarios |
 | `/virtual-champions`, `/jam-de-altura`, `/music-fest` | Cualquiera, sin login | Los otros eventos del programa |
 | `/expositores` | Estudiantes, sin login | Guía de montaje: qué debe tener el stand |
@@ -156,9 +157,10 @@ equivalentes en ningún panel, y es a propósito: con un botón y una línea de
 config diciendo lo mismo habría dos verdades, y tarde o temprano una de las dos
 estaría equivocada.
 
-- **`activo`** manda en la raíz. Al arrancar, la consola dice cuál quedó; si
-  hay dos marcados o ninguno, avisa y sigue con el primero en vez de dejar el
-  sitio sin portada.
+- **`activo`** manda en la raíz. Al arrancar, la consola dice cuál quedó. Si
+  hay dos marcados, avisa y manda con el primero; si no hay ninguno, la raíz
+  lleva al [índice del programa](#el-índice-del-programa-info) —que es un
+  estado normal del sitio, no una avería—.
 - **`inscripciones`** abre y cierra el formulario del evento —el registro de
   expositores de la Expo, la inscripción de equipos del torneo, la de la jam—.
   Cerrarlo **no borra nada**: deja de admitir, y quien ya se inscribió sigue
@@ -174,8 +176,9 @@ más que `activo` y sirve para mirar la página de otro evento un rato.
 
 Cada evento vive **además** en su propia dirección, que no cambia nunca: la
 Expo está siempre en `/expo`, esté o no en la raíz. Los enlaces repartidos
-sirven antes y después de su turno, y el pie de todas las páginas lleva a los
-demás eventos.
+sirven antes y después de su turno, y el pie de todas las páginas lleva al
+[índice del programa](#el-índice-del-programa-info), que es por donde se
+descubren los demás.
 
 **Un evento nuevo:** se agrega a la lista con su `slug` y ya es visitable —sale
 la página de aviso, con el nombre, la fecha y el lema—. Cuando tenga contenido
@@ -183,6 +186,55 @@ se le crea su `data/*.json` y su vista, se apuntan en `datos` y `vista`, y la
 dirección sigue siendo la misma. Si quiere identidad visual propia, la vista
 puede pasarle otra hoja al head (`css: '/loquesea.css'`), que reemplaza a
 `styles.css` entera en vez de apilarse encima.
+
+## El índice del programa (`/info`)
+
+Una página, y es la única pública que **no es de un evento**: es de Ingeniería
+en Multimedia. Cuenta qué hace el programa fuera del salón —los cuatro eventos
+y las salidas pedagógicas—, qué se hizo la última vez y qué viene.
+
+Vive en dos sitios según el semestre:
+
+- **con un evento activo**, es una página más. Se llega desde el pie de
+  cualquier página pública ("Todo lo que hace el programa"), y desde ahí
+  arriba se vuelve al evento en curso. Va en el pie y no en la cabecera a
+  propósito: quien entró al sitio del festival vino al festival;
+- **sin ningún evento activo**, la raíz `/` redirige aquí. Entre un semestre y
+  otro no hay nada que anunciar, y dejar la portada del último evento se leería
+  como si todavía estuviera pasando. La página lo dice de frente —"no hay
+  ninguno en curso"— y enseña todo lo demás.
+
+No tiene login ni formularios: aquí no se hace nada, se mira.
+
+**Cómo está armada.** No es una rejilla de tarjetas: es una **pila de bandas**
+a ancho completo, y cada banda se viste como el sitio del que habla —la Expo
+editorial, el torneo negro y condensado, la jam de píxel, el festival como un
+afiche y las salidas como papel—. Cinco tarjetas iguales no dirían qué es
+ninguno de los cinco. Cada banda vive en su archivo (`views/info/banda-*.ejs`)
+y la hoja es `public/info.css`, que define el armazón en variables y deja que
+cada banda solo cambie sus colores y sus letras.
+
+**De dónde sale lo que dice.** De `lib/programa.js`, y de ningún texto escrito
+a mano:
+
+- lo que **es** cada evento sale de su `data/*.json` y de `config.EVENTOS`;
+- los **números** que lo definen (los juegos del torneo, las horas de la jam,
+  las áreas del festival) salen de `config`;
+- el **historial** —cuántos equipos, qué juegos se entregaron, quién ganó, qué
+  grupos estuvieron en el cartel— se **cuenta** contra la base, semestre por
+  semestre. Solo entra lo aprobado o confirmado, y de las salidas pasadas se
+  dice cuántos *viajaron*, no cuántos se registraron.
+
+Un evento sin historial todavía sale igual, con lo que se sabe de él; y un
+evento nuevo en `config.EVENTOS` que aún no tenga banda propia cae en la
+genérica y aparece desde el minuto uno.
+
+**Con `SOLO_EVENTO_ACTIVO: true`**, los eventos que no son el del semestre se
+siguen contando —fueron parte de lo que hizo el programa— pero **sin enlace**:
+un botón que rebota al visitante de vuelta sin explicarle nada es peor que no
+ponerlo. Y esa bandera no bloquea nada cuando no hay evento activo: sin nadie a
+quien darle la exclusiva, cerrarlo todo dejaría el índice lleno de enlaces
+muertos.
 
 ## Virtual Champions
 

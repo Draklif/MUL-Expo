@@ -1,0 +1,138 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL ÍNDICE DEL PROGRAMA
+
+     La única página pública que no es de un evento: es de Ingeniería en
+     Multimedia. Vive en /info, y es además la raíz del sitio los semestres
+     en que ningún evento está activo.
+
+     CÓMO ESTÁ ARMADA, que es lo que hay que entender antes de tocarla:
+
+     esto NO es una rejilla de tarjetas. Cada evento del programa tiene una
+     cara propia —la Expo es editorial, el torneo es negro y condensado, la
+     jam es de píxel, el festival es un afiche y las salidas son papel— y una
+     lista de tarjetas iguales las aplanaría todas a la vez. Así que la página
+     es una PILA DE BANDAS: cada una ocupa el ancho entero, trae su fondo, su
+     letra y su color, y se lee como un pedazo del sitio de ese evento. El
+     índice no las decora: se aparta y las deja hablar.
+
+     Cada banda vive en su propio archivo, en views/info/, por la misma razón
+     por la que cada evento tiene su hoja de estilos: son cinco maquetas
+     distintas y meterlas en un archivo con cinco ifs las volvería una sola
+     con excepciones.
+
+     El orden lo pone config.EVENTOS. Un evento nuevo que todavía no tenga
+     banda propia cae en la genérica y aparece igual desde el minuto uno; el
+     día que se le haga la suya, se agrega aquí abajo.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('partials/head', {
+      title: title,
+      descripcion: 'Los eventos y las salidas pedagógicas de Ingeniería en Multimedia, Universidad de Boyacá.',
+      css: css,
+      themeColor: themeColor,
+    }) %>
+
+<header class="in-top">
+  <div class="in-top-in">
+    <a href="/info" class="in-marca">Ingeniería en <em>Multimedia</em></a>
+    <%/* El único enlace de la cabecera, y solo cuando hay a dónde ir: al
+         evento que está pasando. Es el camino de vuelta para quien llegó
+         aquí desde el pie de su página. */%>
+    <% if (vigente && eventos[vigente.slug]) { %>
+      <a href="/" class="in-ahora">
+        <span>Ahora mismo</span><strong><%= eventos[vigente.slug].nombre %></strong>
+      </a>
+    <% } %>
+  </div>
+</header>
+
+<main class="in">
+
+  <%/* ───── LA PORTADA ───── */%>
+  <section class="in-portada">
+    <p class="in-eyebrow">Universidad de Boyacá</p>
+    <h1>Lo que pasa <em>fuera del salón</em></h1>
+    <p class="in-lead">
+      Una muestra, un torneo, una jam, un festival y los buses que salen a las
+      cinco de la mañana. Todo lo organiza el programa de Ingeniería en
+      Multimedia y en todo participan estudiantes: aquí está cada cosa, lo que
+      se hizo la última vez y lo que viene.
+    </p>
+
+    <%/* EL ESTADO DEL SEMESTRE. Es la primera pregunta de quien llega —¿hay
+         algo ahora?— y por eso se responde antes que nada, con las dos
+         respuestas posibles escritas de frente. */%>
+    <% if (vigente && eventos[vigente.slug]) { %>
+      <% const ahora = eventos[vigente.slug]; %>
+      <div class="in-estado viva">
+        <p class="k">El evento de este semestre</p>
+        <p class="v"><a href="/"><%= ahora.nombre %></a></p>
+        <p class="q"><%= ahora.lema %></p>
+        <p class="chips">
+          <span class="chip <%= ahora.inscripciones ? 'ok' : '' %>">
+            <%= ahora.inscripciones ? 'Inscripciones abiertas' : 'Inscripciones cerradas' %>
+          </span>
+          <% if (ahora.cuando) { %><span class="chip"><%= ahora.cuando %></span><% } %>
+        </p>
+      </div>
+    <% } else { %>
+      <div class="in-estado quieta">
+        <p class="k">El evento de este semestre</p>
+        <p class="v">No hay ninguno en curso</p>
+        <p class="q">
+          Entre un semestre y otro el programa no anuncia nada, y esta página
+          es lo que hay: el próximo evento aparece aquí y en la raíz del sitio
+          en cuanto se abra. Las salidas pedagógicas van por su cuenta y
+          pueden estar recibiendo gente ahora mismo — están más abajo.
+        </p>
+      </div>
+    <% } %>
+
+    <%/* Los atajos. Con cinco bandas largas, bajar a la que se busca a pulso
+         es un scroll de tres pantallas. No es una barra de navegación: es el
+         índice de esta página y por eso vive dentro de ella y no arriba. */%>
+    <nav class="in-atajos" aria-label="Secciones de la página">
+      <% orden.forEach(function (slug) { if (eventos[slug]) { %>
+        <a href="#<%= slug %>"><%= eventos[slug].nombre %></a>
+      <% } }); %>
+      <a href="#salidas">Salidas pedagógicas</a>
+    </nav>
+  </section>
+
+  <%/* ───── LAS BANDAS ─────
+       El orden es el de config.EVENTOS: el mismo que ve quien edita el
+       archivo, para que no haya que adivinar dónde va a caer un evento. */%>
+  <% orden.forEach(function (slug) { %>
+    <% const ev = eventos[slug]; if (!ev) return; %>
+    <% if (slug === 'expo') { %>
+      <%- include('info/banda-expo', { ev: ev }) %>
+    <% } else if (slug === 'virtual-champions') { %>
+      <%- include('info/banda-vc', { ev: ev, VC: VC }) %>
+    <% } else if (slug === 'jam-de-altura') { %>
+      <%- include('info/banda-jam', { ev: ev, JAM: JAM }) %>
+    <% } else if (slug === 'music-fest') { %>
+      <%- include('info/banda-music', { ev: ev, MUSIC: MUSIC }) %>
+    <% } else { %>
+      <%- include('info/banda-generica', { ev: ev }) %>
+    <% } %>
+  <% }); %>
+
+  <%- include('info/banda-salidas', { salidas: salidas }) %>
+
+</main>
+
+<footer class="in-foot">
+  <div class="in-foot-in">
+    <div>
+      <strong>Ingeniería en Multimedia</strong>
+      <span>Universidad de Boyacá</span>
+    </div>
+    <div class="der">
+      <%/* Aquí sí se nombra el acceso de docentes, y es el único sitio del
+           índice donde aparece: esta página no tiene panel propio, así que
+           manda al de la Expo, que es el del programa. */%>
+      <a href="/acceso" class="in-acceso">Acceso docentes</a>
+    </div>
+  </div>
+</footer>
+
+<%- include('partials/footer') %>

@@ -1,0 +1,113 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     BANDA DE LAS SALIDAS — papel
+
+     La única banda clara de la página, y a propósito: las salidas no son un
+     evento que se mire, son un trámite que se llena. Su cara es un formato
+     institucional —crema, tinta oscura, reglas punteadas— y aquí se
+     conserva, incluida la muesca del tiquete en cada salida.
+
+     Se parten en dos porque son dos preguntas distintas: a cuál me alcanzo a
+     apuntar, y a dónde ha ido el programa. De las que ya pasaron se dice
+     cuántos VIAJARON, no cuántos se registraron.
+     ───────────────────────────────────────────────────────────────── */%>
+<section class="banda b-sal" id="salidas">
+  <div class="banda-in">
+
+    <header class="b-cab">
+      <p class="b-tipo">Salidas pedagógicas</p>
+      <h2>A dónde <em>sale</em> el programa</h2>
+      <p class="b-lema">
+        Ferias, museos, estudios y todo lo que no se puede ver desde un salón.
+      </p>
+    </header>
+
+    <p class="sal-nota">
+      No son eventos del semestre: cada salida es de unas asignaturas y va por
+      su cuenta, así que puede haber dos abiertas a la vez. El registro se hace
+      en línea; el consentimiento firmado y el pago se entregan en persona al
+      docente encargado.
+    </p>
+
+    <% if (salidas.proximas.length) { %>
+      <div class="sal-grupo">
+        <p class="b-rotulo">Lo que viene</p>
+        <div class="sal-lista">
+          <% salidas.proximas.forEach(function (s) { %>
+            <article class="sal-boleta <%= s.abierta ? '' : 'apagada' %>">
+              <div class="sal-top">
+                <h3><%= s.nombre %></h3>
+                <span class="sal-chip <%= s.abierta ? 'ok' : 'no' %>">
+                  <% if (s.abierta) { %>Abierta<% } else { %>
+                    <%= s.cerrada === 'lleno' ? 'Cupo lleno' : 'Cerrada' %>
+                  <% } %>
+                </span>
+              </div>
+
+              <p class="sal-lugar"><%= s.lugar %></p>
+              <% if (s.objetivo) { %><p class="sal-objetivo"><%= s.objetivo %></p><% } %>
+
+              <dl class="sal-datos">
+                <div>
+                  <dt>Sale</dt>
+                  <dd><%= s.sale ? s.sale.dia + ', ' + s.sale.hora : 'Por confirmar' %></dd>
+                </div>
+                <% if (s.precio) { %>
+                  <div>
+                    <dt>Cuesta</dt>
+                    <dd><%= s.precio %></dd>
+                  </div>
+                <% } %>
+                <% if (s.cupo) { %>
+                  <div>
+                    <dt>Cupo</dt>
+                    <dd><%= s.inscritos %> de <%= s.cupo %></dd>
+                  </div>
+                <% } %>
+              </dl>
+
+              <% if (s.asignaturas && s.asignaturas.length) { %>
+                <p class="sal-materias">
+                  <% s.asignaturas.forEach(function (a) { %><span><%= a %></span><% }); %>
+                </p>
+              <% } %>
+
+              <a class="sal-ir" href="/salidas/<%= s.id %>">
+                <%= s.abierta ? 'Registrarme' : 'Ver la salida' %>
+              </a>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    <% } else { %>
+      <p class="sal-vacio">Ahora mismo no hay ninguna salida programada.</p>
+    <% } %>
+
+    <% if (salidas.pasadas.length) { %>
+      <div class="sal-grupo">
+        <p class="b-rotulo">A dónde se ha ido</p>
+        <ul class="sal-pasadas">
+          <% salidas.pasadas.forEach(function (s) { %>
+            <li>
+              <a href="/salidas/<%= s.id %>">
+                <span class="cuando"><%= s.sale ? s.sale.dia : '' %></span>
+                <span class="que"><%= s.nombre %></span>
+                <span class="donde"><%= s.lugar %></span>
+                <% if (s.viajaron) { %>
+                  <span class="cuantos"><%= s.viajaron %> <%= s.viajaron === 1 ? 'viajó' : 'viajaron' %></span>
+                <% } %>
+              </a>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+    <% } %>
+
+    <div class="b-pie">
+      <a class="b-ir" href="/salidas">Ver todas las salidas</a>
+      <p class="sal-codigo">
+        ¿Ya te registraste en alguna? <a href="/salidas/estado">Consulta tu código</a>.
+      </p>
+    </div>
+
+  </div>
+</section>

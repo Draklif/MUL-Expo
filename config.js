@@ -40,6 +40,10 @@ const DOMINIO = "uniboyaca.edu.co";
 //
 //   activo        — true en UNO solo. Es el evento del semestre: el que toma
 //                   la raíz "/" y el único al que se le abren inscripciones.
+//                   En NINGUNO también es una respuesta válida —entre un
+//                   semestre y otro no está pasando nada—: entonces la raíz
+//                   lleva a /info, el índice del programa, que lo dice de
+//                   frente y enseña todo lo que se ha hecho y lo que viene.
 //   inscripciones — true mientras el formulario reciba gente. Se pone en true
 //                   al empezar el semestre y en false el día que se cierra;
 //                   cerrarlo no borra nada, solo deja de admitir.
@@ -57,7 +61,7 @@ const EVENTOS = [
     slug: "expo",
     nombre: "Expo Multimedia",
     activo: false,
-    inscripciones: true,
+    inscripciones: false,
     fecha: "",
     lema: "Todos los proyectos finales del semestre, en un solo recorrido.",
     datos: "expo.json",
@@ -88,8 +92,8 @@ const EVENTOS = [
   {
     slug: "music-fest",
     nombre: "Multimedia Music Fest",
-    activo: true,
-    inscripciones: true,
+    activo: false,
+    inscripciones: false,
     fecha: "",
     lema: "Los grupos culturales del programa en vivo, con la producción entera en manos de los estudiantes.",
     datos: "music-fest.json",

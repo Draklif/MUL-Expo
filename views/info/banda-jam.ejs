@@ -1,0 +1,84 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     BANDA DE LA JAM — píxel
+
+     Verde de consola sobre violeta de madrugada, marcos cuadrados con las
+     esquinas mordidas y sombras planas: la misma retícula de 4 píxeles de
+     su hoja. El titular va en Press Start 2P, que ocupa muchísimo por
+     letra, así que aquí es DELIBERADAMENTE pequeño —es un rótulo de
+     arcade, no un titular de revista— y el peso visual lo carga el marco.
+
+     Lo que se enseña de cada edición son los JUEGOS entregados, con su
+     nombre. Un contador de equipos no dice nada; una lista de juegos que
+     existen porque alguien pasó un fin de semana haciéndolos, sí.
+     ───────────────────────────────────────────────────────────────── */%>
+<section class="banda b-jam" id="jam-de-altura">
+  <div class="banda-in">
+
+    <header class="b-cab">
+      <p class="b-tipo"><%= ev.tipo || 'Gamejam de ' + JAM.horas + ' horas' %></p>
+      <h2><%= ev.nombre %></h2>
+      <p class="b-lema"><%= ev.lema %></p>
+    </header>
+
+    <div class="b-cols">
+      <div class="b-texto">
+        <% if (ev.desc) { %><p><%= ev.desc %></p><% } %>
+        <% if (ev.entradilla) { %><p><%= ev.entradilla %></p><% } %>
+      </div>
+
+      <div class="jam-reglas px">
+        <p class="jam-reloj"><%= JAM.horas %>:00</p>
+        <ul>
+          <li><span>Equipos</span> hasta <%= JAM.max_integrantes %></li>
+          <li><span>Dónde</span> <%= ev.sede || 'En línea' %></li>
+          <li><span>Tema</span> se revela al arrancar</li>
+        </ul>
+      </div>
+    </div>
+
+    <% if (ev.historial.length) { %>
+      <div class="b-historial">
+        <p class="b-rotulo">Lo que se ha hecho en <%= JAM.horas %> horas</p>
+
+        <div class="jam-ediciones">
+          <% ev.historial.forEach(function (ed) { %>
+            <article class="jam-edicion px">
+              <p class="jam-cuando"><%= ed.semestre %></p>
+
+              <% if (ed.tema) { %>
+                <p class="jam-tema"><span>Tema</span><%= ed.tema %></p>
+              <% } %>
+
+              <p class="jam-cifras">
+                <% ed.cifras.forEach(function (c, i) { %><%= i ? ' · ' : '' %><%= c.n %> <%= c.que %><% }); %>
+              </p>
+
+              <% if (ed.nombres.length) { %>
+                <ul class="jam-juegos">
+                  <% ed.nombres.forEach(function (n) { %><li><%= n %></li><% }); %>
+                </ul>
+              <% } %>
+
+              <% if (ed.podio.length) { %>
+                <ul class="jam-podio">
+                  <% ed.podio.forEach(function (p) { %>
+                    <li class="<%= p.cls %>"><span><%= p.label %></span><%= p.quien %></li>
+                  <% }); %>
+                </ul>
+              <% } %>
+            </article>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="b-pie">
+      <% if (ev.url) { %>
+        <a class="b-ir" href="<%= ev.url %>">Ir a la jam</a>
+      <% } else { %>
+        <p class="b-cerrada">La página de la jam vuelve a abrir cuando sea el evento del semestre.</p>
+      <% } %>
+    </div>
+
+  </div>
+</section>

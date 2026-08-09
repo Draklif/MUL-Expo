@@ -10,6 +10,12 @@
      son los de este semestre. Lo que se necesita para moverse está arriba,
      en la cabecera de cada página.
 
+     La excepción es /info, y es una sola puerta, no un menú: el índice del
+     programa, que cuenta qué más se hace en Multimedia. No puede envejecer
+     —lo que enseña lo decide él, y a los eventos cerrados ni los enlaza— y va
+     aquí abajo justamente para no estorbar: quien entró al sitio del festival
+     vino al festival, no a leer sobre el programa.
+
      El marcado es el mismo para las cuatro hojas y solo cambia la clase: la
      Expo es .pub-foot, el torneo .vc-foot, la jam .jam-foot y las salidas
      .sal-foot. Cada hoja lo viste como le corresponde; ninguna decide qué
@@ -28,6 +34,7 @@
       <span><%= programa %> · <%= institucion %></span>
     </div>
     <div class="der">
+      <a href="/info" class="foot-acceso">Todo lo que hace el programa</a>
       <%/* El acceso va discreto y sin nombre de pila: estas páginas son para
            quien viene a exponer, a jugar o a viajar, no para quien califica. */%>
       <a href="<%= panel %><%= dentro ? '/panel' : '/acceso' %>" class="foot-acceso">

@@ -2357,7 +2357,10 @@ body:has(> .pub-foot) > main { flex: 1 0 auto; min-width: 0; width: 100%; }
   display: block;
 }
 .pub-foot span { font-size: 12px; color: var(--ink-mute); }
-.pub-foot .der { margin-left: auto; }
+/* Los dos enlaces del pie —el índice del programa y el acceso de docentes—
+   en fila, y envolviendo antes que salirse: en un teléfono caben uno debajo
+   del otro, que es mejor que encogerlos hasta que no se lean. */
+.pub-foot .der { margin-left: auto; display: flex; gap: 10px; flex-wrap: wrap; }
 .foot-acceso {
   font-size: 12px;
   color: var(--ink-mute);

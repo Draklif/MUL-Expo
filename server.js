@@ -29,6 +29,7 @@ const musicRouter = require("./routes/music");
 const musicPanelRouter = require("./routes/music-panel");
 const salidasRouter = require("./routes/salidas");
 const salidasPanelRouter = require("./routes/salidas-panel");
+const infoRouter = require("./routes/info");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
 const { configurado: vcConfigurado } = require("./lib/vc-auth");
@@ -88,8 +89,10 @@ app.use((req, res, next) => {
   // Quiénes somos, para el pie de cualquier página. Salen del contenido del
   // evento vigente y no de una constante en el código porque el JSON de cada
   // evento puede decirlo a su manera; una vista que traiga el suyo lo pisa,
-  // que es lo que pasa en las landings.
-  const marca = eventos.contenidoDe(vigente.slug);
+  // que es lo que pasa en las landings. Sin evento del semestre no hay JSON
+  // que preguntar y contenidoDe devuelve la plantilla vacía, que ya trae el
+  // nombre del programa y el de la universidad.
+  const marca = eventos.contenidoDe(vigente && vigente.slug);
   res.locals.programa = marca.programa;
   res.locals.institucion = marca.institucion;
 
@@ -159,10 +162,22 @@ function renderEvento(res, evento, base) {
   });
 }
 
+// El índice del programa. Es la única página pública que no es de un evento y
+// va montada antes que la raíz porque es a donde manda la raíz cuando no hay
+// ningún evento activo.
+app.use("/info", infoRouter);
+
 // La raíz es el evento más próximo a suceder —no hay dos a la vez, así que no
 // hace falta un menú de entrada—. Quien llegue sin enlace ve lo que viene.
 app.get("/", (req, res) => {
   const vigente = eventos.activo();
+
+  // Entre un semestre y otro no hay evento que anunciar. En vez de dejar la
+  // portada del último —que se leería como si todavía estuviera pasando— se
+  // manda al índice del programa, que dice que ahora mismo no hay nada en
+  // curso y enseña todo lo que se ha hecho y lo que viene.
+  if (!vigente) return res.redirect("/info");
+
   // Un evento con router propio se arma con datos de la base, así que su
   // página la sirve él y no renderEvento: la raíz manda a su dirección.
   if (vigente.ruta) return res.redirect(`/${vigente.slug}`);
@@ -277,19 +292,28 @@ eventos.EVENTOS.forEach((evento) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, "0.0.0.0", () => {
   const vigente = eventos.activo();
-  const abierto = eventos.inscripcionesAbiertas(vigente.slug);
+  const abierto = vigente ? eventos.inscripcionesAbiertas(vigente.slug) : false;
 
   // Las dos líneas que hay que leer al arrancar: qué evento manda y si está
   // recibiendo gente. Las dos salen de config.js y de ningún otro lado.
-  console.log(`\n  ✓ ${vigente.nombre} en http://localhost:${PORT}`);
-  console.log(`    Semestre ${PERIODO} · inscripciones ${abierto ? "ABIERTAS" : "cerradas"}`);
-  if (!abierto) {
-    console.log(`    Para abrirlas: inscripciones: true en "${vigente.slug}", en config.js.`);
+  if (vigente) {
+    console.log(`\n  ✓ ${vigente.nombre} en http://localhost:${PORT}`);
+    console.log(`    Semestre ${PERIODO} · inscripciones ${abierto ? "ABIERTAS" : "cerradas"}`);
+    if (!abierto) {
+      console.log(`    Para abrirlas: inscripciones: true en "${vigente.slug}", en config.js.`);
+    }
+  } else {
+    // Sin evento del semestre la raíz es el índice del programa. Se dice con
+    // el mismo tono que lo otro: es un estado normal, no una avería.
+    console.log(`\n  ✓ Ingeniería en Multimedia en http://localhost:${PORT}`);
+    console.log(`    Semestre ${PERIODO} · sin evento activo: la raíz lleva al índice`);
+    console.log(`    Para activar uno: activo: true en su evento, en config.js.`);
   }
   console.log("");
-  eventos.EVENTOS.filter((e) => e.slug !== vigente.slug).forEach((e) => {
+  eventos.EVENTOS.filter((e) => !vigente || e.slug !== vigente.slug).forEach((e) => {
     console.log(`  · ${e.nombre.padEnd(24)} http://localhost:${PORT}/${e.slug}`);
   });
+  console.log(`  · Índice del programa:     http://localhost:${PORT}/info`);
   console.log(`  ✓ Acceso docentes:         http://localhost:${PORT}/acceso`);
   console.log(
     vcConfigurado()
