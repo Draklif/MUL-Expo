@@ -3,17 +3,18 @@
    Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
 
    Esta página tiene un problema que no tiene ninguna otra del sitio: habla
-   de CINCO cosas que ya tienen cara propia, y las cinco caras son
+   de SEIS cosas que ya tienen cara propia, y las seis caras son
    incompatibles entre sí a propósito.
 
      Expo Multimedia   — editorial, serif, papel.
      Virtual Champions — negro, condensada, esquinas cortadas.
      Jam de Altura     — píxel, verde consola sobre violeta.
+     INKreible         — papel claro, rotulador y rojo de sello.
      Music Fest        — cartel, Anton y degradado.
      Salidas           — papel claro, formulario institucional.
 
-   La salida fácil era inventar una sexta cara y meterlo todo en tarjetas
-   iguales. Se descartó: cinco tarjetas grises con el nombre de cada evento
+   La salida fácil era inventar una séptima cara y meterlo todo en tarjetas
+   iguales. Se descartó: seis tarjetas grises con el nombre de cada evento
    no dicen qué es ninguno, y quien conoce el festival no lo reconocería.
 
    Lo que se hace en cambio: la página es una PILA DE BANDAS a ancho
@@ -65,9 +66,11 @@
   --f-pixel: "Press Start 2P", "Courier New", monospace;
   --f-mono: "Space Mono", "Courier New", monospace;
   --f-anton: "Anton", "Arial Narrow", Impact, sans-serif;
+  --f-marker: "Permanent Marker", "Comic Sans MS", cursive;
+  --f-mano: "Caveat", "Segoe Script", cursive;
 
   /* El ancho de lectura de todas las bandas. Uno solo para que la página
-     tenga un eje aunque cambie de color cinco veces. */
+     tenga un eje aunque cambie de color seis veces. */
   --ancho: 1020px;
 }
 
@@ -809,7 +812,135 @@ img { max-width: 100%; }
 .jam-podio .bronce { color: #e0a06a; }
 
 /* =====================================================================
-   BANDA 4 · MULTIMEDIA MUSIC FEST — cartel
+   BANDA 4 · INKREIBLE — papel y tinta
+   Clara, como la de las salidas, pero de otra mano: rojo de sello en vez
+   de verde, rotulador en los titulares y los bordes a pulso —el mismo
+   border-radius desigual de su hoja— en vez de la pauta de formato.
+   ===================================================================== */
+.b-ink {
+  --fondo: #f3ede1;
+  --tinta: #16120c;
+  --dim: #4f4636;
+  --mute: #8b8069;
+  --linea: #d6c9ae;
+  --acento: #c33f28;
+  --tipo: var(--f-marker);
+
+  border-top-color: #c6b590;
+}
+
+/* Permanent Marker no tiene más que una grosura y ya viene inclinada: el
+   titular no necesita ni negrita ni cursiva encima, solo tamaño. */
+.b-ink .b-cab h2 {
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--acento);
+}
+.b-ink .b-cab h2 em { font-style: normal; color: var(--tinta); }
+.b-ink .b-tipo, .b-ink .b-rotulo { font-family: var(--f-mano); font-size: 17px; letter-spacing: .02em; }
+.b-ink .b-ir { border-radius: 200px 14px 220px 12px / 12px 210px 14px 200px; }
+
+/* El trazo a pulso: el mismo recurso de public/ink.css. Un radio desigual
+   en las cuatro esquinas hace que un rectángulo parezca dibujado encima
+   del papel y no impreso con él. */
+.ink-reglas,
+.ink-edicion {
+  background: #fffdf6;
+  border: 2px solid var(--tinta);
+  border-radius: 220px 18px 255px 16px / 16px 225px 18px 250px;
+  padding: 22px;
+  min-width: 0;
+}
+
+.ink-numero {
+  margin: 0 0 12px;
+  font-family: var(--f-marker);
+  font-size: clamp(38px, 7vw, 58px);
+  line-height: 1;
+  color: var(--acento);
+}
+.ink-reglas ul { margin: 0; padding: 0; list-style: none; font-size: 13px; }
+.ink-reglas li {
+  padding: 7px 0;
+  border-top: 1px dashed var(--linea);
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+.ink-reglas li span {
+  display: block;
+  font-family: var(--f-mano);
+  font-size: 15px;
+  color: var(--tinta);
+}
+
+.ink-ediciones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+/* A partir de tres tarjetas la rejilla se parte sola; por debajo de 620px
+   van una sobre otra, que es lo único que cabe con este relleno. */
+@media (max-width: 620px) {
+  .ink-ediciones { grid-template-columns: minmax(0, 1fr); }
+}
+
+.ink-cuando {
+  margin: 0 0 4px;
+  font-family: var(--f-mano);
+  font-size: 19px;
+  color: var(--acento);
+}
+.ink-cifras { margin: 0; font-size: 12.5px; color: var(--dim); }
+
+.ink-obras {
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+}
+.ink-obras li {
+  padding: 5px 0 5px 18px;
+  position: relative;
+  overflow-wrap: anywhere;
+}
+/* La viñeta es un trazo de tinta, no un punto: dos píxeles inclinados. */
+.ink-obras li::before {
+  content: "";
+  position: absolute;
+  left: 2px;
+  top: 12px;
+  width: 9px;
+  height: 2px;
+  background: var(--acento);
+  transform: rotate(-18deg);
+}
+
+.ink-podio {
+  margin: 16px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px dashed var(--linea);
+  list-style: none;
+  font-size: 13.5px;
+}
+.ink-podio li { padding: 4px 0; overflow-wrap: anywhere; }
+.ink-podio span {
+  display: block;
+  font-family: var(--f-mano);
+  font-size: 15px;
+  color: var(--mute);
+}
+/* Oro, plata y bronce oscurecidos: sobre papel, los de las bandas oscuras
+   se pierden del todo. */
+.ink-podio .oro { color: #a8791a; }
+.ink-podio .plata { color: #6f6a5c; }
+.ink-podio .bronce { color: #96551f; }
+
+.b-ink .b-viejas li { border-bottom-color: rgba(120, 105, 75, .22); }
+.b-ink .b-viejas .cuando { font-family: var(--f-mano); font-size: 16px; }
+
+/* =====================================================================
+   BANDA 5 · MULTIMEDIA MUSIC FEST — cartel
    Anton en mayúsculas, el degradado corriendo por el título y la escalera
    de nombres. El degradado nunca va plano: siempre de una esquina a otra.
    ===================================================================== */
@@ -937,7 +1068,7 @@ img { max-width: 100%; }
 .mf-podio .bronce { color: #ff8a3d; }
 
 /* =====================================================================
-   BANDA 5 · SALIDAS PEDAGÓGICAS — papel
+   BANDA 6 · SALIDAS PEDAGÓGICAS — papel
    La única clara. Crema con pauta de formato, tinta oscura, reglas
    punteadas y la muesca del tiquete. Nada de sombras difusas: una plana y
    corta, la de un papel encima de otro.

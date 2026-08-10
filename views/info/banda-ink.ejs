@@ -1,0 +1,104 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     BANDA DE INKREIBLE — papel y tinta
+
+     Clara, como la de las salidas, porque el reto es papel de verdad: se
+     dibuja sobre él. Se distinguen por lo demás —aquí manda el rojo del
+     sello y el trazo a mano; allá el verde y la pauta de formato— y entre
+     las dos se cruza la del festival, que es la más oscura de todas. El
+     sistema de variables de la hoja lo permite sin una regla nueva: esta
+     redefine --fondo y --tinta al revés que las oscuras y todo lo
+     compartido se acomoda solo.
+
+     Lo que se enseña de cada edición son los DIBUJOS premiados por su
+     título. Un contador de inscritos no dice nada; que alguien hiciera 28
+     dibujos en 28 días, sí.
+     ───────────────────────────────────────────────────────────────── */%>
+<section class="banda b-ink" id="inkreible">
+  <div class="banda-in">
+
+    <header class="b-cab">
+      <p class="b-tipo"><%= ev.tipo || 'Reto de dibujo de ' + INK.dias + ' días' %></p>
+      <h2><%= ev.nombre %></h2>
+      <p class="b-lema"><%= ev.lema %></p>
+    </header>
+
+    <div class="b-cols">
+      <div class="b-texto">
+        <% if (ev.desc) { %><p><%= ev.desc %></p><% } %>
+        <% if (ev.entradilla) { %><p><%= ev.entradilla %></p><% } %>
+      </div>
+
+      <div class="ink-reglas">
+        <p class="ink-numero"><%= INK.dias %></p>
+        <ul>
+          <li><span>Días</span> uno por palabra</li>
+          <li><span>Semanas</span> <%= INK.semanas %>, con ganador cada una</li>
+          <li><span>Técnica</span> <%= INK.tecnicas.map(function (t) { return t.label; }).join(' o ') %></li>
+        </ul>
+      </div>
+    </div>
+
+    <%/* Mismo reparto que las otras bandas: tres ediciones completas y el
+         resto en un renglón cada una. */%>
+    <% const TOPE = 3, RESTO = 6; %>
+    <% if (ev.historial.length) { %>
+      <div class="b-historial">
+        <p class="b-rotulo">Lo que se ha dibujado</p>
+
+        <div class="ink-ediciones">
+          <% ev.historial.slice(0, TOPE).forEach(function (ed) { %>
+            <article class="ink-edicion">
+              <p class="ink-cuando"><%= ed.semestre %></p>
+
+              <p class="ink-cifras">
+                <% ed.cifras.forEach(function (c, i) { %><%= i ? ' · ' : '' %><%= c.n %> <%= c.que %><% }); %>
+              </p>
+
+              <% if (ed.nombres.length) { %>
+                <ul class="ink-obras">
+                  <% ed.nombres.forEach(function (n) { %><li><%= n %></li><% }); %>
+                </ul>
+              <% } %>
+
+              <% if (ed.podio.length) { %>
+                <ul class="ink-podio">
+                  <% ed.podio.forEach(function (p) { %>
+                    <li class="<%= p.cls %>"><span><%= p.label %></span><%= p.quien %></li>
+                  <% }); %>
+                </ul>
+              <% } %>
+            </article>
+          <% }); %>
+        </div>
+
+        <% if (ev.historial.length > TOPE) { %>
+          <ul class="b-viejas">
+            <% ev.historial.slice(TOPE, TOPE + RESTO).forEach(function (ed) { %>
+              <li>
+                <span class="cuando"><%= ed.semestre %></span>
+                <span class="que"><%= ed.resumen %></span>
+                <% if (ed.marca) { %><span class="marca"><%= ed.marca %></span><% } %>
+              </li>
+            <% }); %>
+          </ul>
+
+          <% if (ev.historial.length > TOPE + RESTO) { %>
+            <p class="b-mas">
+              Y <%= ev.historial.length - TOPE - RESTO %> ediciones más, desde
+              <%= ev.historial[ev.historial.length - 1].semestre %>.
+            </p>
+          <% } %>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="b-pie">
+      <% if (ev.url) { %>
+        <a class="b-ir" href="<%= ev.url %>">Ir al reto</a>
+      <% } else { %>
+        <p class="b-cerrada">La página del reto vuelve a abrir cuando sea el evento del semestre.</p>
+      <% } %>
+    </div>
+
+  </div>
+</section>

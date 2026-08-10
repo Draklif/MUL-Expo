@@ -23,7 +23,7 @@
 // =====================================================================
 const express = require("express");
 const programa = require("../lib/programa");
-const { VC, JAM, MUSIC } = require("../config");
+const { VC, JAM, MUSIC, INK } = require("../config");
 
 const router = express.Router();
 
@@ -37,6 +37,7 @@ router.get("/", (req, res) => {
     VC,
     JAM,
     MUSIC,
+    INK,
     css: "/info.css",
     themeColor: "#0b0b10",
     title: "Ingeniería en Multimedia · Universidad de Boyacá",

@@ -60,9 +60,9 @@ const EVENTOS = [
   {
     slug: "expo",
     nombre: "Expo Multimedia",
-    activo: false,
-    inscripciones: false,
-    fecha: "",
+    activo: true,
+    inscripciones: true,
+    fecha: "2026-11-20",
     lema: "Todos los proyectos finales del semestre, en un solo recorrido.",
     datos: "expo.json",
     vista: "landing",
