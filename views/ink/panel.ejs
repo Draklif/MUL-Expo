@@ -1,0 +1,58 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="ink">
+  <% if (aviso.borrada) { %>
+    <div class="aviso bueno" style="margin-top:26px"><p style="margin:0">Se borró la edición.</p></div>
+  <% } %>
+
+  <%/* ───── EL SEMESTRE EN CURSO ─────
+       La edición no se abre desde aquí: ya está abierta y vacía desde que
+       arrancó el servidor. Lo que sí hay que decir es si está recibiendo
+       inscripciones, porque eso se prende en config y no en esta pantalla. */%>
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %></p>
+        <h2>Edición</h2>
+      </div>
+      <span class="chip <%= abierta ? 'ok' : 'no' %>">
+        Inscripciones <%= abierta ? "abiertas" : "cerradas" %>
+      </span>
+    </div>
+
+    <p class="sec-lead">
+      Una por semestre, abierta sola al arrancar. Para empezar el semestre
+      siguiente se cambia <code>PERIODO</code> en <code>config.js</code>: esta
+      queda archivada con sus palabras, sus dibujos y su podio, y sale otra
+      vacía en su lugar.
+      <% if (!abierta) { %>
+        Las inscripciones se abren poniendo <code>inscripciones: true</code> en
+        INKreible, en ese mismo archivo.
+      <% } %>
+    </p>
+
+    <% if (!ediciones.length) { %>
+      <div class="vacio" style="margin-top:20px">
+        No hay edición en este semestre. Reinicia el servidor y se abre sola.
+      </div>
+    <% } else { %>
+      <%- include('partials/tabla-ediciones', { lista: ediciones, historial: false }) %>
+    <% } %>
+  </section>
+
+  <%/* ───── SEMESTRES PASADOS ───── */%>
+  <% if (pasadas.length) { %>
+    <section class="ink-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Archivo</p>
+          <h2>Ediciones pasadas</h2>
+        </div>
+      </div>
+      <%- include('partials/tabla-ediciones', { lista: pasadas, historial: true }) %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('../partials/footer') %>

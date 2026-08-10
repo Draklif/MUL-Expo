@@ -29,6 +29,8 @@ const musicRouter = require("./routes/music");
 const musicPanelRouter = require("./routes/music-panel");
 const salidasRouter = require("./routes/salidas");
 const salidasPanelRouter = require("./routes/salidas-panel");
+const inkRouter = require("./routes/ink");
+const inkPanelRouter = require("./routes/ink-panel");
 const infoRouter = require("./routes/info");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
@@ -36,6 +38,7 @@ const { configurado: vcConfigurado } = require("./lib/vc-auth");
 const { configurado: jamConfigurado } = require("./lib/jam-auth");
 const { configurado: musicConfigurado } = require("./lib/music-auth");
 const { configurado: salidasConfigurado } = require("./lib/salidas-auth");
+const { configurado: inkConfigurado } = require("./lib/ink-auth");
 
 // Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
 // dejar un login que rechaza a todo el mundo sin explicar por qué.
@@ -103,6 +106,7 @@ app.use((req, res, next) => {
   res.locals.docenteJam = req.session.docenteJam || null;
   res.locals.docenteMusic = req.session.docenteMusic || null;
   res.locals.docenteSalidas = req.session.docenteSalidas || null;
+  res.locals.docenteInk = req.session.docenteInk || null;
   res.locals.query = req.query;
   res.locals.DOMINIO = DOMINIO;
   res.locals.PATRON_CORREO = PATRON_HTML;
@@ -223,6 +227,14 @@ app.use("/jam", jamPanelRouter);
 app.use("/", musicRouter);
 app.use("/music", musicPanelRouter);
 
+// INKreible. Mismo reparto que los anteriores y por la misma razón: su página
+// se arma con la base (la edición, el día del reto, la palabra de hoy, los
+// dibujos), así que la sirve un router y no la página automática de eventos.
+// El público va primero para que el panel, que vive en el mismo /ink, no le
+// pase por encima.
+app.use("/", inkRouter);
+app.use("/ink", inkPanelRouter);
+
 // Salidas pedagógicas. No es un evento del programa —no está en config.EVENTOS
 // ni le pelea la raíz a nadie—: es un trámite con una fecha, y vive siempre en
 // /salidas. Mismo reparto que los eventos con router propio: el público va
@@ -329,6 +341,11 @@ app.listen(PORT, "0.0.0.0", () => {
     musicConfigurado()
       ? `  ✓ Panel Music Fest:        http://localhost:${PORT}/music/acceso`
       : "  · Panel Music Fest:        cerrado (falta PASSWORD_MUSIC en .env)"
+  );
+  console.log(
+    inkConfigurado()
+      ? `  ✓ Panel INKreible:         http://localhost:${PORT}/ink/acceso`
+      : "  · Panel INKreible:         cerrado (falta PASSWORD_INK en .env)"
   );
   console.log(
     salidasConfigurado()

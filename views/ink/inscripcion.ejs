@@ -1,0 +1,119 @@
+<%- include('../partials/head', { title: title, descripcion: 'Inscríbete al reto de dibujo de 28 días del programa.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="ink angosto">
+  <section class="ink-sec">
+    <p class="eyebrow">Participar</p>
+    <h2>Inscripción</h2>
+    <p class="sec-lead">
+      Se participa solo: aquí no hay equipos. El correo tiene que ser el
+      institucional, que es lo que identifica a cada quien y lo que impide que
+      alguien se inscriba dos veces.
+    </p>
+  </section>
+
+  <% if (errores.length) { %>
+    <div class="aviso malo" style="margin-top:26px">
+      <strong>Revisa esto antes de seguir:</strong>
+      <ul><% errores.forEach(function (e) { %><li><%= e %></li><% }); %></ul>
+    </div>
+  <% } %>
+
+  <% if (!abierta) { %>
+    <div class="vacio" style="margin-top:26px">
+      <% if (!edicion) { %>
+        Todavía no hay una edición abierta del reto. La próxima se anuncia en la página.
+      <% } else { %>
+        Las inscripciones de esta edición están cerradas.
+      <% } %>
+      <div style="margin-top:20px"><a href="/inkreible" class="btn chico">Volver al reto</a></div>
+    </div>
+  <% } else { %>
+
+  <form method="POST" action="/ink/inscripcion" style="margin-top:26px">
+
+    <div class="campo">
+      <label for="nombre">Tu nombre</label>
+      <input type="text" name="nombre" id="nombre" required maxlength="120"
+             value="<%= valores.nombre || '' %>" />
+      <p class="ayuda">Como quieres que aparezca al lado de tus dibujos.</p>
+    </div>
+
+    <div class="fila">
+      <div class="campo">
+        <label for="email">Correo institucional</label>
+        <input type="email" name="email" id="email" required maxlength="160"
+               pattern="<%= PATRON_CORREO %>" value="<%= valores.email || '' %>"
+               placeholder="tunombre@<%= DOMINIO %>" />
+      </div>
+      <div class="campo">
+        <label for="semestre">Semestre (opcional)</label>
+        <input type="text" name="semestre" id="semestre" maxlength="20"
+               value="<%= valores.semestre || '' %>" placeholder="Quinto" />
+      </div>
+    </div>
+
+    <div class="campo">
+      <label for="usuario">Tu usuario de redes (opcional)</label>
+      <input type="text" name="usuario" id="usuario" maxlength="40"
+             value="<%= valores.usuario || '' %>" placeholder="tuusuario" />
+      <p class="ayuda">Sin el arroba. Va al lado de tus dibujos en la galería, para que quien los vea sepa a quién seguir.</p>
+    </div>
+
+    <%/* ───── CON QUÉ VAS A DIBUJAR ─────
+         No es un dato de adorno: los premios de digital y de análogo van
+         aparte, y de aquí sale también la sigla del nombre de tus archivos. */%>
+    <h3 style="margin:34px 0 16px">¿Con qué vas a dibujar?</h3>
+    <div class="opciones">
+      <% tecnicas.forEach(function (t) { %>
+        <label class="opcion">
+          <input type="radio" name="tecnica" value="<%= t.id %>" required
+                 <%= valores.tecnica === t.id ? "checked" : "" %> />
+          <span class="t"><%= t.label %></span>
+          <span class="d">
+            <% if (t.id === "digital") { %>
+              Tableta, iPad, mouse. Los archivos van con la sigla <%= t.sigla %>.
+            <% } else { %>
+              Lápiz, tinta, marcador, esfero. Se fotografía o se escanea y va con la sigla <%= t.sigla %>.
+            <% } %>
+          </span>
+        </label>
+      <% }); %>
+      <label class="opcion">
+        <input type="radio" name="tecnica" value="mixto" <%= valores.tecnica === "mixto" ? "checked" : "" %> />
+        <span class="t">Las dos</span>
+        <span class="d">
+          Unos días a mano y otros en digital. Cada dibujo compite en la
+          categoría que diga su archivo.
+        </span>
+      </label>
+    </div>
+
+    <%/* ───── CÓMO SE SUBE ─────
+         Se dice ANTES de inscribirse y no solo en el correo de después: es
+         la parte que más se pregunta y la que hace que la galería exista. */%>
+    <div class="tarjeta" style="margin-bottom:26px">
+      <h3 style="margin-bottom:10px">Cómo se entrega</h3>
+      <p style="color:var(--tinta-dim);font-size:15px">
+        Cuando la organización te admita te llega por correo el enlace de una
+        carpeta de Drive. Ahí subes tus dibujos <strong>por semana</strong>, y
+        cada archivo va con este nombre: tu código, el día en dos cifras y con
+        qué lo hiciste.
+      </p>
+      <p class="archivo"><%= ejemplo %></p>
+      <p class="mini" style="margin:12px 0 0">
+        (Ese <code>ABC234</code> es de mentira: el tuyo te sale al inscribirte.)
+      </p>
+    </div>
+
+    <div style="display:flex;gap:16px;flex-wrap:wrap">
+      <button type="submit" class="btn">Inscribirme</button>
+      <a href="/ink/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+    </div>
+  </form>
+
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

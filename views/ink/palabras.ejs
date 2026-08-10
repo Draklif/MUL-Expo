@@ -1,0 +1,85 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL CALENDARIO DE LAS 28 PALABRAS
+
+     Las que ya salieron se leen; las que no, ni siquiera vienen en el HTML
+     —el servidor manda el texto en blanco— y lo que se pinta en su lugar es
+     un rayón. No hay nada que espiar en el código fuente de esta página.
+
+     Salvo que la organización haya publicado la lista completa, que es la
+     otra forma de jugar el reto: entonces se ven las 28 desde el primer día.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: 'Las palabras del reto, una por día durante cuatro semanas.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="ink">
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Una por día</p>
+        <h2>Las palabras</h2>
+      </div>
+      <% if (abierta) { %><a href="/ink/inscripcion" class="btn chico">Inscribirme</a><% } %>
+    </div>
+
+    <p class="sec-lead">
+      <% if (!edicion) { %>
+        Todavía no hay una edición abierta del reto.
+      <% } else if (edicion.lista_publica) { %>
+        Esta edición publicó la lista completa: ya se pueden ver los
+        <%= fase.dias %> días. Lo que no cambia es la fecha de cada uno.
+      <% } else { %>
+        Cada palabra se destapa el día que le toca. No hay forma de ir
+        adelantando trabajo, que es justo lo que hace el reto un reto.
+      <% } %>
+    </p>
+  </section>
+
+  <% if (!palabras.length) { %>
+    <div class="vacio">
+      Las palabras de esta edición todavía no están cargadas.
+      <div style="margin-top:20px"><a href="/inkreible" class="btn chico">Volver al reto</a></div>
+    </div>
+  <% } else { %>
+    <% semanas.forEach(function (s) { %>
+      <section class="ink-sec" style="padding-top:12px" id="semana-<%= s.n %>">
+        <div class="semana-cab">
+          <h3>Semana <%= s.n %></h3>
+          <span class="rango">
+            Días <%= s.desde %>–<%= s.hasta %>
+            <% if (s.inicio && s.fin) { %> · <%= s.inicio.diaCorto %> a <%= s.fin.diaCorto %><% } %>
+          </span>
+          <% if (s.corriendo) { %><span class="chip vivo">Esta semana</span><% } %>
+          <% if (s.cumplida) { %><span class="chip ok">Cerrada</span><% } %>
+        </div>
+
+        <div class="calendario">
+          <% palabras.filter(function (p) { return p.semana === s.n; }).forEach(function (p) { %>
+            <div class="dia <%= p.hoy ? 'hoy' : p.publica ? 'pasada' : 'tapada' %>">
+              <div class="n">Día <%= String(p.dia).padStart(2, "0") %></div>
+              <% if (p.publica && p.palabra) { %>
+                <div class="p"><%= p.palabra %></div>
+              <% } else { %>
+                <div class="rayon" aria-label="Palabra sin revelar"></div>
+              <% } %>
+              <% if (p.fecha) { %><div class="f"><%= p.fecha.diaCorto %></div><% } %>
+            </div>
+          <% }); %>
+        </div>
+      </section>
+    <% }); %>
+  <% } %>
+
+  <section class="ink-sec">
+    <div class="tarjeta">
+      <h3 style="margin-bottom:10px">¿Y si me salto un día?</h3>
+      <p style="margin:0;color:var(--tinta-dim)">
+        Se sigue con la palabra del día siguiente. Los premios se deciden por
+        dibujo, no por asistencia; lo único que pide los
+        <%= fase.dias %> completos es el certificado de haber terminado el reto.
+      </p>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

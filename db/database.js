@@ -1,6 +1,6 @@
 const { DatabaseSync } = require("node:sqlite");
 const path = require("path");
-const { DOCENTES, PERIODO, VC, JAM, MUSIC } = require("../config");
+const { DOCENTES, PERIODO, VC, JAM, MUSIC, INK } = require("../config");
 
 const db = new DatabaseSync(path.join(__dirname, "expo.db"));
 db.exec("PRAGMA journal_mode = WAL");
@@ -598,6 +598,140 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_patrocinios_periodo ON patrocinios(periodo_id, created_at);
+
+
+  -- =================================================================
+  --  INKREIBLE
+  --  El reto de dibujo de 28 días. Todo lo suyo lleva el prefijo ink_
+  --  y no comparte tablas con nadie.
+  -- =================================================================
+
+  -- Una edición es el reto de un semestre. Como en la jam, es la unidad que
+  -- se repite: al semestre siguiente se abre otra y la anterior queda
+  -- archivada con sus palabras, sus dibujos y su podio.
+  --
+  -- La columna inicio es el DÍA 1 en AAAA-MM-DD, sin hora: aquí no hay un reloj de
+  -- horas sino un calendario, y de esa fecha sale sola la cuenta de en qué
+  -- día y en qué semana va el reto.
+  --
+  -- Los tres interruptores del final son lo que la organización va abriendo:
+  -- la lista completa de palabras (si no, se destapan día por día), la
+  -- galería y el podio.
+  CREATE TABLE IF NOT EXISTS ink_ediciones (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    periodo_id          INTEGER,
+    nombre              TEXT NOT NULL,
+    estado              TEXT NOT NULL DEFAULT 'inscripcion',
+    inscripcion_abierta INTEGER NOT NULL DEFAULT 1,
+    inicio              TEXT,
+    dias                INTEGER NOT NULL DEFAULT 28,
+    semanas             INTEGER NOT NULL DEFAULT 4,
+    cupo                INTEGER,
+    drive_url           TEXT,
+    nomenclatura        TEXT NOT NULL DEFAULT '{CODIGO}_{DIA}_{TECNICA}',
+    lista_publica       INTEGER NOT NULL DEFAULT 0,
+    galeria_publica     INTEGER NOT NULL DEFAULT 0,
+    resultados_publicos INTEGER NOT NULL DEFAULT 0,
+    created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (periodo_id) REFERENCES periodos(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_ink_ed_periodo ON ink_ediciones(periodo_id);
+
+  -- Las palabras del reto, una por día. Se cargan todas de una desde el panel
+  -- y se guardan desde el primer día: lo que decide si una palabra se ve no
+  -- es una columna sino la fecha (o el interruptor de lista completa), así
+  -- que no hay nada que apagar y prender a mano cada mañana.
+  CREATE TABLE IF NOT EXISTS ink_palabras (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id INTEGER NOT NULL,
+    dia        INTEGER NOT NULL,
+    palabra    TEXT NOT NULL,
+    pista      TEXT,
+    UNIQUE (edicion_id, dia),
+    FOREIGN KEY (edicion_id) REFERENCES ink_ediciones(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_ink_pal_edicion ON ink_palabras(edicion_id, dia);
+
+  -- Quien se inscribe. Aquí no hay equipos: la unidad es la persona, y su
+  -- correo institucional es su identidad dentro de la edición. El código de
+  -- 6 caracteres es el mismo invento del resto del sitio y además es la
+  -- primera pieza del nombre de cada archivo que sube al Drive.
+  --
+  -- La columna drive_enviado_at es lo que evita mandarle el enlace dos veces
+  -- a la misma persona cuando se reenvía en bloque a los aprobados.
+  CREATE TABLE IF NOT EXISTS ink_participantes (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id       INTEGER NOT NULL,
+    codigo           TEXT NOT NULL UNIQUE,
+    nombre           TEXT NOT NULL,
+    email            TEXT NOT NULL COLLATE NOCASE,
+    semestre         TEXT,
+    tecnica          TEXT,
+    usuario          TEXT,
+    estado           TEXT NOT NULL DEFAULT 'pendiente',
+    nota_docente     TEXT,
+    revisado_por     INTEGER,
+    revisado_at      DATETIME,
+    drive_enviado_at DATETIME,
+    created_at       DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (edicion_id, email),
+    FOREIGN KEY (edicion_id)   REFERENCES ink_ediciones(id) ON DELETE CASCADE,
+    FOREIGN KEY (revisado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_ink_part_edicion ON ink_participantes(edicion_id, estado);
+
+  -- Un dibujo: una persona, un día. Los archivos viven en el Drive del
+  -- evento —esta app no recibe imágenes—, así que lo que se guarda es el
+  -- enlace y con qué se dibujó. El UNIQUE de (participante, día) es la regla
+  -- del reto escrita en la base: un dibujo por día y por persona; volver a
+  -- cargar el mismo día reemplaza el enlace en vez de duplicarlo.
+  CREATE TABLE IF NOT EXISTS ink_dibujos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id      INTEGER NOT NULL,
+    participante_id INTEGER NOT NULL,
+    dia             INTEGER NOT NULL,
+    tecnica         TEXT NOT NULL DEFAULT 'digital',
+    url             TEXT NOT NULL,
+    titulo          TEXT,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (participante_id, dia),
+    FOREIGN KEY (edicion_id)      REFERENCES ink_ediciones(id)     ON DELETE CASCADE,
+    FOREIGN KEY (participante_id) REFERENCES ink_participantes(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_ink_dib_edicion ON ink_dibujos(edicion_id, dia);
+  CREATE INDEX IF NOT EXISTS idx_ink_dib_persona ON ink_dibujos(participante_id, dia);
+
+  -- El podio. Un mismo dibujo puede ganar su semana, entrar al top y ser el
+  -- mejor digital: por eso los premios son una tabla aparte y no una columna
+  -- del dibujo.
+  --
+  --   tipo    — 'semana' (uno por cada semana), 'top' (el top del final),
+  --             'digital' y 'analogo' (los mejores de cada técnica).
+  --   semana  — solo cuenta para tipo 'semana'; en los demás va en 0 y no en
+  --             NULL, porque en SQLite dos NULL no chocan entre sí y el
+  --             UNIQUE de abajo dejaría dos primeros puestos del top.
+  --   puesto  — el orden dentro de su categoría. En 'semana' siempre es 1.
+  CREATE TABLE IF NOT EXISTS ink_premios (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    edicion_id      INTEGER NOT NULL,
+    tipo            TEXT NOT NULL,
+    semana          INTEGER NOT NULL DEFAULT 0,
+    puesto          INTEGER NOT NULL DEFAULT 1,
+    dibujo_id       INTEGER NOT NULL,
+    participante_id INTEGER NOT NULL,
+    nota            TEXT,
+    created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (edicion_id, tipo, semana, puesto),
+    FOREIGN KEY (edicion_id)      REFERENCES ink_ediciones(id)     ON DELETE CASCADE,
+    FOREIGN KEY (dibujo_id)       REFERENCES ink_dibujos(id)       ON DELETE CASCADE,
+    FOREIGN KEY (participante_id) REFERENCES ink_participantes(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_ink_prem_edicion ON ink_premios(edicion_id, tipo);
 `);
 
 // ---------- Migraciones suaves ----------
@@ -731,6 +865,25 @@ try {
       MUSIC.cupo_produccion || null
     );
     console.log(`  ✓ Edición del Music Fest abierta en ${PERIODO}.`);
+  }
+
+  if (!db.prepare("SELECT 1 FROM ink_ediciones WHERE periodo_id = ?").get(periodoActual.id)) {
+    db.prepare(
+      `INSERT INTO ink_ediciones
+         (periodo_id, nombre, estado, inscripcion_abierta, dias, semanas, cupo, nomenclatura)
+       VALUES (?, ?, 'inscripcion', 1, ?, ?, ?, ?)`
+    ).run(
+      periodoActual.id,
+      `INKreible · ${PERIODO}`,
+      INK.dias,
+      INK.semanas,
+      INK.cupo || null,
+      INK.nomenclatura
+    );
+    // La carpeta de Drive y el día 1 no salen de aquí a propósito: los pone la
+    // organización desde el panel del reto, porque no existen hasta que
+    // alguien crea la carpeta del semestre y decide cuándo arranca.
+    console.log(`  ✓ Edición de INKreible abierta en ${PERIODO}.`);
   }
 
   db.exec("COMMIT");

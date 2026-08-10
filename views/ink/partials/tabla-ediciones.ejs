@@ -1,0 +1,61 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     La tabla de ediciones del panel, para el semestre en curso y para el
+     archivo.
+
+     Son TRES columnas y no ocho, igual que en la jam y por lo mismo: ocho
+     entraban en un portátil y en un teléfono se salían de la pantalla. El
+     semestre y el día de arranque bajan a la línea chica del nombre, los
+     conteos son chips en una sola celda y el botón "Abrir" sobra porque el
+     nombre ya es el enlace.
+
+       lista     — las ediciones a pintar.
+       historial — true en los semestres pasados: ahí ya no importa cuántos
+                   quedaron por revisar.
+     ───────────────────────────────────────────────────────────────── */%>
+<table class="tabla">
+  <thead>
+    <tr>
+      <th>Edición</th>
+      <th>Estado</th>
+      <th>Dibujando</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% lista.forEach(function (e) { %>
+      <tr>
+        <td>
+          <a href="/ink/panel/ediciones/<%= e.id %>" style="text-decoration:none">
+            <span class="nom"><%= e.nombre %></span>
+          </a>
+          <div class="mini">
+            <%= e.periodo || "sin semestre" %> ·
+            <% if (e.fase.momento_inicio) { %>
+              arranca <%= e.fase.momento_inicio.diaCorto %>
+              <% if (e.fase.clave === "en_curso") { %> · día <%= e.fase.dia %> de <%= e.fase.dias %><% } %>
+            <% } else { %>
+              sin fecha
+            <% } %>
+          </div>
+        </td>
+        <td>
+          <span class="chip <%= e.estado === 'finalizada' ? 'no' : e.estado === 'en_curso' ? 'rojo' : 'ok' %>">
+            <%= e.estado === "inscripcion" ? "Inscripciones" : e.estado === "en_curso" ? "En curso" : "Cerrada" %>
+          </span>
+          <% if (e.fase.clave === "en_curso") { %><span class="chip vivo">Corriendo</span><% } %>
+          <% if (e.galeria_publica) { %><span class="chip azul">Galería</span><% } %>
+          <% if (e.resultados_publicos) { %><span class="chip rojo">Podio</span><% } %>
+        </td>
+        <td>
+          <strong><%= e.cifras.inscritos %></strong>
+          <% if (e.cifras.dibujos > 0) { %>
+            <span class="chip azul"><%= e.cifras.dibujos %> dibujos</span>
+          <% } %>
+          <span class="chip"><%= e.cifras.palabras %> / <%= e.dias %> palabras</span>
+          <% if (!historial && e.cifras.pendientes > 0) { %>
+            <span class="chip pend"><%= e.cifras.pendientes %> por revisar</span>
+          <% } %>
+        </td>
+      </tr>
+    <% }); %>
+  </tbody>
+</table>

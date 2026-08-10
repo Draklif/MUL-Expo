@@ -40,6 +40,7 @@ Copia `.env.example` como `.env` —lo secreto— y llénalo:
 | Variable | Para qué | ¿Obligatoria? |
 |---|---|---|
 | `PASSWORD_DOCENTES` | La contraseña compartida de los docentes | **Sí**: sin ella la app no arranca |
+| `PASSWORD_VC`, `PASSWORD_JAM`, `PASSWORD_INK` | Los paneles del torneo, la jam y el reto de dibujo: [una clave por herramienta](#las-dos-caras-de-la-app) | No: sin una de ellas ese panel queda cerrado y el resto del sitio funciona igual |
 | `SESSION_SECRET` | Firma las cookies de sesión | No, pero sin ella cada reinicio cierra las sesiones |
 | `PORT` | Puerto del servidor (vacío = 3000) | No |
 | `EVENTO` | Clava la raíz en un [evento](#los-eventos) (vacío = manda la fecha) | No |
@@ -84,10 +85,12 @@ Verás (la primera línea es el evento que esté vigente):
   ✓ Expo Multimedia en http://localhost:3000
   · Virtual Champions        http://localhost:3000/virtual-champions
   · Jam de Altura            http://localhost:3000/jam-de-altura
+  · INKreible                http://localhost:3000/inkreible
   · Multimedia Music Fest    http://localhost:3000/music-fest
   ✓ Acceso docentes:         http://localhost:3000/acceso
   ✓ Panel Virtual Champions: http://localhost:3000/vc/acceso
   ✓ Panel Jam de Altura:     http://localhost:3000/jam/acceso
+  ✓ Panel INKreible:         http://localhost:3000/ink/acceso
   ✓ Para exponer con ngrok:  ngrok http 3000
 ```
 
@@ -100,7 +103,7 @@ Abre `http://localhost:3000` en el navegador del PC.
 | `/` | Cualquiera, sin login | El [evento vigente](#los-eventos); si no hay ninguno activo, manda a `/info` |
 | `/info` | Cualquiera, sin login | El [índice del programa](#el-índice-del-programa-info): todos los eventos y las salidas |
 | `/expo` | Cualquiera, sin login | Página pública de la Expo: el recorrido, el plano, los horarios |
-| `/virtual-champions`, `/jam-de-altura`, `/music-fest` | Cualquiera, sin login | Los otros eventos del programa |
+| `/virtual-champions`, `/jam-de-altura`, `/inkreible`, `/music-fest` | Cualquiera, sin login | Los otros eventos del programa |
 | `/expositores` | Estudiantes, sin login | Guía de montaje: qué debe tener el stand |
 | `/registro` | Estudiantes, sin login | Registro de expositores |
 | `/registro/estado` | Estudiantes, sin login | Consulta del estado con el código |
@@ -113,14 +116,21 @@ Abre `http://localhost:3000` en el navegador del PC.
 | `/jam/equipos` | Cualquiera, sin login | Los equipos de la edición vigente |
 | `/jam/acceso`, `/jam/panel` | Docentes | Panel de la jam, con **su propia contraseña** |
 | `/vc/acceso`, `/vc/panel` | Docentes | Panel de Virtual Champions, con la suya |
+| `/ink/inscripcion` | Estudiantes, sin login | Inscripción a [INKreible](#inkreible) |
+| `/ink/inscripcion/estado` | Estudiantes, sin login | Consulta del código: **la carpeta, los nombres de archivo y los días que lleva** |
+| `/ink/palabras` | Cualquiera, sin login | El calendario de las 28 palabras |
+| `/ink/galeria` | Cualquiera, sin login | Todos los dibujos del reto |
+| `/ink/resultados` | Cualquiera, sin login | El podio: semanas, top, digitales y análogos |
+| `/ink/acceso`, `/ink/panel` | Docentes | Panel del reto, con la suya |
 | `/salidas`, `/salidas/:id` | Estudiantes, sin login | Las [salidas pedagógicas](#salidas-pedagógicas): a dónde, cuándo, qué cuesta y las normas |
 | `/salidas/:id/registro` | Estudiantes, sin login | Registro para una salida |
 | `/salidas/estado` | Estudiantes, sin login | Consulta del código: en qué va el trámite y qué pago falta |
 | `/salidas/acceso`, `/salidas/panel` | Docentes | Panel de salidas: confirmar pagos, con la suya |
 
-Son **cuatro herramientas con cuatro contraseñas**: la de la Expo
+Son **seis herramientas con seis contraseñas**: la de la Expo
 (`PASSWORD_DOCENTES`), la del torneo (`PASSWORD_VC`), la de la jam
-(`PASSWORD_JAM`) y la de las salidas (`PASSWORD_SALIDAS`). Los docentes son los
+(`PASSWORD_JAM`), la del festival (`PASSWORD_MUSIC`), la del reto de dibujo
+(`PASSWORD_INK`) y la de las salidas (`PASSWORD_SALIDAS`). Los docentes son los
 mismos —la lista de `config.js`— pero entrar a una no abre las otras. Si a una le
 falta su clave en el `.env`, ese panel queda cerrado y todo lo demás funciona
 igual.
@@ -491,6 +501,115 @@ todas: son de la universidad, no de la feria) y `advertencias`.
 | `docente` | `nombre`, `email`, `telefono`, `donde`. Es el dato más importante de la página: sin eso nadie puede pagar |
 | `consentimiento` | Ruta del archivo servido desde `public/` |
 
+## INKreible
+
+El reto de dibujo: **28 días, 28 palabras, un dibujo por día**, repartidos en
+cuatro semanas. Al final se premia un ganador por semana, un top de los diez
+mejores del reto y los mejores digitales y análogos aparte; y queda una galería
+con todo lo que salió. Vive en `/inkreible`, tiene identidad propia —papel y
+tinta, `public/ink.css`, la única clara de las cuatro—, su propia base (`ink_*`)
+y su propio panel.
+
+Aquí **no hay equipos**: se participa solo, y la unidad no es un reloj de horas
+sino el **día**.
+
+### Los archivos no viven en esta app
+
+Es la decisión que explica todo lo demás. Los dibujos se suben a **una carpeta
+de Drive** cuyo enlace se le manda a cada quien al admitirlo, con un **nombre de
+archivo predefinido**. Esta app no recibe imágenes: guarda el enlace de cada
+dibujo y arma con eso la galería y el podio.
+
+La nomenclatura es lo que hace que eso funcione, porque de un nombre de archivo
+salen solos el autor, el día y la técnica:
+
+```
+ABC234_07_DIG.jpg     código de la persona · día 07 · digital
+XY7KLM_12_ANA.png     código de la persona · día 12 · análogo
+```
+
+La plantilla se edita desde el panel (`{CODIGO}`, `{DIA}`, `{TECNICA}`), y en la
+página de cada participante **no sale la fórmula sino el nombre exacto** de los
+siete archivos de esa semana, listo para copiar. Es lo que más se pregunta y lo
+que más se equivoca.
+
+### La edición es la unidad que se repite
+
+Igual que en la jam: una **edición** es el reto de un semestre —sus palabras,
+sus inscritos, sus dibujos y su podio—. Para el siguiente no se borra nada: sale
+otra edición y la anterior queda archivada tal como quedó.
+
+**No se abre desde el panel.** La edición del semestre en curso ya está abierta
+y vacía desde que arrancó el servidor: la crea `config.PERIODO` con los valores
+de `config.INK` (días, semanas, cupo, nomenclatura). Ver
+[Semestres](#semestres).
+
+La carpeta de Drive y el día 1 son lo único que no sale de ahí, y es a
+propósito: no existen hasta que alguien crea la carpeta del semestre y decide
+cuándo arranca. Se ponen desde la sala de control, con las dos primeras
+herramientas de la lista de abajo.
+
+### Las herramientas del panel, en orden de uso
+
+| # | Herramienta | Qué hace |
+|---|---|---|
+| 1 | **Cronograma** | El día 1, cuántos días y en cuántas semanas. Es lo único que mueve el calendario público |
+| 2 | **Las palabras** | Las 28 de un tirón, una por línea. Escribirlas **no las publica** |
+| 3 | **La carpeta** | El enlace de Drive y la nomenclatura, más el botón de mandárselos a quien no los tenga |
+| 4 | **Inscripciones** | Admitir o rechazar. Al admitir sale un correo **con la carpeta y el nombre de archivo** |
+| 5 | **Quiénes dibujan** | Cuánto lleva cada quien: sirve para escribirle a mitad de reto a quien se está quedando |
+| 6 | **Cargar dibujos** | Se pega la lista de la carpeta y de cada nombre salen autor, día y técnica |
+| 7 | **El podio** | Los ganadores, dictados por código y día. Se publica todo de una vez |
+| 8 | **Ajustes** | Estado, cupo, y los dos interruptores del final: galería y podio |
+
+### El día no tiene interruptor
+
+Como el reloj de la jam, **la fase se calcula**: de la fecha de arranque salen
+en qué día va el reto, qué semana corre y cuánto falta. Nadie tiene que apretar
+nada a las seis de la mañana.
+
+Y de ahí sale también qué palabra se puede ver: **la del día 12 no existe para
+el público hasta el día 12**. No está escondida en el HTML ni en la API —el
+servidor manda el texto en blanco—, así que no hay forma de adelantarla mirando
+el código fuente. Quien prefiera jugarlo como el inktober original tiene un
+botón para **publicar la lista completa** desde el primer día.
+
+La galería y el podio son los otros dos interruptores, y están cerrados
+mientras el reto corre: la idea es que nadie mire lo que hizo el vecino antes de
+resolver su propia palabra.
+
+### Cargar los dibujos de la carpeta
+
+Son 28 dibujos por persona: nadie va a teclear eso a mano. Se pega la lista de
+la carpeta —nombre del archivo y enlace, en cualquier orden y separados por lo
+que sea— y la herramienta reparte cada línea a quien le corresponde. Volver a
+cargar un día que ya estaba **reemplaza el enlace**, así que se puede pegar la
+lista completa cada semana sin duplicar nada.
+
+Lo que no se entiende **no se descarta en silencio**: vuelve a la pantalla con
+el motivo (`no hay nadie con el código MALO99`, `no dice si es digital o
+análogo`), que casi siempre es un archivo mal nombrado en el Drive.
+
+Un detalle que hace que la galería exista de verdad: un enlace de Drive de los
+de `…/file/d/ID/view` es una página, no una imagen. La app lo convierte sola a
+su miniatura, así que se ve en la galería y no baja 8 MB por dibujo. Lo único
+que hace falta es que el archivo esté compartido con **"cualquiera con el
+enlace"** —está dicho en las reglas, en el panel y en el correo—.
+
+### Lo que se configura
+
+En `config.js`, el bloque `INK`:
+
+| Campo | Para qué |
+|---|---|
+| `dias` | Cuántos dibujos tiene el reto (28) |
+| `semanas` | En cuántos tramos se parte (4). De aquí sale a qué semana pertenece cada día y cuántos ganadores semanales hay |
+| `cupo` | Tope de participantes por edición. `null` = sin tope |
+| `top` | Cuántos entran al top del final (10) |
+| `por_tecnica` | Cuántos se premian de cada técnica (3 digitales y 3 análogos) |
+| `tecnicas` | Con qué se puede dibujar. El `id` va en el nombre del archivo, así que no se cambia una vez repartida la nomenclatura |
+| `nomenclatura` | Cómo se llama cada archivo. Cada edición guarda la suya y se edita desde el panel |
+
 ## Registro de expositores
 
 El docente **solo crea la materia y aprueba**. No da de alta estudiantes ni
@@ -783,8 +902,9 @@ emisión cuando el evento tenga día definido.
 
 ## Correos automáticos
 
-La app le escribe al estudiante en tres momentos. Todo es **opcional**: sin
-configurar nada funciona igual que antes, solo que sin avisos.
+En la Expo, la app le escribe al estudiante en tres momentos —el torneo, la jam
+y [INKreible](#inkreible) tienen los suyos, contados en sus secciones—. Todo es
+**opcional**: sin configurar nada funciona igual que antes, solo que sin avisos.
 
 | Cuándo | A quién | Qué lleva |
 |---|---|---|

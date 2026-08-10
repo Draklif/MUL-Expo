@@ -1,0 +1,316 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LANDING DE INKREIBLE
+
+     Arriba va lo que cambia solo —la palabra de hoy, el avance, la galería—
+     y abajo el texto que no cambia y sale de data/inkreible.json.
+
+     El orden no es decorativo: lo primero que ve quien entra un martes por
+     la mañana es qué le toca dibujar hoy. Todo lo demás —las reglas, los
+     premios, las preguntas— es para antes de empezar y por eso va después.
+
+     Cada sección está protegida con un if: una edición recién abierta, sin
+     fecha ni palabras ni inscritos, tiene que renderizar una página corta y
+     no un error.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: hero ? hero.entradilla : evento.desc, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="ink">
+
+  <%/* ───── HERO ───── */%>
+  <section class="ink-hero">
+    <span class="borron uno" aria-hidden="true"></span>
+    <span class="borron dos" aria-hidden="true"></span>
+
+    <p class="eyebrow"><%= programa %> · <%= institucion %></p>
+    <h1><em>INK</em>reible</h1>
+
+    <% if (hero && hero.lema) { %><p class="lema"><%= hero.lema %></p><% } %>
+    <% if (hero && hero.entradilla) { %><p class="entradilla"><%= hero.entradilla %></p><% } %>
+
+    <div class="ink-hero-acciones">
+      <% if (abierta) { %>
+        <a href="/ink/inscripcion" class="btn">Inscribirme</a>
+        <a href="/ink/inscripcion/estado" class="btn ghost">Ya me inscribí</a>
+      <% } else { %>
+        <a href="/ink/inscripcion/estado" class="btn ghost">Consultar mi código</a>
+        <% if (galeriaAbierta) { %><a href="/ink/galeria" class="btn">Ver la galería</a><% } %>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── LA PALABRA DE HOY ─────
+       La pieza más grande de la página. Se pinta en el servidor para que
+       quien llegue la vea de una, sin esperar a que corra el JavaScript;
+       de ahí en adelante la consulta de más abajo se entera si cambió el
+       día mientras la pestaña seguía abierta. */%>
+  <section id="hoy-sec">
+    <% if (fase.clave === "en_curso" && palabra && palabra.palabra) { %>
+      <div class="hoy" id="hoy">
+        <div class="k">La palabra de hoy</div>
+        <div class="v" id="hoy-palabra"><%= palabra.palabra %></div>
+        <div class="n">
+          Día <%= fase.dia %> de <%= fase.dias %> · Semana <%= fase.semana %>
+          <% if (palabra.fecha) { %> · <%= palabra.fecha.dia %><% } %>
+        </div>
+        <div class="barra"><i style="width:<%= fase.avance.toFixed(1) %>%"></i></div>
+      </div>
+    <% } else { %>
+      <div class="hoy apagada" id="hoy">
+        <% if (fase.clave === "antes") { %>
+          <div class="k">Todavía no empieza</div>
+          <div class="v">
+            Faltan <%= fase.faltan %> <%= fase.faltan === 1 ? "día" : "días" %>
+          </div>
+          <div class="n">
+            <% if (fase.momento_inicio) { %>
+              Arranca el <%= fase.momento_inicio.dia %><% if (fase.momento_fin) { %> y termina el <%= fase.momento_fin.dia %><% } %>
+            <% } %>
+          </div>
+        <% } else if (fase.clave === "terminado") { %>
+          <div class="k">Se acabaron los <%= fase.dias %> días</div>
+          <div class="v">Reto terminado</div>
+          <div class="n">
+            <% if (galeriaAbierta) { %>La galería ya está abierta<% } else { %>La galería se abre en unos días<% } %>
+          </div>
+        <% } else if (fase.clave === "sin_fecha") { %>
+          <div class="k">Fecha por confirmar</div>
+          <div class="v">Pronto</div>
+          <div class="n">Ya se puede uno inscribir: la fecha se anuncia por acá y por correo.</div>
+        <% } else { %>
+          <div class="k">La próxima edición</div>
+          <div class="v">Pronto</div>
+          <div class="n">Todavía no hay fecha. Vuelve por acá.</div>
+        <% } %>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ───── LAS CUATRO SEMANAS ───── */%>
+  <% if (edicion && semanas.length) { %>
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Cómo van los días</p>
+        <h2><%= fase.dias %> días, <%= fase.semanas %> semanas</h2>
+      </div>
+      <a href="/ink/palabras" class="btn chico">Ver el calendario</a>
+    </div>
+    <div class="grid">
+      <% semanas.forEach(function (s) { %>
+        <div class="tarjeta">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+            <h3>Semana <%= s.n %></h3>
+            <% if (s.corriendo) { %><span class="chip vivo">Ahora</span><% } %>
+            <% if (s.cumplida) { %><span class="chip ok">Cerrada</span><% } %>
+          </div>
+          <p class="mini" style="margin:0">
+            Días <%= s.desde %> al <%= s.hasta %>
+            <% if (s.inicio && s.fin) { %><br /><%= s.inicio.diaCorto %> — <%= s.fin.diaCorto %><% } %>
+          </p>
+          <p class="nota-mano" style="margin:12px 0 0">
+            <% if (s.cumplida) { %>Se entregaron sus 7 dibujos<% } else if (s.corriendo) { %>Se sube al final de esta semana<% } else { %>Todavía no empieza<% } %>
+          </p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── CIFRAS ───── */%>
+  <% if (edicion) { %>
+  <section class="ink-sec">
+    <div class="ink-datos">
+      <div class="ink-dato">
+        <div class="k">Dibujando</div>
+        <div class="v"><%= cifras.inscritos || "—" %></div>
+      </div>
+      <div class="ink-dato">
+        <div class="k">Dibujos</div>
+        <div class="v"><%= cifras.dibujos || "—" %></div>
+      </div>
+      <div class="ink-dato">
+        <div class="k">Días</div>
+        <div class="v"><%= edicion.dias %></div>
+      </div>
+      <% if (cifras.completos) { %>
+      <div class="ink-dato">
+        <div class="k">Van completos</div>
+        <div class="v"><%= cifras.completos %></div>
+      </div>
+      <% } %>
+      <% tecnicasHechas.forEach(function (t) { %>
+      <div class="ink-dato">
+        <div class="k"><%= t.label %></div>
+        <div class="v"><%= t.n %></div>
+      </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── LO ÚLTIMO QUE ENTRÓ ─────
+       Solo cuando la galería está abierta: durante el reto nadie mira lo que
+       hizo el vecino antes de resolver su propia palabra. */%>
+  <% if (ultimos.length) { %>
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Lo que salió</p>
+        <h2>De la galería</h2>
+      </div>
+      <a href="/ink/galeria" class="btn chico">Verla completa</a>
+    </div>
+    <div class="galeria">
+      <% ultimos.forEach(function (d) { %>
+        <%- include('partials/obra', { d: d, palabra: null }) %>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── EL PODIO, SI YA ESTÁ ───── */%>
+  <% if (podio && podio.top.length) { %>
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Ya hay resultados</p>
+        <h2>El podio del reto</h2>
+      </div>
+      <a href="/ink/resultados" class="btn">Ver el podio</a>
+    </div>
+    <div class="galeria">
+      <% podio.top.slice(0, 4).forEach(function (p) { %>
+        <%- include('partials/obra', { d: p, palabra: null }) %>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── CÓMO FUNCIONA ───── */%>
+  <% if (formato && formato.puntos && formato.puntos.length) { %>
+  <section class="ink-sec">
+    <p class="eyebrow">El formato</p>
+    <h2><%= formato.titulo %></h2>
+    <% if (formato.lead) { %><p class="sec-lead"><%= formato.lead %></p><% } %>
+    <div class="grid">
+      <% formato.puntos.forEach(function (b) { %>
+        <div class="tarjeta">
+          <h3 style="color:var(--rojo);margin-bottom:10px"><%= b.titulo %></h3>
+          <p style="color:var(--tinta-dim);margin:0;font-size:15px"><%= b.texto %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── INSCRIPCIÓN ───── */%>
+  <section class="ink-sec">
+    <p class="eyebrow">Participar</p>
+    <h2>Inscríbete</h2>
+    <p class="sec-lead">
+      <% if (abierta) { %>
+        Te inscribes con tu correo institucional y, cuando la organización te
+        admite, te llega el enlace de la carpeta donde vas a subir tus dibujos
+        y el nombre exacto que tiene que llevar cada archivo.
+      <% } else { %>
+        Las inscripciones de esta edición están cerradas. La próxima se anuncia
+        por acá.
+      <% } %>
+    </p>
+    <div class="ink-hero-acciones" style="margin-bottom:0">
+      <% if (abierta) { %><a href="/ink/inscripcion" class="btn">Inscribirme</a><% } %>
+      <a href="/ink/inscripcion/estado" class="btn ghost">Consultar mi código</a>
+    </div>
+  </section>
+
+  <%/* ───── REGLAS ───── */%>
+  <% if (reglamento && reglamento.reglas && reglamento.reglas.length) { %>
+  <section class="ink-sec" id="reglas">
+    <p class="eyebrow">Sin letra chica</p>
+    <h2><%= reglamento.titulo %></h2>
+    <% if (reglamento.lead) { %><p class="sec-lead"><%= reglamento.lead %></p><% } %>
+    <ol class="reglas" style="margin-top:24px">
+      <% reglamento.reglas.forEach(function (x) { %><li><%= x %></li><% }); %>
+    </ol>
+  </section>
+  <% } %>
+
+  <%/* ───── PREMIOS ───── */%>
+  <% if (premios && premios.puestos && premios.puestos.length) { %>
+  <section class="ink-sec">
+    <p class="eyebrow">Lo que está en juego</p>
+    <h2><%= premios.titulo %></h2>
+    <% if (premios.lead) { %><p class="sec-lead"><%= premios.lead %></p><% } %>
+    <div class="grid">
+      <% premios.puestos.forEach(function (x) { %>
+        <div class="tarjeta">
+          <div class="nota-mano" style="margin-bottom:8px"><%= x.puesto %></div>
+          <p style="margin:0;color:var(--tinta-dim);font-size:15px"><%= x.premio %></p>
+        </div>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+  <%/* ───── PREGUNTAS ───── */%>
+  <% if (faq && faq.preguntas && faq.preguntas.length) { %>
+  <section class="ink-sec">
+    <p class="eyebrow">Antes de preguntar</p>
+    <h2><%= faq.titulo %></h2>
+    <div style="margin-top:18px">
+      <% faq.preguntas.forEach(function (q) { %>
+        <details class="faq">
+          <summary><%= q.p %></summary>
+          <div class="r"><%= q.r %></div>
+        </details>
+      <% }); %>
+    </div>
+  </section>
+  <% } %>
+
+</main>
+
+<%- include('partials/pie') %>
+
+<% if (edicion) { %>
+<script>
+  // =================================================================
+  //  Lo único que cambia solo en esta página: el día.
+  //
+  //  A diferencia del reloj de la jam —que resta segundos— aquí no hay
+  //  nada que contar: la palabra cambia una vez al día, a medianoche. La
+  //  consulta existe para un caso concreto y real: la pestaña que alguien
+  //  dejó abierta anoche y mira otra vez por la mañana. Si el servidor
+  //  dice que ya es otro día, se recarga; si no, no se toca nada.
+  //
+  //  Cada dos minutos es de sobra para eso y no le cuesta nada a nadie.
+  // =================================================================
+  (function () {
+    var EDICION = <%= edicion.id %>;
+    var CADA = 120000;
+
+    var estado = {
+      dia: <%= fase.dia || 0 %>,
+      clave: <%- JSON.stringify(fase.clave) %>
+    };
+
+    function consultar() {
+      fetch("/ink/api/estado?edicion=" + EDICION)
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          // Que cambie el día o la fase reordena media página: es más
+          // honesto recargar que remendar el DOM sección por sección.
+          if (d.dia !== estado.dia || d.clave !== estado.clave) location.reload();
+        })
+        .catch(function () { /* un fallo de red no rompe la página: se reintenta solo */ });
+    }
+
+    if (estado.clave !== "terminado" && estado.clave !== "sin_edicion") {
+      setInterval(consultar, CADA);
+    }
+  })();
+</script>
+<% } %>
+
+<%- include('../partials/footer') %>

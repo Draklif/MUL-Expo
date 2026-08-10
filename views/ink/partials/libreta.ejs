@@ -1,0 +1,34 @@
+<%/* Las 28 casillas de una persona: lo que entregó, lo que se le pasó y lo que
+     todavía no llega. Se usa en la página pública de cada participante y en la
+     que ve él mismo con su código, porque son la misma información.
+
+     Un día sin dibujo que ya pasó se marca en amarillo y no en rojo: fallar un
+     día no saca a nadie del reto y la página no tiene por qué regañar.
+
+     Recibe `grilla` (de lib/ink.js) y `palabras`. */%>
+<div class="libreta">
+  <% grilla.forEach(function (c) { %>
+    <%
+      const p = palabras.find(function (x) { return x.dia === c.dia; });
+      const palabra = p && p.publica ? p.palabra : "";
+      const clase = c.dibujo ? "hecha" : c.vencido ? "falta" : "porvenir";
+      const rotulo = c.dibujo
+        ? `Día ${c.dia}${palabra ? ": " + palabra : ""}, entregado`
+        : c.vencido
+          ? `Día ${c.dia}${palabra ? ": " + palabra : ""}, sin dibujo`
+          : `Día ${c.dia}, todavía no llega`;
+    %>
+    <% if (c.dibujo) { %>
+      <a class="casilla hecha" href="<%= c.dibujo.url %>" target="_blank" rel="noopener" title="<%= rotulo %>">
+        <img src="<%= c.dibujo.imagen %>" alt="<%= rotulo %>" loading="lazy" />
+        <span class="n"><%= c.dia %></span>
+        <% if (palabra) { %><span class="w"><%= palabra %></span><% } %>
+      </a>
+    <% } else { %>
+      <div class="casilla <%= clase %>" title="<%= rotulo %>">
+        <span class="n"><%= c.dia %></span>
+        <% if (palabra) { %><span class="w"><%= palabra %></span><% } %>
+      </div>
+    <% } %>
+  <% }); %>
+</div>
