@@ -1,0 +1,23 @@
+<%/* Un dibujo de la galería. Se usa igual en la portada, en la galería, en la
+     libreta de una persona y en el podio, así que recibe el dibujo ya venido
+     de lib/ink.js (con `imagen`, que es el enlace que sí se puede poner en un
+     <img>) y la palabra de ese día, que la sabe quien llama.
+
+     La imagen va con loading="lazy" porque una galería del final del reto son
+     cientos de archivos de Drive: cargarlos todos de una es dejar el celular
+     de alguien pensando un minuto. */%>
+<a class="obra" href="<%= d.url %>" target="_blank" rel="noopener"
+   title="Abrir el dibujo original">
+  <div class="marco">
+    <img src="<%= d.imagen %>" alt="Día <%= d.dia %><%= palabra ? ': ' + palabra : '' %>, por <%= d.autor %>"
+         loading="lazy" />
+  </div>
+  <div class="pie">
+    <div class="palabra"><%= palabra || ("Día " + d.dia) %></div>
+    <div class="quien"><%= d.autor %><% if (d.autor_usuario) { %> · @<%= d.autor_usuario %><% } %></div>
+    <div class="datos">
+      <span class="chip no">Día <%= d.dia %></span>
+      <span class="chip <%= d.tecnica === 'digital' ? 'azul' : 'rojo' %>"><%= d.tecnica_label %></span>
+    </div>
+  </div>
+</a>

@@ -59,6 +59,15 @@ const EVENTOS = [
     ruta: true,
   },
   {
+    slug: "inkreible",
+    nombre: "INKreible",
+    fecha: "",
+    lema: "Veintiocho días, veintiocho palabras, veintiocho dibujos.",
+    datos: "inkreible.json",
+    vista: "ink/landing",
+    ruta: true,
+  },
+  {
     slug: "music-fest",
     nombre: "Multimedia Music Fest",
     fecha: "",
@@ -161,6 +170,43 @@ const JAM = {
   ],
 };
 
+// ---------------------------------------------------------------------
+//  INKREIBLE
+// ---------------------------------------------------------------------
+// El reto de dibujo: una palabra por día durante cuatro semanas. Aquí no hay
+// equipos —se participa solo— y tampoco hay un reloj de horas: la unidad es
+// el DÍA, y de la fecha de arranque sale todo lo demás (qué palabra toca hoy,
+// en qué semana vamos y cuántos días quedan).
+//
+// Como en la jam, lo que se repite cada semestre es la EDICIÓN entera y se
+// abre con un botón desde el panel. Estos números son solo los que vienen
+// propuestos al abrirla: cada edición guarda los suyos.
+//
+//   dias        — cuántos dibujos tiene el reto. 28 = cuatro semanas justas.
+//   semanas     — en cuántos tramos se parte. dias/semanas tiene que dar
+//                 entero: es lo que decide a qué semana pertenece cada día y
+//                 cuántos ganadores semanales hay.
+//   top         — cuántos dibujos entran en el top del final.
+//   por_tecnica — cuántos se premian de cada técnica (digitales y análogos).
+//   tecnicas    — con qué se puede dibujar. El `id` va en el nombre del
+//                 archivo que sube el estudiante (la nomenclatura), así que no
+//                 se cambia una vez repartida; `sigla` es lo que se teclea.
+//   nomenclatura— cómo se tiene que llamar cada archivo en el Drive. Las
+//                 piezas entre llaves las reemplaza el sitio con los datos de
+//                 cada quien, así que la plantilla se puede reescribir entera
+//                 sin tocar código.
+const INK = {
+  dias: 28,
+  semanas: 4,
+  top: 10,
+  por_tecnica: 3,
+  tecnicas: [
+    { id: "digital", label: "Digital", sigla: "DIG" },
+    { id: "analogo", label: "Análogo", sigla: "ANA" },
+  ],
+  nomenclatura: "{CODIGO}_{DIA}_{TECNICA}",
+};
+
 // Contraseña del panel de Virtual Champions. Es DISTINTA a la de la Expo a
 // propósito: los mismos docentes, pero dos herramientas separadas. Va en el
 // .env (PASSWORD_VC). Sin ella el panel del torneo queda cerrado, pero el
@@ -170,6 +216,9 @@ const PASSWORD_VC = String(process.env.PASSWORD_VC || "").trim();
 // Contraseña del panel de la Jam de Altura, por la misma razón: tercera
 // herramienta, tercera clave. Va en el .env (PASSWORD_JAM).
 const PASSWORD_JAM = String(process.env.PASSWORD_JAM || "").trim();
+
+// Y la de INKreible, cuarta. Va en el .env (PASSWORD_INK).
+const PASSWORD_INK = String(process.env.PASSWORD_INK || "").trim();
 
 // Contraseña compartida para todos los docentes.
 // El correo identifica a cada quien; esta clave es la segunda barrera.
@@ -232,9 +281,11 @@ module.exports = {
   EVENTO_ACTIVO,
   VC,
   JAM,
+  INK,
   PASSWORD,
   PASSWORD_VC,
   PASSWORD_JAM,
+  PASSWORD_INK,
   DOCENTES,
   CORREO,
   CRITERIOS,

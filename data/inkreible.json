@@ -1,0 +1,103 @@
+{
+  "programa": "Ingeniería en Multimedia",
+  "institucion": "Universidad de Boyacá",
+
+  "evento": {
+    "name": "INKreible",
+    "tipo": "Reto de dibujo de 28 días",
+    "estado": "Inscripciones abiertas",
+    "cuando": "Cuatro semanas del semestre",
+    "sede": "Se dibuja donde sea; se sube en línea",
+    "desc": "Veintiocho días, veintiocho palabras y un dibujo por día. Cuatro semanas, cuatro ganadores, un top diez y una galería con todo lo que salió."
+  },
+
+  "hero": {
+    "titulo": "INKreible",
+    "lema": "28 días · 28 palabras · 28 dibujos",
+    "entradilla": "Una palabra al día durante cuatro semanas. No hay tema libre ni prórroga: se dibuja lo que diga la palabra del día y se sube antes de que empiece la siguiente. Lo difícil no es el primer dibujo, es el del día doce."
+  },
+
+  "formato": {
+    "titulo": "Cómo funciona",
+    "lead": "Una palabra, un dibujo, un día. Cuatro semanas seguidas.",
+    "puntos": [
+      {
+        "titulo": "La palabra se destapa el día que le toca",
+        "texto": "Aquí no está la lista completa desde el primer día: cada mañana aparece la palabra que corresponde y esa es la de hoy. No se puede ir adelantando trabajo, que es justo lo que hace el reto un reto."
+      },
+      {
+        "titulo": "Digital o análogo, como quieras",
+        "texto": "Tableta, lápiz, tinta china, esfero en una servilleta. Se premian aparte los mejores digitales y los mejores análogos, así que nadie compite contra una herramienta que no tiene."
+      },
+      {
+        "titulo": "Se sube por semana a una carpeta",
+        "texto": "Al quedar admitido te llega el enlace de una carpeta de Drive y el nombre exacto que tiene que llevar cada archivo. Se sube al final de cada semana: siete dibujos de un viaje."
+      },
+      {
+        "titulo": "Se puede fallar un día y seguir",
+        "texto": "Nadie queda descalificado por saltarse el día nueve. Cuenta lo que se entregue, y quien complete los 28 tiene su reconocimiento aparte de los premios."
+      }
+    ]
+  },
+
+  "reglamento": {
+    "titulo": "Reglas del reto",
+    "lead": "Cortas, para que nadie tenga que preguntarlas.",
+    "reglas": [
+      "Hay que ser estudiante activo del programa e inscribirse con el correo institucional.",
+      "Un dibujo por día y por persona: el del día 7 responde a la palabra del día 7 y a ninguna otra.",
+      "Se dibuja durante el reto. Sacar del cajón algo de hace dos años se nota y queda fuera de concurso.",
+      "El dibujo es tuyo, hecho a mano o a tableta. Nada generado por inteligencia artificial: el reto es dibujar.",
+      "Las referencias y los estudios de obra ajena se pueden usar si se dicen. Calcar y firmar, no.",
+      "Cada archivo se sube a la carpeta con el nombre que se te indica. Un archivo mal nombrado no se puede repartir y no entra a la galería.",
+      "El archivo tiene que quedar compartido con \"cualquiera con el enlace\": si el jurado no lo puede abrir, no lo puede mirar.",
+      "El jurado es de la organización y su decisión es la última. Se mira la idea, el oficio y la constancia, en ese orden."
+    ]
+  },
+
+  "premios": {
+    "titulo": "Qué se lleva quien dibuja",
+    "lead": "Cuatro semanas, cuatro ganadores, y al final el podio de todo el reto.",
+    "puestos": [
+      { "puesto": "Ganador de cada semana", "premio": "Reconocimiento del programa · uno por cada una de las cuatro semanas" },
+      { "puesto": "Top 10 del reto", "premio": "Los diez mejores dibujos de los 28 días, con su lugar en la galería y en la Expo Multimedia" },
+      { "puesto": "Mejores digitales", "premio": "Reconocimiento del programa a los tres mejores hechos en digital" },
+      { "puesto": "Mejores análogos", "premio": "Reconocimiento del programa a los tres mejores hechos a mano" },
+      { "puesto": "Los 28 días completos", "premio": "Certificado de participación: terminar el reto también es ganarlo" }
+    ]
+  },
+
+  "faq": {
+    "titulo": "Preguntas frecuentes",
+    "preguntas": [
+      {
+        "p": "¿Tengo que dibujar bien para participar?",
+        "r": "No. Esto no es una convocatoria de portafolio: es un reto de constancia. La gente que más avanza en los 28 días casi nunca es la que mejor dibujaba el día uno."
+      },
+      {
+        "p": "¿Cuánto tiempo tengo que meterle a cada dibujo?",
+        "r": "El que quieras. Hay quien resuelve la palabra en veinte minutos y quien le mete tres horas; ambos entregan. Con veinte minutos diarios se termina el reto, y terminarlo ya es la mitad del asunto."
+      },
+      {
+        "p": "Se me pasó un día. ¿Ya perdí?",
+        "r": "No. Se sigue con la palabra del día siguiente. Solo el certificado de los 28 días completos pide justamente eso: los 28. Los premios se deciden por dibujo, no por asistencia."
+      },
+      {
+        "p": "¿Puedo hacer unos digitales y otros a mano?",
+        "r": "Sí, y es lo normal. Cada archivo dice con qué se hizo (DIG o ANA) y con eso compite en la categoría que le toca. Al inscribirte puedes decir que vas a usar las dos."
+      },
+      {
+        "p": "¿Cómo se suben los dibujos?",
+        "r": "A una carpeta de Drive que te llega por correo cuando te admiten, con un nombre de archivo predefinido: tu código, el día y si es digital o análogo. Se sube por semana, no dibujo por dibujo."
+      },
+      {
+        "p": "¿Puedo publicarlos en mis redes mientras tanto?",
+        "r": "Claro, y hazlo. El dibujo es tuyo. Lo único que pedimos es que el archivo esté también en la carpeta con el nombre correcto: es de ahí de donde sale la galería y de donde los toma el jurado."
+      },
+      {
+        "p": "¿Esto tiene nota?",
+        "r": "Depende de la materia: el reto es del programa, no de una asignatura. Lo que sí da es certificado, y los dibujos que quedan en el top suelen terminar expuestos en la Expo Multimedia."
+      }
+    ]
+  }
+}

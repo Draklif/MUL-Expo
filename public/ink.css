@@ -1,0 +1,1068 @@
+/* =====================================================================
+   INKREIBLE
+   Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
+
+   Las cuatro caras del sitio tienen que distinguirse a un metro de la
+   pantalla, sin leer una palabra:
+
+     Expo Multimedia   — editorial, serif, oscuro.
+     Virtual Champions — negro, condensada en mayúsculas, esquinas cortadas
+                         en diagonal, un color por juego.
+     Jam de Altura     — pixel: retícula de 4px, sombras duras, verde de
+                         consola sobre violeta de madrugada.
+     INKreible         — esto: PAPEL. La única clara de las cuatro, y esa es
+                         justamente la idea: un cuaderno de dibujo abierto.
+                         Fondo crema con retícula de puntos, tinta negra,
+                         un rojo de sello para lo que importa y marcos que
+                         no son rectángulos perfectos sino trazos hechos a
+                         pulso.
+
+   LA PIEZA CLAVE es --trazo: el radio irregular que convierte cualquier
+   caja en un rectángulo dibujado a mano. Cuatro esquinas con radios
+   distintos y elípticos —eso es todo—, pero es lo que hace que la página
+   parezca dibujada y no maquetada. Va acompañado siempre de un borde de
+   tinta y de una sombra dura y sin difuminar, como la de un sticker pegado
+   en la hoja.
+
+   Y una decisión de fondo: aquí NO se suben imágenes. Los dibujos viven en
+   una carpeta de Drive y esta página solo enseña enlaces, así que todo lo
+   que parece una galería es en realidad una retícula de <img> apuntando
+   hacia afuera. Por eso las figuras tienen fondo y borde propios: mientras
+   la imagen carga —o si el archivo quedó sin compartir— el hueco tiene que
+   verse como una casilla vacía del cuaderno y no como una página rota.
+   ===================================================================== */
+
+:root {
+  --papel: #f3ede1;
+  --papel-alt: #e9dfcb;
+  --carta: #fffdf6;
+  --carta-alt: #f8f2e6;
+
+  --tinta: #16120c;
+  --tinta-dim: #4f4636;
+  --tinta-mute: #8b8069;
+  --linea: #d6c9ae;
+
+  --rojo: #c33f28;     /* el sello: lo principal */
+  --rojo-claro: #f2d9d2;
+  --azul: #2a4a86;     /* la otra tinta: los datos */
+  --azul-claro: #d9e2f1;
+  --verde: #46733f;    /* lo que ya está hecho */
+  --amarillo: #d99a17; /* lo que está pendiente */
+
+  --display: "Permanent Marker", "Comic Sans MS", cursive;
+  --mano: "Caveat", "Segoe Script", cursive;
+  --body: "Plus Jakarta Sans", -apple-system, system-ui, sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Courier New", monospace;
+
+  /* El trazo a pulso. Se usa tal cual en casi todo. */
+  --trazo: 220px 18px 255px 16px / 16px 225px 18px 250px;
+  --trazo-2: 18px 240px 15px 255px / 230px 16px 250px 18px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  /* La retícula de puntos de un cuaderno de dibujo. Muy tenue: tiene que
+     sentirse el papel, no leerse la cuadrícula. */
+  background-image: radial-gradient(circle, rgba(22, 18, 12, .13) 1px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+
+a { color: var(--rojo); }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+h1 { font-size: clamp(38px, 9vw, 92px); }
+h2 { font-size: clamp(24px, 4vw, 38px); }
+h3 { font-size: 20px; }
+
+p { margin: 0 0 1em; }
+
+/* Las imágenes de la galería vienen de Drive y no se sabe de qué tamaño son:
+   se les pone el tope aquí una vez y no en cada sitio. */
+img { max-width: 100%; display: block; }
+
+/* ---------------------------------------------------------------------
+   Piezas base
+   --------------------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--mano);
+  font-size: 21px;
+  line-height: 1.3;
+  color: var(--rojo);
+  margin: 0 0 6px;
+  transform: rotate(-1.2deg);
+  transform-origin: left center;
+}
+
+.sec-lead {
+  color: var(--tinta-dim);
+  max-width: 64ch;
+  margin: 12px 0 0;
+  font-size: 17px;
+}
+
+.mini { font-size: 13px; color: var(--tinta-mute); }
+
+/* La anotación al margen: se usa para lo que alguien escribiría a mano al
+   lado de un dibujo. */
+.nota-mano {
+  font-family: var(--mano);
+  font-size: 20px;
+  color: var(--azul);
+  line-height: 1.35;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 6px 11px;
+  color: var(--tinta-dim);
+  background: var(--carta);
+  border: 2px solid var(--tinta);
+  border-radius: 30px 12px 28px 14px / 14px 28px 12px 30px;
+  white-space: nowrap;
+}
+
+.chip.ok     { color: var(--verde); border-color: var(--verde); }
+.chip.pend   { color: var(--amarillo); border-color: var(--amarillo); }
+.chip.no     { color: var(--tinta-mute); border-color: var(--linea); }
+.chip.rojo   { color: var(--rojo); border-color: var(--rojo); background: var(--rojo-claro); }
+.chip.azul   { color: var(--azul); border-color: var(--azul); background: var(--azul-claro); }
+
+/* El punto que late del "hoy". Es un borrón de tinta, no un círculo
+   perfecto. */
+.chip.vivo { color: var(--rojo); border-color: var(--rojo); }
+
+.chip.vivo::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--rojo);
+  border-radius: 60% 40% 55% 45% / 45% 55% 40% 60%;
+  animation: pulso 1.6s ease-in-out infinite;
+}
+
+@keyframes pulso {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.75); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------------------------------------------------------------------
+   Botones: papel recortado y pegado
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: var(--body);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  padding: 13px 24px;
+  background: var(--rojo);
+  color: var(--carta);
+  border: 2px solid var(--tinta);
+  border-radius: var(--trazo);
+  box-shadow: 4px 4px 0 0 var(--tinta);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .08s ease;
+}
+
+.btn:hover { background: #d94b31; }
+
+/* Se hunde al apretarlo: el papel se pega a la hoja. */
+.btn:active { transform: translate(4px, 4px); box-shadow: 0 0 0 0 var(--tinta); }
+
+.btn.ghost { background: var(--carta); color: var(--tinta); }
+.btn.ghost:hover { background: var(--papel-alt); }
+
+.btn.azul { background: var(--azul); color: var(--carta); }
+.btn.azul:hover { background: #33569a; }
+
+.btn.tinta { background: var(--tinta); color: var(--carta); }
+
+.btn.chico {
+  font-size: 13px;
+  padding: 8px 15px;
+  box-shadow: 3px 3px 0 0 var(--tinta);
+  background: var(--carta);
+  color: var(--tinta);
+  border-radius: var(--trazo-2);
+}
+
+.btn.chico:hover { background: var(--papel-alt); }
+.btn.chico:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--tinta); }
+
+.btn.peligro { background: var(--carta); color: var(--rojo); border-color: var(--rojo); }
+.btn.block { width: 100%; }
+.btn.gigante { font-size: clamp(17px, 2.6vw, 22px); padding: 20px 34px; }
+.btn[disabled] { opacity: .4; pointer-events: none; }
+
+/* ---------------------------------------------------------------------
+   Estructura
+   --------------------------------------------------------------------- */
+.ink {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 22px 80px;
+}
+
+.ink.angosto { max-width: 760px; }
+
+.ink-sec { padding: 54px 0 0; }
+
+.sec-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  margin-top: 22px;
+}
+
+.tarjeta {
+  background: var(--carta);
+  border: 2px solid var(--tinta);
+  border-radius: var(--trazo);
+  box-shadow: 4px 4px 0 0 var(--tinta);
+  padding: 20px 22px;
+}
+
+/* Ninguna caja queda perfectamente derecha: se alternan los trazos y una
+   inclinación de menos de un grado. Es lo que separa "dibujado" de
+   "maquetado", y es tan poco que no marea al leer. */
+.tarjeta:nth-child(even) { border-radius: var(--trazo-2); transform: rotate(-.35deg); }
+.tarjeta:nth-child(odd) { transform: rotate(.25deg); }
+
+a.tarjeta { text-decoration: none; color: inherit; display: block; }
+a.tarjeta:hover { background: var(--carta-alt); transform: rotate(0) translateY(-2px); }
+
+/* ---------------------------------------------------------------------
+   Cabecera
+   --------------------------------------------------------------------- */
+.ink-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--papel);
+  border-bottom: 2px solid var(--tinta);
+}
+
+.ink-top-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  min-height: 66px;
+  flex-wrap: wrap;
+}
+
+.ink-marca {
+  font-family: var(--display);
+  font-size: 25px;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--tinta);
+  white-space: nowrap;
+  padding: 4px 0;
+}
+
+/* Las tres primeras letras van en rojo: es la tinta del nombre. */
+.ink-marca em { font-style: normal; color: var(--rojo); }
+
+.ink-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.ink-nav a {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tinta-dim);
+  text-decoration: none;
+  padding: 9px 12px;
+  border-radius: 20px 8px 22px 10px / 10px 22px 8px 20px;
+  border: 2px solid transparent;
+}
+
+.ink-nav a:hover { color: var(--tinta); background: var(--papel-alt); }
+
+/* La pestaña activa va subrayada a mano, no rellena: es una anotación
+   encima de la palabra. */
+.ink-nav a.on { color: var(--rojo); border-color: var(--rojo); background: var(--carta); }
+
+.ink-nav .ic { display: none; }
+
+/* ---------------------------------------------------------------------
+   Hero
+   --------------------------------------------------------------------- */
+.ink-hero { padding: 60px 0 0; position: relative; }
+
+.ink-hero h1 {
+  margin: 8px 0 0;
+  line-height: .95;
+  /* El nombre lleva sombra de tinta corrida, como un sello mal estampado. */
+  text-shadow: 5px 5px 0 var(--rojo-claro);
+}
+
+.ink-hero h1 em { font-style: normal; color: var(--rojo); }
+
+.ink-hero .lema {
+  font-family: var(--mano);
+  font-size: clamp(24px, 3.6vw, 34px);
+  color: var(--azul);
+  margin: 18px 0 0;
+  transform: rotate(-.8deg);
+  transform-origin: left center;
+}
+
+.ink-hero .entradilla {
+  max-width: 60ch;
+  color: var(--tinta-dim);
+  font-size: 18px;
+  margin: 20px 0 0;
+}
+
+.ink-hero-acciones {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 32px 0 10px;
+}
+
+/* Los borrones de tinta del fondo del hero. Van dibujados con radios
+   irregulares y no con imágenes: pesan cero y se acomodan solos. */
+.borron {
+  position: absolute;
+  border-radius: 62% 38% 46% 54% / 51% 43% 57% 49%;
+  opacity: .5;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.borron.uno { width: 190px; height: 170px; background: var(--rojo-claro); top: 20px; right: 4%; }
+.borron.dos { width: 120px; height: 130px; background: var(--azul-claro); top: 190px; right: 16%; border-radius: 44% 56% 61% 39% / 55% 47% 53% 45%; }
+
+@media (max-width: 900px) { .borron { display: none; } }
+
+/* ---------------------------------------------------------------------
+   LA PALABRA DE HOY — la pieza más grande de la página
+   --------------------------------------------------------------------- */
+.hoy {
+  margin: 40px 0 0;
+  padding: 34px 28px 30px;
+  background: var(--carta);
+  border: 3px solid var(--tinta);
+  border-radius: var(--trazo);
+  box-shadow: 8px 8px 0 0 var(--tinta);
+  text-align: center;
+  position: relative;
+}
+
+.hoy .k {
+  font-family: var(--mano);
+  font-size: 24px;
+  color: var(--rojo);
+  line-height: 1.2;
+}
+
+.hoy .v {
+  font-family: var(--display);
+  font-size: clamp(40px, 11vw, 104px);
+  line-height: 1.05;
+  margin: 14px 0 0;
+  word-break: break-word;
+  text-transform: uppercase;
+}
+
+.hoy .n {
+  display: inline-block;
+  margin-top: 20px;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+}
+
+/* Cuando el reto no está corriendo la caja se apaga: sin sombra dura y con
+   el borde de la retícula, para que se vea que no es la del día. */
+.hoy.apagada {
+  background: var(--carta-alt);
+  border-color: var(--linea);
+  box-shadow: none;
+}
+
+.hoy.apagada .k { color: var(--tinta-mute); }
+.hoy.apagada .v { color: var(--tinta-mute); font-size: clamp(26px, 5vw, 46px); }
+
+/* La barra de avance de los 28 días: rayada a mano, no una línea limpia. */
+.barra {
+  height: 18px;
+  margin: 24px 0 0;
+  background: var(--papel-alt);
+  border: 2px solid var(--tinta);
+  border-radius: 14px 6px 14px 6px / 6px 14px 6px 14px;
+  overflow: hidden;
+}
+
+.barra i {
+  display: block;
+  height: 100%;
+  background: var(--rojo);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(0, 0, 0, .18) 0 5px,
+    transparent 5px 11px
+  );
+}
+
+/* ---------------------------------------------------------------------
+   EL CALENDARIO DE LAS 28
+   --------------------------------------------------------------------- */
+.semana-cab {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 38px 0 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px dashed var(--linea);
+}
+
+.semana-cab h3 { font-size: 26px; }
+.semana-cab .rango { color: var(--tinta-mute); font-size: 14px; }
+
+.calendario {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.dia {
+  background: var(--carta);
+  border: 2px solid var(--tinta);
+  border-radius: var(--trazo);
+  padding: 14px 15px 16px;
+  min-height: 108px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dia:nth-child(3n) { border-radius: var(--trazo-2); }
+
+.dia .n {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--tinta-mute);
+}
+
+.dia .p {
+  font-family: var(--display);
+  font-size: 21px;
+  line-height: 1.15;
+  text-transform: uppercase;
+  word-break: break-word;
+}
+
+.dia .f { font-size: 12px; color: var(--tinta-mute); margin-top: auto; }
+
+/* El día de hoy: rojo, más grueso y levantado de la hoja. */
+.dia.hoy {
+  border-color: var(--rojo);
+  border-width: 3px;
+  box-shadow: 5px 5px 0 0 var(--rojo);
+  background: var(--carta);
+}
+
+.dia.hoy .n { color: var(--rojo); }
+
+/* Un día que todavía no llega no muestra la palabra porque el servidor no la
+   manda: lo que se dibuja es el rayón que la tapa. */
+.dia.tapada { background: var(--papel-alt); border-style: dashed; border-color: var(--linea); }
+.dia.tapada .n { color: var(--tinta-mute); }
+
+.rayon {
+  height: 26px;
+  margin: 4px 0;
+  background-image: repeating-linear-gradient(
+    -12deg,
+    var(--linea) 0 3px,
+    transparent 3px 9px
+  );
+  border-radius: 12px 5px 14px 6px / 6px 14px 5px 12px;
+}
+
+/* Un día ya cumplido se ve tachado con lápiz: sigue leyéndose, que es el
+   punto —el calendario es también el registro de lo que ya pasó—. */
+.dia.pasada { background: var(--carta-alt); }
+.dia.pasada .p { color: var(--tinta-dim); }
+
+/* ---------------------------------------------------------------------
+   LA GALERÍA
+   Retícula de columnas de alturas libres: los dibujos vienen en cualquier
+   proporción y recortarlos a un cuadrado sería estropear el trabajo de
+   alguien. Se usa columns y no grid justamente por eso.
+   --------------------------------------------------------------------- */
+.galeria {
+  columns: 4 240px;
+  column-gap: 20px;
+  margin-top: 24px;
+}
+
+.obra {
+  break-inside: avoid;
+  margin: 0 0 20px;
+  background: var(--carta);
+  border: 2px solid var(--tinta);
+  border-radius: var(--trazo);
+  box-shadow: 4px 4px 0 0 var(--tinta);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.obra:nth-child(even) { border-radius: var(--trazo-2); }
+.obra:hover { box-shadow: 6px 6px 0 0 var(--rojo); border-color: var(--rojo); }
+
+/* El marco de la imagen tiene fondo y alto mínimo: mientras carga —o si el
+   archivo del Drive quedó sin compartir— la casilla se ve vacía y no rota. */
+.obra .marco {
+  background: var(--papel-alt);
+  min-height: 120px;
+  border-bottom: 2px solid var(--tinta);
+}
+
+.obra img { width: 100%; height: auto; }
+
+.obra .pie { padding: 12px 14px 14px; }
+
+.obra .palabra {
+  font-family: var(--display);
+  font-size: 18px;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.obra .quien { font-size: 13px; color: var(--tinta-dim); margin-top: 4px; }
+.obra .datos { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+
+/* Los filtros de la galería: una tira de pastillas. */
+.filtros {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 20px 0 6px;
+}
+
+.filtros a {
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--tinta-dim);
+  background: var(--carta);
+  border: 2px solid var(--linea);
+  border-radius: 24px 10px 26px 12px / 12px 26px 10px 24px;
+  padding: 7px 14px;
+}
+
+.filtros a:hover { border-color: var(--tinta); color: var(--tinta); }
+.filtros a.on { background: var(--tinta); border-color: var(--tinta); color: var(--carta); }
+
+/* ---------------------------------------------------------------------
+   LA LIBRETA — las 28 casillas de una persona
+   --------------------------------------------------------------------- */
+.libreta {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(74px, 1fr));
+  margin-top: 18px;
+}
+
+.casilla {
+  aspect-ratio: 1;
+  border: 2px solid var(--linea);
+  border-radius: 18px 7px 20px 8px / 8px 20px 7px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: var(--carta);
+  text-decoration: none;
+  color: var(--tinta-mute);
+  font-size: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.casilla .n { font-family: var(--display); font-size: 17px; }
+.casilla .w { font-size: 10px; text-align: center; padding: 0 4px; line-height: 1.2; }
+
+/* Entregado: tinta llena. Es el estado que la gente quiere ver 28 veces. */
+.casilla.hecha { border-color: var(--tinta); color: var(--tinta); background: var(--carta); box-shadow: 3px 3px 0 0 var(--tinta); }
+.casilla.hecha .n { color: var(--verde); }
+
+/* Un día que pasó sin dibujo: no se castiga con rojo de error, se deja
+   marcado en amarillo. Fallar un día no saca a nadie del reto. */
+.casilla.falta { border-color: var(--amarillo); border-style: dashed; color: var(--amarillo); }
+
+/* Lo que todavía no llega ni siquiera se dibuja del todo. */
+.casilla.porvenir { opacity: .5; border-style: dotted; }
+
+/* La miniatura del dibujo cuando lo hay: llena la casilla y el número queda
+   encima, sobre una cinta de papel. */
+.casilla img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.casilla.hecha .n { position: relative; z-index: 1; background: var(--carta); padding: 1px 7px; border-radius: 9px 4px 10px 4px / 4px 10px 4px 9px; }
+.casilla.hecha .w { position: relative; z-index: 1; background: var(--carta); padding: 0 5px; border-radius: 8px; }
+
+/* ---------------------------------------------------------------------
+   EL PODIO
+   --------------------------------------------------------------------- */
+.podio-grupo { margin-top: 40px; }
+
+.medalla {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  font-family: var(--display);
+  font-size: 17px;
+  color: var(--carta);
+  background: var(--tinta);
+  border-radius: 58% 42% 52% 48% / 48% 55% 45% 52%;
+}
+
+.medalla.oro { background: var(--rojo); }
+.medalla.plata { background: var(--azul); }
+
+.ganador { display: flex; gap: 16px; align-items: flex-start; }
+.ganador .quien { font-family: var(--display); font-size: 19px; line-height: 1.25; }
+.ganador .que { color: var(--tinta-dim); font-size: 14px; margin-top: 3px; }
+
+/* ---------------------------------------------------------------------
+   Cifras
+   --------------------------------------------------------------------- */
+.ink-datos {
+  display: flex;
+  gap: 40px;
+  flex-wrap: wrap;
+  padding: 30px 0 0;
+}
+
+.ink-dato .k {
+  font-family: var(--mano);
+  font-size: 20px;
+  color: var(--rojo);
+  line-height: 1.2;
+}
+
+.ink-dato .v {
+  font-family: var(--display);
+  font-size: 34px;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: var(--tinta-dim);
+  margin: 0 0 7px;
+}
+
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="date"], input[type="url"],
+select, textarea {
+  width: 100%;
+  background: var(--carta);
+  color: var(--tinta);
+  font-family: var(--body);
+  font-size: 16px;
+  padding: 12px 14px;
+  border: 2px solid var(--tinta);
+  border-radius: 18px 7px 20px 8px / 8px 20px 7px 18px;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--rojo);
+  box-shadow: 3px 3px 0 0 var(--rojo);
+}
+
+input::placeholder, textarea::placeholder { color: var(--tinta-mute); }
+textarea { min-height: 100px; resize: vertical; line-height: 1.5; }
+
+/* La lista de palabras y la de dibujos se pegan de un tirón: el textarea
+   tiene que verse como lo que es, una lista larga. */
+textarea.lista { min-height: 220px; font-family: var(--mono); font-size: 14px; }
+
+.campo { margin-bottom: 22px; }
+.campo .ayuda { font-size: 13px; color: var(--tinta-mute); margin: 8px 0 0; }
+
+.fila {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
+fieldset { border: 0; margin: 0; padding: 0; }
+
+/* Elegir con qué se dibuja: tarjetas, no radios chiquitos. */
+.opciones {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  margin-bottom: 24px;
+}
+
+.opcion {
+  display: block;
+  position: relative;
+  background: var(--carta);
+  border: 2px solid var(--tinta);
+  border-radius: var(--trazo);
+  padding: 18px 20px;
+  cursor: pointer;
+}
+
+.opcion input { position: absolute; opacity: 0; pointer-events: none; }
+.opcion .t { font-family: var(--display); font-size: 19px; display: block; margin-bottom: 6px; }
+.opcion .d { font-size: 14px; color: var(--tinta-dim); line-height: 1.5; }
+
+.opcion:has(input:checked) {
+  background: var(--rojo-claro);
+  border-color: var(--rojo);
+  box-shadow: 4px 4px 0 0 var(--rojo);
+}
+
+.opcion:has(input:checked) .t { color: var(--rojo); }
+
+/* El nombre de archivo: lo más importante que lee un participante en todo el
+   sitio, así que se ve como lo que es —texto de máquina— y se puede copiar. */
+.archivo {
+  font-family: var(--mono);
+  font-size: 15px;
+  background: var(--papel-alt);
+  border: 2px dashed var(--tinta);
+  border-radius: 14px 6px 16px 6px / 6px 16px 6px 14px;
+  padding: 12px 16px;
+  display: inline-block;
+  word-break: break-all;
+}
+
+/* ---------------------------------------------------------------------
+   Avisos
+   --------------------------------------------------------------------- */
+.aviso {
+  background: var(--carta);
+  border: 2px solid var(--tinta);
+  border-left-width: 8px;
+  border-radius: var(--trazo);
+  padding: 16px 20px;
+  margin: 0 0 24px;
+}
+
+.aviso.malo { border-color: var(--rojo); background: var(--rojo-claro); }
+.aviso.bueno { border-color: var(--verde); }
+.aviso ul { margin: 8px 0 0; padding-left: 20px; }
+.aviso li { margin-bottom: 4px; }
+.aviso p:last-child { margin-bottom: 0; }
+
+.codigo-grande {
+  font-family: var(--display);
+  font-size: clamp(34px, 9vw, 62px);
+  letter-spacing: .06em;
+  text-align: center;
+  padding: 26px 18px;
+  margin: 22px 0;
+  background: var(--carta);
+  border: 3px solid var(--tinta);
+  border-radius: var(--trazo);
+  box-shadow: 7px 7px 0 0 var(--rojo);
+}
+
+.vacio {
+  text-align: center;
+  color: var(--tinta-mute);
+  padding: 46px 22px;
+  margin: 22px 0;
+  background: var(--carta-alt);
+  border: 2px dashed var(--linea);
+  border-radius: var(--trazo);
+}
+
+/* ---------------------------------------------------------------------
+   Reglas y preguntas
+   --------------------------------------------------------------------- */
+.reglas { list-style: none; margin: 0; padding: 0; counter-reset: r; }
+
+.reglas li {
+  counter-increment: r;
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 14px;
+  padding: 15px 0;
+  border-bottom: 2px dashed var(--linea);
+  color: var(--tinta-dim);
+}
+
+.reglas li::before {
+  content: counter(r, decimal-leading-zero);
+  font-family: var(--display);
+  color: var(--rojo);
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+details.faq { border-bottom: 2px dashed var(--linea); padding: 4px 0; }
+
+details.faq summary {
+  cursor: pointer;
+  list-style: none;
+  padding: 16px 0;
+  font-family: var(--display);
+  font-size: 19px;
+  line-height: 1.3;
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+}
+
+details.faq summary::-webkit-details-marker { display: none; }
+details.faq summary::before { content: "→"; color: var(--rojo); }
+details.faq[open] summary::before { content: "↓"; }
+details.faq .r { color: var(--tinta-dim); padding: 0 0 18px 26px; max-width: 68ch; }
+
+/* ---------------------------------------------------------------------
+   Pie
+   --------------------------------------------------------------------- */
+.ink-foot {
+  border-top: 2px solid var(--tinta);
+  padding: 34px 22px 46px;
+  color: var(--tinta-mute);
+  font-size: 14px;
+}
+
+.ink-foot-in {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ink-foot a { color: var(--tinta-dim); }
+.ink-foot .der { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+.ink-foot strong { font-family: var(--display); font-size: 20px; font-weight: 400; color: var(--tinta); }
+
+/* El acceso de la organización va discreto: esta página es para quien viene
+   a dibujar. */
+.foot-acceso { color: var(--tinta-mute); text-decoration: none; font-size: 13px; }
+.foot-acceso:hover { color: var(--rojo); }
+
+.foot-eventos {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 18px 0 0;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--tinta-mute);
+}
+
+.foot-eventos a { color: var(--tinta-dim); }
+
+/* ---------------------------------------------------------------------
+   Panel de la organización
+   --------------------------------------------------------------------- */
+.panel-top { background: var(--papel-alt); }
+
+.tabla { width: 100%; border-collapse: collapse; margin-top: 10px; }
+
+.tabla th {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  text-align: left;
+  padding: 12px 10px;
+  border-bottom: 2px solid var(--tinta);
+}
+
+.tabla td {
+  padding: 13px 10px;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: top;
+}
+
+.tabla tr:hover td { background: var(--carta); }
+.tabla .nom { font-family: var(--display); font-size: 17px; line-height: 1.25; }
+
+.acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* Cada herramienta del panel en su hoja, con su título. */
+.herramienta {
+  margin: 0 0 26px;
+  padding: 24px;
+  background: var(--carta);
+  border: 2px solid var(--tinta);
+  border-radius: var(--trazo);
+  box-shadow: 5px 5px 0 0 var(--tinta);
+}
+
+.herramienta > h3 { font-size: 23px; color: var(--rojo); margin-bottom: 6px; }
+.herramienta .sec-lead { margin-bottom: 20px; font-size: 15px; }
+
+.revision { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end; margin-top: 16px; }
+.revision .campo { flex: 1; min-width: 220px; margin-bottom: 0; }
+
+/* La barrita de avance de cada persona en la tabla del panel. */
+.avance {
+  height: 10px;
+  background: var(--papel-alt);
+  border: 1px solid var(--tinta);
+  border-radius: 8px;
+  overflow: hidden;
+  min-width: 90px;
+}
+
+.avance i { display: block; height: 100%; background: var(--verde); }
+.avance.completo i { background: var(--rojo); }
+
+/* Las líneas que no se entendieron al pegar la lista. */
+.problema {
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 9px 12px;
+  border-bottom: 1px dashed var(--linea);
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+
+.problema .por { color: var(--rojo); font-family: var(--body); font-weight: 600; }
+
+/* ---------------------------------------------------------------------
+   CELULAR — el menú se va abajo
+   Mismo criterio que en el torneo y en la jam: cinco enlaces no caben al
+   lado de la marca y se van al borde inferior, donde llega el pulgar.
+   --------------------------------------------------------------------- */
+@media (max-width: 780px) {
+  .ink { padding: 0 16px 70px; }
+  .ink-top-in.publica { flex-wrap: nowrap; min-height: 58px; gap: 10px; padding: 0 16px; }
+  .ink-marca { font-size: 21px; }
+
+  .ink-nav.tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    margin: 0;
+    gap: 0;
+    flex-wrap: nowrap;
+    background: var(--carta);
+    border-top: 2px solid var(--tinta);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .ink-nav.tabs a {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 9px 2px 8px;
+    font-size: 11px;
+    border: 0;
+    border-radius: 0;
+    border-top: 3px solid transparent;
+  }
+
+  .ink-nav.tabs a span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ink-nav.tabs .ic { display: block; width: 21px; height: 21px; flex: 0 0 auto; }
+  .ink-nav.tabs a.on { color: var(--rojo); border-top-color: var(--rojo); background: var(--rojo-claro); }
+
+  /* Sin esto la barra tapa el pie. Solo en las páginas que la tienen: el
+     panel no la lleva y no tiene por qué quedar con un hueco. */
+  body:has(.ink-nav.tabs) { padding-bottom: calc(62px + env(safe-area-inset-bottom, 0px)); }
+
+  /* El panel es otra historia: dos enlaces y el botón de salir. Se le quita
+     el nombre del docente, que es lo único prescindible. */
+  .panel-top .ink-top-in { gap: 10px; padding: 0 14px; min-height: 58px; }
+  .panel-top .mini { display: none; }
+
+  .galeria { columns: 2 150px; column-gap: 14px; }
+  .ink-datos { gap: 26px; }
+  .tabla th, .tabla td { padding: 10px 6px; }
+  .hoy { padding: 26px 18px 24px; }
+}
+
+@media (max-width: 440px) {
+  .calendario { grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); }
+  .libreta { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); }
+}

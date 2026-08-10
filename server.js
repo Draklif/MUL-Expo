@@ -25,10 +25,13 @@ const vcRouter = require("./routes/vc");
 const vcPanelRouter = require("./routes/vc-panel");
 const jamRouter = require("./routes/jam");
 const jamPanelRouter = require("./routes/jam-panel");
+const inkRouter = require("./routes/ink");
+const inkPanelRouter = require("./routes/ink-panel");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
 const { configurado: vcConfigurado } = require("./lib/vc-auth");
 const { configurado: jamConfigurado } = require("./lib/jam-auth");
+const { configurado: inkConfigurado } = require("./lib/ink-auth");
 
 // Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
 // dejar un login que rechaza a todo el mundo sin explicar por qué.
@@ -84,6 +87,7 @@ app.use((req, res, next) => {
   // sitio público ofrezca "ir al panel" a quien ya entró y "acceso" al resto.
   res.locals.docenteVC = req.session.docenteVC || null;
   res.locals.docenteJam = req.session.docenteJam || null;
+  res.locals.docenteInk = req.session.docenteInk || null;
   res.locals.query = req.query;
   res.locals.DOMINIO = DOMINIO;
   res.locals.PATRON_CORREO = PATRON_HTML;
@@ -158,6 +162,14 @@ app.use("/vc", vcPanelRouter);
 app.use("/", jamRouter);
 app.use("/jam", jamPanelRouter);
 
+// INKreible. Mismo reparto que los dos anteriores y por la misma razón: su
+// página se arma con la base (la edición, el día del reto, la palabra de hoy,
+// los dibujos), así que la sirve un router y no la página automática de
+// eventos. El público va primero para que el panel, que vive en el mismo /ink,
+// no le pase por encima.
+app.use("/", inkRouter);
+app.use("/ink", inkPanelRouter);
+
 // Certificados (públicos: el QR de cada uno apunta a su página)
 app.use("/certificado", certificadosRouter);
 
@@ -231,6 +243,11 @@ app.listen(PORT, "0.0.0.0", () => {
     jamConfigurado()
       ? `  ✓ Panel Jam de Altura:     http://localhost:${PORT}/jam/acceso`
       : "  · Panel Jam de Altura:     cerrado (falta PASSWORD_JAM en .env)"
+  );
+  console.log(
+    inkConfigurado()
+      ? `  ✓ Panel INKreible:         http://localhost:${PORT}/ink/acceso`
+      : "  · Panel INKreible:         cerrado (falta PASSWORD_INK en .env)"
   );
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(

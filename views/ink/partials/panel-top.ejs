@@ -1,0 +1,18 @@
+<%/* Cabecera del panel. Deliberadamente distinta a la del sitio público: aquí
+     no hay marca grande ni barra de pestañas, solo dónde estás, quién eres y
+     la salida. */%>
+<header class="ink-top panel-top">
+  <div class="ink-top-in panel">
+    <a href="/ink/panel" class="ink-marca">Panel <em>INK</em></a>
+    <nav class="ink-nav">
+      <a href="/ink/panel">Ediciones</a>
+      <a href="/inkreible">Ver el sitio</a>
+    </nav>
+    <div style="display:flex;align-items:center;gap:14px;margin-left:12px">
+      <span class="mini"><%= docenteInk.name %><%= periodoInk ? " · " + periodoInk.codigo : "" %></span>
+      <form method="POST" action="/ink/salir" style="margin:0">
+        <button type="submit" class="btn chico">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

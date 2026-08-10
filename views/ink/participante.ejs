@@ -1,0 +1,52 @@
+<%/* La libreta pública de una persona: sus 28 casillas y sus dibujos en
+     grande. Se llega desde la galería y es lo que alguien comparte cuando
+     termina el reto. */%>
+<%- include('../partials/head', { title: title, descripcion: persona.nombre + ' en INKreible: ' + persona.entregados + ' dibujos.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<%
+  const palabraDe = (n) => {
+    const p = palabras.find((x) => x.dia === n);
+    return p && p.publica ? p.palabra : null;
+  };
+%>
+
+<main class="ink">
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Su libreta</p>
+        <h2><%= persona.nombre %></h2>
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <% if (persona.usuario) { %><span class="chip azul">@<%= persona.usuario %></span><% } %>
+          <span class="chip no"><%= persona.tecnica_label %></span>
+          <% if (persona.completo) { %>
+            <span class="chip rojo">Los <%= fase.dias %> completos</span>
+          <% } else { %>
+            <span class="chip ok"><%= persona.entregados %> de <%= fase.dias %></span>
+          <% } %>
+        </div>
+      </div>
+      <a href="/ink/galeria" class="btn chico">Volver a la galería</a>
+    </div>
+
+    <%- include('partials/libreta', { grilla: persona.grilla, palabras: palabras }) %>
+  </section>
+
+  <% if (persona.dibujos.length) { %>
+  <section class="ink-sec">
+    <p class="eyebrow">Uno por uno</p>
+    <h2><%= persona.dibujos.length %> <%= persona.dibujos.length === 1 ? "dibujo" : "dibujos" %></h2>
+    <div class="galeria">
+      <% persona.dibujos.forEach(function (d) { %>
+        <%- include('partials/obra', { d: d, palabra: palabraDe(d.dia) }) %>
+      <% }); %>
+    </div>
+  </section>
+  <% } else { %>
+    <div class="vacio">Todavía no hay dibujos suyos cargados.</div>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

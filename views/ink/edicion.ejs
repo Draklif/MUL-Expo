@@ -1,0 +1,623 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA SALA DE CONTROL DE UNA EDICIÓN
+
+     Las herramientas van en el orden en que se usan durante un semestre:
+     primero el cronograma (que es lo que echa a andar el calendario
+     público), después las palabras y la carpeta, después la revisión de
+     inscripciones, después la carga de los dibujos —que es lo que se hace
+     cada semana— y de últimas el podio y los ajustes.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="ink">
+
+  <%/* ───── AVISOS ───── */%>
+  <%
+    const BUENOS = {
+      ok: "Guardado.",
+      abierta: "Edición abierta. Las inscripciones ya están recibiendo.",
+      revisado: "Inscripción revisada y avisada por correo.",
+      borrado: "Borrado.",
+    };
+    const MALOS = {
+      enlace: "El enlace tiene que empezar por http.",
+      sin_carpeta: "Primero pon el enlace de la carpeta y guárdalo; después se manda.",
+      sin_persona: "No hay nadie admitido con ese código en esta edición.",
+      dia: "El día tiene que estar dentro del reto.",
+      premio: "Esa categoría de premio no existe.",
+      sin_dibujo: "No hay ningún dibujo cargado con ese código y ese día.",
+      sin_publicar: "El podio todavía no está publicado. No se puede avisar por correo un resultado que no está en la página.",
+      con_gente: "Esa edición ya tiene gente inscrita: no se borra. Ciérrala en los ajustes si ya terminó.",
+    };
+    const bueno = Object.keys(BUENOS).find((k) => aviso[k]);
+    const malo = MALOS[aviso.error];
+  %>
+
+  <% if (bueno) { %>
+    <div class="aviso bueno" style="margin-top:26px"><p style="margin:0"><%= BUENOS[bueno] %></p></div>
+  <% } %>
+  <% if (malo) { %>
+    <div class="aviso malo" style="margin-top:26px"><p style="margin:0"><%= malo %></p></div>
+  <% } %>
+  <% if (aviso.palabras !== undefined) { %>
+    <div class="aviso bueno" style="margin-top:26px">
+      <p style="margin:0">Quedaron <%= aviso.palabras %> palabras cargadas de <%= edicion.dias %>.</p>
+    </div>
+  <% } %>
+  <% if (aviso.enviados !== undefined) { %>
+    <div class="aviso bueno" style="margin-top:26px">
+      <p style="margin:0">
+        Se mandó el enlace a <%= aviso.enviados %> personas<%= Number(aviso.fallaron) ? ` (${aviso.fallaron} fallaron)` : "" %>.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.avisados !== undefined) { %>
+    <div class="aviso bueno" style="margin-top:26px">
+      <p style="margin:0">
+        Se avisó del podio a <%= aviso.avisados %> personas<%= Number(aviso.fallaron) ? ` (${aviso.fallaron} fallaron)` : "" %>.
+      </p>
+    </div>
+  <% } %>
+
+  <%/* ───── CABECERA ───── */%>
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow"><%= edicion.periodo || "Sin semestre" %></p>
+        <h2><%= edicion.nombre %></h2>
+        <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <span class="chip <%= edicion.estado === 'finalizada' ? 'no' : edicion.estado === 'en_curso' ? 'rojo' : 'ok' %>">
+            <%= edicion.estado === "inscripcion" ? "Inscripciones" : edicion.estado === "en_curso" ? "En curso" : "Cerrada" %>
+          </span>
+          <% if (fase.clave === "en_curso") { %>
+            <span class="chip vivo">Día <%= fase.dia %> de <%= fase.dias %></span>
+          <% } %>
+          <% if (fase.clave === "antes") { %><span class="chip azul">Faltan <%= fase.faltan %> días</span><% } %>
+          <% if (fase.clave === "sin_fecha") { %><span class="chip pend">Sin fecha</span><% } %>
+          <span class="chip <%= edicion.inscripcion_abierta ? 'ok' : 'no' %>">
+            Inscripciones <%= edicion.inscripcion_abierta ? "abiertas" : "cerradas" %>
+          </span>
+          <span class="chip <%= edicion.galeria_publica ? 'azul' : 'no' %>">
+            Galería <%= edicion.galeria_publica ? "abierta" : "cerrada" %>
+          </span>
+          <span class="chip <%= edicion.resultados_publicos ? 'rojo' : 'no' %>">
+            Podio <%= edicion.resultados_publicos ? "publicado" : "sin publicar" %>
+          </span>
+        </div>
+      </div>
+      <a href="/inkreible" class="btn chico">Ver la página pública</a>
+    </div>
+
+    <div class="ink-datos" style="padding-top:14px">
+      <div class="ink-dato"><div class="k">Dibujando</div><div class="v"><%= cifras.inscritos %></div></div>
+      <div class="ink-dato"><div class="k">Por revisar</div><div class="v"><%= cifras.pendientes %></div></div>
+      <div class="ink-dato"><div class="k">Dibujos</div><div class="v"><%= cifras.dibujos %></div></div>
+      <div class="ink-dato"><div class="k">Completos</div><div class="v"><%= cifras.completos %></div></div>
+      <div class="ink-dato"><div class="k">Palabras</div><div class="v"><%= cifras.palabras %>/<%= edicion.dias %></div></div>
+    </div>
+  </section>
+
+  <%/* ───── 1. CRONOGRAMA ───── */%>
+  <section class="ink-sec" id="cronograma">
+    <div class="herramienta">
+      <h3>1 · Cuándo arranca</h3>
+      <p class="sec-lead">
+        Esto y nada más es lo que mueve el calendario de la página. Con la
+        fecha puesta, cada mañana se destapa sola la palabra del día que
+        corresponde; no hay nada que apretar a las seis de la mañana.
+      </p>
+
+      <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/cronograma">
+        <div class="fila">
+          <div class="campo">
+            <label for="inicio">Día 1 del reto</label>
+            <input type="date" name="inicio" id="inicio" value="<%= edicion.inicio || '' %>" />
+          </div>
+          <div class="campo">
+            <label for="dias">Cuántos días</label>
+            <input type="number" name="dias" id="dias" min="1" max="365" value="<%= edicion.dias %>" />
+          </div>
+          <div class="campo">
+            <label for="semanas">En cuántas semanas</label>
+            <input type="number" name="semanas" id="semanas" min="1" max="52" value="<%= edicion.semanas %>" />
+          </div>
+        </div>
+        <button type="submit" class="btn chico">Guardar el cronograma</button>
+      </form>
+
+      <% if (fase.momento_inicio) { %>
+        <p class="mini" style="margin-top:20px">
+          Empieza el <%= fase.momento_inicio.dia %>
+          <% if (fase.momento_fin) { %>y termina el <%= fase.momento_fin.dia %><% } %>.
+        </p>
+        <div class="filtros" style="margin-top:10px">
+          <% semanas.forEach(function (s) { %>
+            <a href="#palabras" class="<%= s.corriendo ? 'on' : '' %>">
+              Semana <%= s.n %>: días <%= s.desde %>–<%= s.hasta %>
+              <% if (s.inicio) { %> · <%= s.inicio.diaCorto %><% } %>
+            </a>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 2. LAS PALABRAS ───── */%>
+  <section class="ink-sec" id="palabras">
+    <div class="herramienta">
+      <h3>2 · Las <%= edicion.dias %> palabras</h3>
+      <p class="sec-lead">
+        Una por línea y en el orden de los días. Se cargan todas de una y se
+        pueden dejar listas con semanas de anticipación: cada una se destapa
+        sola el día que le toca, así que escribirlas no las publica.
+      </p>
+
+      <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/palabras">
+        <div class="campo">
+          <label for="lista-palabras">La lista, una por línea</label>
+          <textarea name="palabras" id="lista-palabras" class="lista"
+                    placeholder="Nudo&#10;Espejo&#10;Antiguo&#10;…"><%= palabras.map(function (p) { return p.palabra; }).join("\n") %></textarea>
+          <p class="ayuda">
+            Lo que se manda reemplaza lo que había. Una línea en blanco deja ese
+            día sin palabra; las líneas de más se ignoran.
+          </p>
+        </div>
+        <button type="submit" class="btn chico">Guardar las palabras</button>
+      </form>
+
+      <div style="margin-top:26px;padding-top:22px;border-top:2px dashed var(--linea)">
+        <p style="margin:0 0 16px">
+          <% if (edicion.lista_publica) { %>
+            <span class="chip azul">Lista completa</span>
+            Las <%= edicion.dias %> palabras se están viendo desde ya, como en el inktober original.
+          <% } else { %>
+            <span class="chip no">Día por día</span>
+            Cada palabra se destapa el día que le toca. Es lo normal.
+          <% } %>
+        </p>
+        <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/lista" style="margin:0">
+          <input type="hidden" name="publicar" value="<%= edicion.lista_publica ? "0" : "1" %>" />
+          <button type="submit" class="btn chico">
+            <%= edicion.lista_publica ? "Volver a destaparlas día por día" : "Publicar la lista completa" %>
+          </button>
+        </form>
+      </div>
+
+      <%/* Vista rápida de cómo van quedando: el panel sí ve todas. */%>
+      <% if (cifras.palabras) { %>
+        <div class="calendario" style="margin-top:24px">
+          <% palabras.forEach(function (p) { %>
+            <div class="dia <%= p.hoy ? 'hoy' : p.palabra ? '' : 'tapada' %>">
+              <div class="n">Día <%= String(p.dia).padStart(2, "0") %></div>
+              <% if (p.palabra) { %>
+                <div class="p"><%= p.palabra %></div>
+              <% } else { %>
+                <div class="rayon"></div>
+              <% } %>
+              <% if (p.fecha) { %><div class="f"><%= p.fecha.diaCorto %></div><% } %>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 3. LA CARPETA ───── */%>
+  <section class="ink-sec" id="carpeta">
+    <div class="herramienta">
+      <h3>3 · La carpeta y el nombre de los archivos</h3>
+      <p class="sec-lead">
+        Esto es lo que recibe cada quien al ser admitido y lo único que
+        necesita para participar. La carpeta se comparte con permiso de subida
+        para cualquiera con el enlace; los archivos, para que los pueda abrir
+        el jurado, tienen que quedar visibles.
+      </p>
+
+      <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/carpeta">
+        <div class="campo">
+          <label for="drive_url">Enlace de la carpeta</label>
+          <input type="url" name="drive_url" id="drive_url" maxlength="500"
+                 value="<%= edicion.drive_url || '' %>"
+                 placeholder="https://drive.google.com/drive/folders/…" />
+        </div>
+        <div class="campo">
+          <label for="nomenclatura">Nomenclatura</label>
+          <input type="text" name="nomenclatura" id="nomenclatura" maxlength="80"
+                 value="<%= edicion.nomenclatura %>" />
+          <p class="ayuda">
+            Las llaves las reemplaza el sitio: <code>{CODIGO}</code> es el de
+            cada persona, <code>{DIA}</code> el día en dos cifras y
+            <code>{TECNICA}</code> la sigla
+            (<% tecnicas.forEach(function (t, i) { %><%= i ? ", " : "" %><%= t.sigla %> = <%= t.label %><% }); %>).
+          </p>
+        </div>
+        <button type="submit" class="btn chico">Guardar</button>
+      </form>
+
+      <div style="margin-top:26px;padding-top:22px;border-top:2px dashed var(--linea)">
+        <p style="margin:0 0 8px">Así le queda el nombre del día 7 a alguien con el código ABC234:</p>
+        <p class="archivo" style="margin:0 0 20px">
+          <%= edicion.nomenclatura.replace("{CODIGO}", "ABC234").replace("{DIA}", "07").replace("{TECNICA}", tecnicas[0].sigla) %>.jpg
+        </p>
+
+        <div class="acciones">
+          <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/enviar-enlace" style="margin:0">
+            <button type="submit" class="btn chico" <%= correoActivo && edicion.drive_url && sinEnlace ? "" : "disabled" %>>
+              Mandar el enlace a los <%= sinEnlace %> que no lo tienen
+            </button>
+          </form>
+          <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/enviar-enlace" style="margin:0">
+            <input type="hidden" name="todos" value="1" />
+            <button type="submit" class="btn chico" <%= correoActivo && edicion.drive_url ? "" : "disabled" %>>
+              Mandarlo otra vez a todos
+            </button>
+          </form>
+        </div>
+        <p class="mini" style="margin-top:12px">
+          <% if (!correoActivo) { %>
+            Los correos están apagados en el .env, así que no saldría ninguno.
+          <% } else if (!edicion.drive_url) { %>
+            Falta el enlace de la carpeta.
+          <% } else { %>
+            Lo segundo sirve el día que cambie el enlace de la carpeta.
+          <% } %>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── 4. INSCRIPCIONES POR REVISAR ───── */%>
+  <section class="ink-sec" id="inscripciones">
+    <div class="herramienta">
+      <h3>4 · Inscripciones por revisar</h3>
+      <p class="sec-lead">
+        Nadie entra a la galería hasta que se admite. Al aprobar, a esa persona
+        le llega un correo con el enlace de la carpeta y con el nombre que
+        tienen que llevar sus archivos.
+      </p>
+
+      <% if (!pendientes.length) { %>
+        <div class="vacio" style="margin:0">No hay inscripciones esperando.</div>
+      <% } else { %>
+        <% pendientes.forEach(function (p) { %>
+          <div class="tarjeta" style="margin:0 0 20px;transform:none">
+            <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+              <div style="flex:1;min-width:200px">
+                <div class="nom"><%= p.nombre %></div>
+                <div class="mini">
+                  <%= p.email %> · <%= p.codigo %>
+                  <% if (p.semestre) { %> · <%= p.semestre %><% } %>
+                  <% if (p.usuario) { %> · @<%= p.usuario %><% } %>
+                </div>
+              </div>
+              <span class="chip no"><%= p.tecnica === "mixto" ? "Digital y análogo" : p.tecnica %></span>
+            </div>
+
+            <form method="POST" action="/ink/panel/participantes/<%= p.id %>/revisar" class="revision">
+              <div class="campo">
+                <label for="nota-<%= p.id %>">Nota (solo hace falta si no queda admitido)</label>
+                <input type="text" name="nota_docente" id="nota-<%= p.id %>" maxlength="400"
+                       placeholder="Qué tiene que ajustar" />
+              </div>
+              <div class="acciones">
+                <button type="submit" name="estado" value="aprobado" class="btn chico">Admitir</button>
+                <button type="submit" name="estado" value="rechazado" class="btn chico peligro">No admitir</button>
+              </div>
+            </form>
+          </div>
+        <% }); %>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 5. QUIÉNES ESTÁN DIBUJANDO ───── */%>
+  <section class="ink-sec" id="gente">
+    <div class="herramienta">
+      <h3>5 · Quiénes están dibujando</h3>
+      <p class="sec-lead">
+        Con lo que lleva cada quien. Sirve para lo de siempre a mitad del reto:
+        ver quién se está quedando y escribirle antes de que abandone.
+      </p>
+
+      <% if (!admitidos.length) { %>
+        <div class="vacio" style="margin:0">Todavía no hay nadie admitido.</div>
+      <% } else { %>
+        <div style="overflow-x:auto">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Quién</th>
+                <th>Código</th>
+                <th>Con qué</th>
+                <th>Lleva</th>
+                <th>Avance</th>
+                <th>Enlace</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <% admitidos.forEach(function (p) { %>
+                <tr>
+                  <td>
+                    <span class="nom"><%= p.nombre %></span>
+                    <div class="mini"><%= p.email %></div>
+                  </td>
+                  <td class="mini" style="font-family:var(--mono)"><%= p.codigo %></td>
+                  <td class="mini"><%= p.tecnica_label %></td>
+                  <td>
+                    <%= p.entregados %>/<%= edicion.dias %>
+                    <% if (p.faltantes) { %><br /><span class="chip pend"><%= p.faltantes %> sin subir</span><% } %>
+                  </td>
+                  <td>
+                    <div class="avance <%= p.completo ? 'completo' : '' %>">
+                      <i style="width:<%= p.avance.toFixed(1) %>%"></i>
+                    </div>
+                  </td>
+                  <td class="mini">
+                    <%= p.drive_enviado_at ? "enviado" : "—" %>
+                  </td>
+                  <td>
+                    <form method="POST" action="/ink/panel/participantes/<%= p.id %>/borrar" style="margin:0"
+                          onsubmit="return confirm('Se borra a <%= p.nombre %> con sus <%= p.entregados %> dibujos. ¿Seguro?')">
+                      <button type="submit" class="btn chico peligro">Borrar</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+
+      <% if (rechazados.length) { %>
+        <p class="mini" style="margin-top:18px">
+          Y <%= rechazados.length %> <%= rechazados.length === 1 ? "inscripción no admitida" : "inscripciones no admitidas" %>.
+        </p>
+      <% } %>
+    </div>
+  </section>
+
+  <%/* ───── 6. CARGAR LOS DIBUJOS ───── */%>
+  <section class="ink-sec" id="dibujos">
+    <div class="herramienta">
+      <h3>6 · Cargar los dibujos de la carpeta</h3>
+      <p class="sec-lead">
+        Se pega la lista de la carpeta —nombre del archivo y enlace, en
+        cualquier orden— y de ahí salen solos el autor, el día y la técnica.
+        Para eso existe la nomenclatura. Volver a cargar un día que ya estaba
+        reemplaza el enlace, así que se puede pegar la lista completa cada
+        semana sin miedo a duplicar nada.
+      </p>
+
+      <% if (carga) { %>
+        <div class="aviso <%= carga.descartadas ? "malo" : "bueno" %>">
+          <p style="margin:0">
+            Se cargaron <strong><%= carga.guardados %></strong> de <%= carga.total %> líneas.
+            <% if (carga.descartadas) { %>
+              <%= carga.descartadas %> no se pudieron: casi siempre es el nombre
+              del archivo en el Drive.
+            <% } %>
+          </p>
+        </div>
+        <% if (carga.problemas.length) { %>
+          <div style="margin-bottom:24px">
+            <% carga.problemas.forEach(function (x) { %>
+              <div class="problema">
+                <span><%= x.linea.slice(0, 90) %></span>
+                <span class="por"><%= x.error %></span>
+              </div>
+            <% }); %>
+          </div>
+        <% } %>
+      <% } %>
+
+      <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/dibujos">
+        <div class="campo">
+          <label for="lista-dibujos">La lista, una línea por archivo</label>
+          <textarea name="lista" id="lista-dibujos" class="lista"
+                    placeholder="ABC234_07_DIG.jpg&#9;https://drive.google.com/file/d/1a2b3c/view&#10;XY7KLM_07_ANA.jpg&#9;https://drive.google.com/file/d/4d5e6f/view"></textarea>
+          <p class="ayuda">
+            De Drive se saca con el complemento de listar carpetas, o pegando
+            desde una hoja de cálculo con dos columnas. El orden de las columnas
+            da igual.
+          </p>
+        </div>
+        <button type="submit" class="btn chico">Cargar la lista</button>
+      </form>
+
+      <div style="margin-top:26px;padding-top:22px;border-top:2px dashed var(--linea)">
+        <p style="margin:0 0 16px">O uno solo, para corregir una fila que quedó mal:</p>
+        <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/dibujo">
+          <div class="fila">
+            <div class="campo">
+              <label for="d-codigo">Código</label>
+              <input type="text" name="codigo" id="d-codigo" maxlength="6" required placeholder="ABC234" />
+            </div>
+            <div class="campo">
+              <label for="d-dia">Día</label>
+              <input type="number" name="dia" id="d-dia" min="1" max="<%= edicion.dias %>" required />
+            </div>
+            <div class="campo">
+              <label for="d-tecnica">Técnica</label>
+              <select name="tecnica" id="d-tecnica">
+                <% tecnicas.forEach(function (t) { %>
+                  <option value="<%= t.id %>"><%= t.label %></option>
+                <% }); %>
+              </select>
+            </div>
+          </div>
+          <div class="campo">
+            <label for="d-url">Enlace del archivo</label>
+            <input type="url" name="url" id="d-url" maxlength="500" required
+                   placeholder="https://drive.google.com/file/d/…/view" />
+          </div>
+          <button type="submit" class="btn chico">Guardar el dibujo</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── 7. EL PODIO ───── */%>
+  <section class="ink-sec" id="podio">
+    <div class="herramienta">
+      <h3>7 · El podio</h3>
+      <p class="sec-lead">
+        Cada ganador se dicta como se dicta en una reunión de jurado: el código
+        de quien dibujó y el día. Se puede ir armando por partes; hasta que no
+        se publique en los ajustes, no se ve nada en la página.
+      </p>
+
+      <% Object.keys(categorias).forEach(function (tipo) { %>
+        <% const cat = categorias[tipo]; %>
+        <div style="margin-bottom:30px">
+          <div class="semana-cab" style="margin-top:22px">
+            <h3><%= cat.label %></h3>
+            <span class="rango">
+              <%= tipo === "semana" ? `uno por cada una de las ${edicion.semanas} semanas` : `hasta ${cat.cuantos}` %>
+            </span>
+          </div>
+
+          <% if (podio[tipo].length) { %>
+            <div style="margin-bottom:16px">
+              <% podio[tipo].forEach(function (p) { %>
+                <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid var(--linea)">
+                  <span class="medalla <%= p.puesto === 1 ? 'oro' : '' %>">
+                    <%= tipo === "semana" ? "S" + p.semana : p.puesto %>
+                  </span>
+                  <div style="flex:1;min-width:160px">
+                    <div class="nom"><%= p.autor %></div>
+                    <div class="mini">Día <%= p.dia %> · <%= p.autor_codigo %> · <%= p.tecnica_label %></div>
+                  </div>
+                  <a href="<%= p.url %>" target="_blank" rel="noopener" class="btn chico">Ver</a>
+                  <form method="POST" action="/ink/panel/premios/<%= p.id %>/borrar" style="margin:0">
+                    <button type="submit" class="btn chico peligro">Quitar</button>
+                  </form>
+                </div>
+              <% }); %>
+            </div>
+          <% } %>
+
+          <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/premios">
+            <input type="hidden" name="tipo" value="<%= tipo %>" />
+            <div class="fila">
+              <% if (tipo === "semana") { %>
+                <div class="campo">
+                  <label for="sem-<%= tipo %>">Semana</label>
+                  <select name="semana" id="sem-<%= tipo %>">
+                    <% for (let s = 1; s <= edicion.semanas; s++) { %>
+                      <option value="<%= s %>">Semana <%= s %></option>
+                    <% } %>
+                  </select>
+                </div>
+              <% } else { %>
+                <div class="campo">
+                  <label for="pue-<%= tipo %>">Puesto</label>
+                  <select name="puesto" id="pue-<%= tipo %>">
+                    <% for (let n = 1; n <= cat.cuantos; n++) { %>
+                      <option value="<%= n %>"><%= n %></option>
+                    <% } %>
+                  </select>
+                </div>
+              <% } %>
+              <div class="campo">
+                <label for="cod-<%= tipo %>">Código de quien dibujó</label>
+                <input type="text" name="codigo" id="cod-<%= tipo %>" maxlength="6" required placeholder="ABC234" />
+              </div>
+              <div class="campo">
+                <label for="dia-<%= tipo %>">Día del dibujo</label>
+                <input type="number" name="dia" id="dia-<%= tipo %>" min="1" max="<%= edicion.dias %>" required />
+              </div>
+            </div>
+            <div class="campo">
+              <label for="nota-<%= tipo %>">Por qué (opcional, sale en la página)</label>
+              <input type="text" name="nota" id="nota-<%= tipo %>" maxlength="200" />
+            </div>
+            <button type="submit" class="btn chico">Guardar en <%= cat.corto %></button>
+          </form>
+        </div>
+      <% }); %>
+
+      <div style="margin-top:20px;padding-top:22px;border-top:2px dashed var(--linea)">
+        <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/avisar-podio" style="margin:0">
+          <button type="submit" class="btn chico" <%= correoActivo && edicion.resultados_publicos ? "" : "disabled" %>>
+            Avisarle por correo a quienes quedaron
+          </button>
+        </form>
+        <p class="mini" style="margin-top:12px">
+          Un solo correo por persona aunque haya ganado en dos categorías. Solo
+          se puede mandar con el podio ya publicado.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <%/* ───── 8. AJUSTES ───── */%>
+  <section class="ink-sec" id="ajustes">
+    <div class="herramienta">
+      <h3>8 · Ajustes</h3>
+      <p class="sec-lead">
+        Los dos interruptores de abajo son los del final del reto: la galería
+        se abre cuando estén todos los dibujos y el podio cuando el jurado
+        termine.
+      </p>
+
+      <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/estado">
+        <div class="fila">
+          <div class="campo">
+            <label for="estado">Estado</label>
+            <select name="estado" id="estado">
+              <option value="inscripcion" <%= edicion.estado === "inscripcion" ? "selected" : "" %>>Inscripciones</option>
+              <option value="en_curso" <%= edicion.estado === "en_curso" ? "selected" : "" %>>En curso</option>
+              <option value="finalizada" <%= edicion.estado === "finalizada" ? "selected" : "" %>>Cerrada</option>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="cupo">Cupo</label>
+            <input type="number" name="cupo" id="cupo" min="1" max="1000"
+                   value="<%= edicion.cupo || '' %>" placeholder="sin tope" />
+          </div>
+        </div>
+
+        <label class="opcion" style="margin-bottom:16px">
+          <input type="checkbox" name="inscripcion_abierta" value="1" <%= edicion.inscripcion_abierta ? "checked" : "" %> />
+          <span class="t">Inscripciones abiertas</span>
+          <span class="d">Mientras esté marcado, cualquiera puede inscribirse desde la página.</span>
+        </label>
+
+        <label class="opcion" style="margin-bottom:16px">
+          <input type="checkbox" name="galeria_publica" value="1" <%= edicion.galeria_publica ? "checked" : "" %> />
+          <span class="t">Galería abierta</span>
+          <span class="d">
+            Cerrada mientras el reto corre: la idea es que nadie mire lo que hizo
+            el vecino antes de resolver su propia palabra.
+          </span>
+        </label>
+
+        <label class="opcion" style="margin-bottom:16px">
+          <input type="checkbox" name="resultados_publicos" value="1" <%= edicion.resultados_publicos ? "checked" : "" %> />
+          <span class="t">Podio publicado</span>
+          <span class="d">
+            El podio se arma en varias sentadas; esto es lo que lo saca a la
+            página, todo de una vez.
+          </span>
+        </label>
+
+        <button type="submit" class="btn chico">Guardar los ajustes</button>
+      </form>
+
+      <div style="margin-top:26px;padding-top:22px;border-top:2px dashed var(--linea)">
+        <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/borrar" style="margin:0"
+              onsubmit="return confirm('Se borra la edición entera con sus palabras, sus dibujos y su podio. ¿Seguro?')">
+          <button type="submit" class="btn chico peligro">Borrar esta edición</button>
+        </form>
+        <p class="mini" style="margin-top:12px">
+          Solo se puede si no tiene gente inscrita. Una edición con dibujos no
+          se borra: se cierra.
+        </p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

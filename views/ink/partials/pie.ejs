@@ -1,0 +1,18 @@
+<footer class="ink-foot">
+  <div class="ink-foot-in">
+    <div>
+      <strong>INKreible</strong><br />
+      <%= programa %> · <%= institucion %>
+    </div>
+    <div class="der">
+      <a href="/ink/inscripcion">Inscribirse</a>
+      <a href="/ink/inscripcion/estado">Consultar código</a>
+      <%/* El acceso de la organización va discreto y no en el menú: esta
+           página es para quien viene a dibujar. */%>
+      <a href="<%= docenteInk ? '/ink/panel' : '/ink/acceso' %>" class="foot-acceso">
+        <%= docenteInk ? 'Ir al panel' : 'Acceso organización' %>
+      </a>
+    </div>
+  </div>
+  <%- include('../../partials/otros-eventos') %>
+</footer>

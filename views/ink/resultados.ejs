@@ -1,0 +1,148 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL PODIO
+
+     Cuatro categorías y un orden que no es casual: primero los ganadores de
+     cada semana —que es lo que se vive mientras el reto corre—, después el
+     top del reto entero y de últimas los mejores de cada técnica, que se
+     premian aparte para que nadie compita contra una herramienta que no
+     tiene.
+
+     Y al final, la lista de quienes terminaron los 28 días: no es un premio
+     del jurado, es el otro logro del reto.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: 'Los ganadores del reto de 28 días.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<%
+  const palabraDe = (n) => {
+    const p = palabras.find((x) => x.dia === n);
+    return p && p.publica ? p.palabra : null;
+  };
+%>
+
+<main class="ink">
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Cómo quedó</p>
+        <h2>El podio</h2>
+      </div>
+      <% if (edicion) { %><span class="chip no"><%= edicion.nombre %></span><% } %>
+    </div>
+
+    <% if (!podio) { %>
+      <div class="vacio">
+        <% if (!edicion) { %>
+          Todavía no hay una edición del reto.
+        <% } else if (fase.clave === "terminado") { %>
+          El jurado está revisando. Los resultados se publican por acá y por
+          correo a quienes queden en el podio.
+        <% } else { %>
+          Los resultados salen cuando terminen los <%= fase.dias %> días.
+          <% if (fase.clave === "en_curso") { %>
+            <br />Van <strong><%= fase.dia %></strong> de <%= fase.dias %>.
+          <% } %>
+        <% } %>
+        <div style="margin-top:20px"><a href="/inkreible" class="btn chico">Volver al reto</a></div>
+      </div>
+    <% } else { %>
+
+      <%/* ───── GANADORES DE CADA SEMANA ───── */%>
+      <% if (podio.semana.length) { %>
+      <div class="podio-grupo">
+        <div class="semana-cab"><h3><%= categorias.semana.label %></h3></div>
+        <div class="galeria">
+          <% podio.semana.forEach(function (p) { %>
+            <div style="break-inside:avoid;margin-bottom:20px">
+              <p class="nota-mano" style="margin:0 0 8px">Semana <%= p.semana %></p>
+              <%- include('partials/obra', { d: p, palabra: palabraDe(p.dia) }) %>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+
+      <%/* ───── EL TOP DEL RETO ───── */%>
+      <% if (podio.top.length) { %>
+      <div class="podio-grupo">
+        <div class="semana-cab">
+          <h3>Top <%= podio.top.length %> del reto</h3>
+          <span class="rango">Los mejores dibujos de los <%= fase.dias %> días</span>
+        </div>
+        <div class="galeria">
+          <% podio.top.forEach(function (p) { %>
+            <div style="break-inside:avoid;margin-bottom:20px">
+              <div class="ganador" style="margin-bottom:8px">
+                <span class="medalla <%= p.puesto === 1 ? 'oro' : p.puesto <= 3 ? 'plata' : '' %>"><%= p.puesto %></span>
+                <div>
+                  <div class="quien"><%= p.autor %></div>
+                  <div class="que">
+                    Día <%= p.dia %><% const w = palabraDe(p.dia); if (w) { %> · <%= w %><% } %>
+                  </div>
+                </div>
+              </div>
+              <%- include('partials/obra', { d: p, palabra: palabraDe(p.dia) }) %>
+              <% if (p.nota) { %><p class="mini" style="margin:8px 0 0"><%= p.nota %></p><% } %>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+
+      <%/* ───── POR TÉCNICA ───── */%>
+      <% ["digital", "analogo"].forEach(function (tipo) { %>
+        <% if (podio[tipo].length) { %>
+        <div class="podio-grupo">
+          <div class="semana-cab"><h3><%= categorias[tipo].label %></h3></div>
+          <div class="galeria">
+            <% podio[tipo].forEach(function (p) { %>
+              <div style="break-inside:avoid;margin-bottom:20px">
+                <div class="ganador" style="margin-bottom:8px">
+                  <span class="medalla <%= p.puesto === 1 ? 'oro' : '' %>"><%= p.puesto %></span>
+                  <div>
+                    <div class="quien"><%= p.autor %></div>
+                    <div class="que">Día <%= p.dia %></div>
+                  </div>
+                </div>
+                <%- include('partials/obra', { d: p, palabra: palabraDe(p.dia) }) %>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+        <% } %>
+      <% }); %>
+
+      <%/* ───── LOS QUE TERMINARON ───── */%>
+      <% if (completos.length) { %>
+      <div class="podio-grupo">
+        <div class="semana-cab">
+          <h3>Terminaron los <%= fase.dias %> días</h3>
+          <span class="rango">Sin faltar uno solo</span>
+        </div>
+        <%/* Los nombres enlazan a su libreta solo si la galería está abierta:
+             es el mismo interruptor el que decide si se pueden mirar los
+             dibujos de alguien, y el podio no puede ser una puerta de atrás. */%>
+        <div class="filtros" style="margin-top:16px">
+          <% completos.forEach(function (p) { %>
+            <% if (galeriaAbierta) { %>
+              <a href="/ink/participante/<%= p.id %>"><%= p.nombre %></a>
+            <% } else { %>
+              <span class="chip no"><%= p.nombre %></span>
+            <% } %>
+          <% }); %>
+        </div>
+      </div>
+      <% } %>
+
+      <section class="ink-sec">
+        <div class="ink-hero-acciones">
+          <a href="/ink/galeria" class="btn">Ver la galería completa</a>
+        </div>
+      </section>
+
+    <% } %>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

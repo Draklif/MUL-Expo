@@ -1,0 +1,129 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA GALERÍA
+
+     Todo lo que salió del reto, con filtros por semana, por día y por
+     técnica. Se abre al final: mientras el reto corre, esta página está
+     cerrada a propósito para que nadie mire lo que hizo el vecino antes de
+     resolver su propia palabra.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: 'Todos los dibujos del reto de 28 días.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<%
+  // Un filtro se enciende y se apaga con el mismo enlace: se arma la URL
+  // partiendo de lo que ya está puesto y cambiando una sola llave.
+  const conFiltro = (cambio) => {
+    const actual = { semana: filtros.semana, dia: filtros.dia, tecnica: filtros.tecnica, autor: filtros.autor };
+    const nuevo = { ...actual, ...cambio };
+    const partes = Object.keys(nuevo)
+      .filter((k) => nuevo[k])
+      .map((k) => `${k}=${encodeURIComponent(nuevo[k])}`);
+    return partes.length ? `/ink/galeria?${partes.join("&")}` : "/ink/galeria";
+  };
+  const palabraDe = (n) => {
+    const p = palabras.find((x) => x.dia === n);
+    return p && p.publica ? p.palabra : null;
+  };
+%>
+
+<main class="ink">
+  <section class="ink-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Lo que salió</p>
+        <h2>
+          <% if (!galeriaAbierta) { %>La galería<% } else { %>
+            <%= dibujos.length %> <%= dibujos.length === 1 ? "dibujo" : "dibujos" %>
+          <% } %>
+        </h2>
+      </div>
+      <% if (edicion) { %><span class="chip no"><%= edicion.nombre %></span><% } %>
+    </div>
+
+    <% if (!edicion) { %>
+      <div class="vacio">Todavía no hay una edición del reto.</div>
+
+    <% } else if (!galeriaAbierta) { %>
+      <div class="vacio">
+        La galería se abre cuando termine el reto y estén todos los dibujos.
+        <% if (fase.clave === "en_curso") { %>
+          <br />Van <strong><%= fase.dia %></strong> de <%= fase.dias %> días.
+        <% } %>
+        <div style="margin-top:20px">
+          <a href="/ink/palabras" class="btn chico">Ver las palabras</a>
+        </div>
+      </div>
+
+    <% } else { %>
+
+      <%/* ───── FILTROS ───── */%>
+      <div class="filtros">
+        <a href="/ink/galeria" class="<%= !filtros.semana && !filtros.dia && !filtros.tecnica && !filtros.autor ? 'on' : '' %>">Todo</a>
+        <% semanas.forEach(function (s) { %>
+          <a href="<%= conFiltro({ semana: filtros.semana === s.n ? null : s.n, dia: null }) %>"
+             class="<%= filtros.semana === s.n ? 'on' : '' %>">Semana <%= s.n %></a>
+        <% }); %>
+        <% tecnicas.forEach(function (t) { %>
+          <a href="<%= conFiltro({ tecnica: filtros.tecnica === t.id ? null : t.id }) %>"
+             class="<%= filtros.tecnica === t.id ? 'on' : '' %>"><%= t.label %></a>
+        <% }); %>
+      </div>
+
+      <%/* El filtro por día es una lista larga: va aparte y solo cuando ya se
+           eligió una semana, que es cuando tiene sentido afinar. */%>
+      <% if (filtros.semana) { %>
+        <% const s = semanas.find(function (x) { return x.n === filtros.semana; }); %>
+        <% if (s) { %>
+          <div class="filtros" style="margin-top:0">
+            <% for (let n = s.desde; n <= s.hasta; n++) { %>
+              <a href="<%= conFiltro({ dia: filtros.dia === n ? null : n }) %>"
+                 class="<%= filtros.dia === n ? 'on' : '' %>">
+                Día <%= n %><% const w = palabraDe(n); if (w) { %> · <%= w %><% } %>
+              </a>
+            <% } %>
+          </div>
+        <% } %>
+      <% } %>
+
+      <% if (filtros.autor) { %>
+        <% const quien = autores.find(function (a) { return a.id === filtros.autor; }); %>
+        <% if (quien) { %>
+          <p class="nota-mano" style="margin:16px 0 0">
+            Solo los dibujos de <%= quien.nombre %> ·
+            <a href="<%= conFiltro({ autor: null }) %>">ver los de todos</a>
+          </p>
+        <% } %>
+      <% } %>
+
+      <% if (!dibujos.length) { %>
+        <div class="vacio">
+          No hay dibujos con ese filtro.
+          <div style="margin-top:20px"><a href="/ink/galeria" class="btn chico">Ver todo</a></div>
+        </div>
+      <% } else { %>
+        <div class="galeria">
+          <% dibujos.forEach(function (d) { %>
+            <%- include('partials/obra', { d: d, palabra: palabraDe(d.dia) }) %>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <%/* ───── QUIÉNES DIBUJARON ───── */%>
+      <% if (autores.length) { %>
+      <section class="ink-sec">
+        <p class="eyebrow">Quiénes dibujaron</p>
+        <h2><%= autores.length %> <%= autores.length === 1 ? "persona" : "personas" %></h2>
+        <div class="filtros" style="margin-top:18px">
+          <% autores.forEach(function (a) { %>
+            <a href="/ink/participante/<%= a.id %>"><%= a.nombre %></a>
+          <% }); %>
+        </div>
+      </section>
+      <% } %>
+
+    <% } %>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

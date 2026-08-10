@@ -1,0 +1,199 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA PÁGINA DEL CÓDIGO
+
+     Es la única página que un participante necesita durante las cuatro
+     semanas, así que carga de una todo lo suyo: en qué va su inscripción, el
+     enlace de la carpeta, cómo se tiene que llamar cada archivo de esta
+     semana y qué días lleva.
+
+     Lo del nombre del archivo va resuelto y no como una fórmula: se imprime
+     el nombre exacto de los siete archivos de la semana, listo para copiar.
+     Es lo que más se pregunta y lo que más se equivoca.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, descripcion: 'Consulta tu inscripción, tu carpeta y los días que llevas.', css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="ink angosto">
+  <section class="ink-sec">
+    <p class="eyebrow">Tu inscripción</p>
+    <h2><%= recienEnviada ? "Listo" : "Consultar" %></h2>
+  </section>
+
+  <% if (recienEnviada) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Quedaste inscrito.
+        <% if (correoActivo) { %>
+          Mandamos el código a tu correo, pero anótalo también: es lo que sirve
+          para consultar y es la primera parte del nombre de cada archivo que subas.
+        <% } else { %>
+          <strong>Anota este código</strong>: es lo que sirve para consultar y es
+          la primera parte del nombre de cada archivo que subas.
+        <% } %>
+      </p>
+    </div>
+    <div class="codigo-grande"><%= codigo %></div>
+  <% } %>
+
+  <%/* ───── BUSCADOR ───── */%>
+  <form method="GET" action="/ink/inscripcion/estado" style="margin:26px 0">
+    <div class="campo">
+      <label for="codigo">Tu código</label>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <input type="text" name="codigo" id="codigo" maxlength="6" required
+               value="<%= codigo %>" placeholder="ABC234"
+               style="flex:1;min-width:170px;font-family:var(--mono);font-size:17px;letter-spacing:.14em;text-transform:uppercase" />
+        <button type="submit" class="btn">Consultar</button>
+      </div>
+    </div>
+  </form>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <% if (ficha) { %>
+    <%
+      // La semana que se muestra: la que está corriendo, y si el reto no ha
+      // empezado, la primera. Terminado el reto ya no hay nada que subir y se
+      // deja la última.
+      const f = ficha.fase;
+      const semanaVer = f.clave === "en_curso" ? f.semana : f.clave === "terminado" ? f.semanas : 1;
+      const diasSemana = ficha.grilla.filter((c) => c.semana === semanaVer);
+      const suTecnica = ficha.tecnica === "mixto" ? "digital" : ficha.tecnica;
+      const suEdicion = ficha.edicion;
+      const palabraDe = (n) => {
+        const p = palabras.find((x) => x.dia === n);
+        return p && p.publica ? p.palabra : null;
+      };
+    %>
+
+    <%/* ───── QUIÉN ERES Y CÓMO VAS ───── */%>
+    <div class="tarjeta">
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+        <div style="min-width:0;flex:1">
+          <h3 style="margin-bottom:6px"><%= ficha.nombre %></h3>
+          <div class="mini">
+            <%= ficha.codigo %> · <%= ficha.tecnica_label %>
+            <% if (suEdicion) { %> · <%= suEdicion.nombre %><% } %>
+          </div>
+        </div>
+        <span class="chip <%= ficha.estado_info.cls %>"><%= ficha.estado_info.label %></span>
+      </div>
+
+      <% if (ficha.estado === "pendiente") { %>
+        <p style="color:var(--tinta-dim);margin:16px 0 0">
+          La organización todavía no ha revisado tu inscripción. Cuando lo haga
+          te llega un correo a <%= ficha.email %> con el enlace de la carpeta
+          donde se suben los dibujos.
+        </p>
+
+      <% } else if (ficha.estado === "rechazado") { %>
+        <p style="color:var(--tinta-dim);margin:16px 0 0">
+          <% if (ficha.nota_docente) { %>
+            <strong>Lo que dice la organización:</strong><br /><%= ficha.nota_docente %>
+          <% } else { %>
+            No quedó admitida y no dejaron un motivo. Escríbeles para saber qué ajustar.
+          <% } %>
+        </p>
+
+      <% } else { %>
+        <p style="color:var(--tinta-dim);margin:16px 0 0">
+          Estás dentro.
+          <% if (f.clave === "en_curso") { %>
+            Vamos en el <strong>día <%= f.dia %></strong> de <%= f.dias %> y llevas
+            <strong><%= ficha.entregados %></strong>
+            <%= ficha.entregados === 1 ? "dibujo" : "dibujos" %>.
+          <% } else if (f.clave === "antes") { %>
+            El reto arranca en <%= f.faltan %> <%= f.faltan === 1 ? "día" : "días" %><% if (f.momento_inicio) { %>, el <%= f.momento_inicio.dia %><% } %>.
+          <% } else if (f.clave === "terminado") { %>
+            El reto terminó y entregaste <strong><%= ficha.entregados %></strong> de <%= f.dias %>.
+          <% } %>
+        </p>
+        <div class="barra" style="margin-top:16px"><i style="width:<%= ficha.avance.toFixed(1) %>%"></i></div>
+      <% } %>
+    </div>
+
+    <% if (ficha.estado === "aprobado") { %>
+
+      <%/* ───── LA CARPETA ───── */%>
+      <section class="ink-sec">
+        <p class="eyebrow">Dónde se sube</p>
+        <h2 style="font-size:26px">Tu carpeta</h2>
+
+        <% if (suEdicion && suEdicion.drive_url) { %>
+          <p class="sec-lead">
+            Los dibujos se suben ahí, por semana. El archivo tiene que quedar
+            compartido con <strong>"cualquiera con el enlace"</strong>: si el
+            jurado no lo puede abrir, no lo puede mirar.
+          </p>
+          <div class="ink-hero-acciones">
+            <a href="<%= suEdicion.drive_url %>" class="btn" target="_blank" rel="noopener">
+              Abrir la carpeta
+            </a>
+          </div>
+        <% } else { %>
+          <div class="vacio">
+            La carpeta todavía se está preparando. Apenas esté, te llega el
+            enlace por correo a <%= ficha.email %>.
+          </div>
+        <% } %>
+      </section>
+
+      <%/* ───── LOS NOMBRES DE ESTA SEMANA ───── */%>
+      <section class="ink-sec">
+        <p class="eyebrow">Semana <%= semanaVer %></p>
+        <h2 style="font-size:26px">Cómo se llaman tus archivos</h2>
+        <p class="sec-lead">
+          Uno por día, con este nombre exacto. Lo único que cambia entre uno y
+          otro es el número del día y la sigla del final.
+        </p>
+
+        <div style="margin-top:20px">
+          <% diasSemana.forEach(function (c) { %>
+            <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:12px 0;border-bottom:2px dashed var(--linea)">
+              <span class="chip <%= c.dibujo ? 'ok' : c.vencido ? 'pend' : 'no' %>" style="min-width:74px;justify-content:center">
+                Día <%= c.dia %>
+              </span>
+              <span class="archivo"><%= nombreArchivo(c.dia, suTecnica) %>.jpg</span>
+              <% const w = palabraDe(c.dia); %>
+              <% if (w) { %><span class="nota-mano"><%= w %></span><% } %>
+              <% if (c.dibujo) { %><span class="mini" style="margin-left:auto">recibido</span><% } %>
+            </div>
+          <% }); %>
+        </div>
+
+        <p class="mini" style="margin-top:16px">
+          <% if (ficha.tecnica === "mixto") { %>
+            Dijiste que ibas a usar las dos técnicas: si un día lo haces a mano,
+            cambia <code><%= tecnicas[0].sigla %></code> por
+            <code><%= tecnicas[1].sigla %></code> en el nombre de ese archivo.
+          <% } else { %>
+            Si algún día lo haces con la otra técnica, cambia la sigla del final
+            (<code><%= tecnicas[0].sigla %></code> para digital,
+            <code><%= tecnicas[1].sigla %></code> para análogo): es lo que decide
+            en qué categoría compite ese dibujo.
+          <% } %>
+          La extensión puede ser .jpg o .png, da igual.
+        </p>
+      </section>
+
+      <%/* ───── LA LIBRETA ───── */%>
+      <section class="ink-sec">
+        <p class="eyebrow">Tus <%= f.dias %> días</p>
+        <h2 style="font-size:26px">Lo que llevas</h2>
+        <p class="sec-lead">
+          Las casillas se van llenando a medida que la organización carga lo que
+          hay en la carpeta, así que no es instantáneo. Si subiste algo y sigue
+          en blanco a los pocos días, casi siempre es que el archivo quedó mal
+          nombrado.
+        </p>
+        <%- include('partials/libreta', { grilla: ficha.grilla, palabras: palabras }) %>
+      </section>
+
+    <% } %>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>
