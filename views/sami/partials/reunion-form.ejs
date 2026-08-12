@@ -1,0 +1,104 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL FORMULARIO DE UNA REUNIÓN
+
+     Es la fila de la hoja semanal, entera y en un solo guardado. Sirve igual
+     para crear una reunión nueva y para corregir una ya registrada: es el
+     mismo dato y sería raro que se llenara de dos formas distintas.
+
+     Arriba lo del PROYECTO —lo que mostraron y a qué se comprometieron—,
+     abajo una línea por ESTUDIANTE con su asistencia y su nota. Esa división
+     no es de forma: en un proyecto de dos, el avance es del trabajo y la
+     falta es de una persona.
+
+     La asistencia son tres botones de radio y no una casilla, porque son tres
+     valores: vino, no vino y todavía no lo he mirado. Con una casilla, una
+     reunión a medio registrar se leería como una falta.
+
+     Locals:
+       accion  — a dónde postear.
+       reunion — la que se edita, o null si es nueva.
+       activos — los estudiantes activos del proyecto.
+       escala  — el máximo de la calificación (config.ESCALA_MAX). */%>
+<%
+  const esNueva = !reunion;
+  const marcas = {};
+  if (reunion) reunion.marcas.forEach(function (m) { marcas[m.estudiante_id] = m; });
+  const pre = esNueva ? "n" : "e" + reunion.id;
+%>
+
+<form method="POST" action="<%= accion %>" class="<%= esNueva ? "tarjeta" : "" %>">
+  <% if (esNueva) { %>
+    <h3 style="margin-bottom:14px">Registrar una reunión</h3>
+  <% } %>
+
+  <div class="fila">
+    <div class="campo">
+      <label for="<%= pre %>_fecha">Fecha de la reunión</label>
+      <input type="date" name="fecha" id="<%= pre %>_fecha" required
+             value="<%= reunion ? reunion.fecha : "" %>" />
+      <p class="ayuda">
+        La semana (S1…S<%= sami.calendario.semanas %>) sale sola del calendario del semestre.
+      </p>
+    </div>
+    <div class="campo"></div>
+  </div>
+
+  <div class="campo">
+    <label for="<%= pre %>_adelantos">Adelantos realizados</label>
+    <textarea name="adelantos" id="<%= pre %>_adelantos" maxlength="2000"
+              placeholder="Qué mostraron en esta reunión."><%= reunion ? reunion.adelantos || "" : "" %></textarea>
+  </div>
+
+  <div class="campo">
+    <label for="<%= pre %>_compromisos">Se compromete a entregar</label>
+    <textarea name="compromisos" id="<%= pre %>_compromisos" maxlength="2000"
+              placeholder="Qué queda para la próxima."><%= reunion ? reunion.compromisos || "" : "" %></textarea>
+    <p class="ayuda">Esto sí lo ve el estudiante cuando consulta su código.</p>
+  </div>
+
+  <div class="marcas">
+    <% activos.forEach(function (e) {
+         const m = marcas[e.id] || {};
+         const asistio = m.asistio === undefined ? null : m.asistio;
+    %>
+      <div class="marca">
+        <%/* Los campos van indexados por el id del estudiante y no como
+             listas paralelas: los tres radios de una persona tienen que ser
+             SU grupo. Con un name repetido, marcar "asistió" en el primero
+             desmarcaría al segundo, que es lo que hace un grupo de radios. */%>
+        <input type="hidden" name="marca_estudiante" value="<%= e.id %>" />
+        <div class="quien"><%= e.nombre %></div>
+
+        <div class="campo">
+          <label>Asistencia</label>
+          <div class="lista">
+            <label class="pasa vino">
+              <input type="radio" name="marca_asistio_<%= e.id %>" value="1"
+                     <%= asistio === 1 ? "checked" : "" %> />Asistió
+            </label>
+            <label class="pasa falto">
+              <input type="radio" name="marca_asistio_<%= e.id %>" value="0"
+                     <%= asistio === 0 ? "checked" : "" %> />No vino
+            </label>
+            <label class="pasa limpio">
+              <input type="radio" name="marca_asistio_<%= e.id %>" value=""
+                     <%= asistio === null ? "checked" : "" %> />Sin marcar
+            </label>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="<%= pre %>_n<%= e.id %>">Calificación</label>
+          <input type="number" name="marca_nota_<%= e.id %>" id="<%= pre %>_n<%= e.id %>"
+                 min="0" max="<%= escala %>" step="0.01"
+                 value="<%= m.calificacion === null || m.calificacion === undefined ? "" : m.calificacion %>"
+                 placeholder="0 a <%= escala %>" />
+        </div>
+      </div>
+    <% }); %>
+  </div>
+
+  <button type="submit" class="btn" style="margin-top:14px">
+    <%= esNueva ? "Registrar la reunión" : "Guardar los cambios" %>
+  </button>
+</form>

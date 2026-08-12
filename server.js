@@ -31,6 +31,8 @@ const salidasRouter = require("./routes/salidas");
 const salidasPanelRouter = require("./routes/salidas-panel");
 const inkRouter = require("./routes/ink");
 const inkPanelRouter = require("./routes/ink-panel");
+const samiRouter = require("./routes/sami");
+const samiPanelRouter = require("./routes/sami-panel");
 const infoRouter = require("./routes/info");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
@@ -39,6 +41,7 @@ const { configurado: jamConfigurado } = require("./lib/jam-auth");
 const { configurado: musicConfigurado } = require("./lib/music-auth");
 const { configurado: salidasConfigurado } = require("./lib/salidas-auth");
 const { configurado: inkConfigurado } = require("./lib/ink-auth");
+const { configurado: samiConfigurado } = require("./lib/sami-auth");
 
 // Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
 // dejar un login que rechaza a todo el mundo sin explicar por qué.
@@ -107,6 +110,7 @@ app.use((req, res, next) => {
   res.locals.docenteMusic = req.session.docenteMusic || null;
   res.locals.docenteSalidas = req.session.docenteSalidas || null;
   res.locals.docenteInk = req.session.docenteInk || null;
+  res.locals.docenteSami = req.session.docenteSami || null;
   res.locals.query = req.query;
   res.locals.DOMINIO = DOMINIO;
   res.locals.PATRON_CORREO = PATRON_HTML;
@@ -243,6 +247,14 @@ app.use("/ink", inkPanelRouter);
 app.use("/", salidasRouter);
 app.use("/salidas", salidasPanelRouter);
 
+// Semillero SAMI. Tampoco es un evento, y por la razón contraria a las salidas:
+// no tiene fecha porque no termina nunca. Es una alternativa de grado que está
+// andando siempre, con proyectos de tres semestres que se solapan. Vive en
+// /semillero y se reparte igual: el público primero, y lo que no sea una de sus
+// páginas sigue de largo hasta el panel, que vive en ese mismo /semillero.
+app.use("/", samiRouter);
+app.use("/semillero", samiPanelRouter);
+
 // Certificados (públicos: el QR de cada uno apunta a su página)
 app.use("/certificado", certificadosRouter);
 
@@ -352,7 +364,13 @@ app.listen(PORT, "0.0.0.0", () => {
       ? `  ✓ Panel salidas:           http://localhost:${PORT}/salidas/acceso`
       : "  · Panel salidas:           cerrado (falta PASSWORD_SALIDAS en .env)"
   );
+  console.log(
+    samiConfigurado()
+      ? `  ✓ Panel semillero SAMI:    http://localhost:${PORT}/semillero/acceso`
+      : "  · Panel semillero SAMI:    cerrado (falta PASSWORD_SAMI en .env)"
+  );
   console.log(`  · Salidas pedagógicas:     http://localhost:${PORT}/salidas`);
+  console.log(`  · Semillero SAMI:          http://localhost:${PORT}/semillero`);
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(
     envios.activo()

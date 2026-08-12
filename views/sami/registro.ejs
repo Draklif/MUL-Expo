@@ -1,0 +1,201 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EL FORMULARIO
+
+     Lo que se pide aquí y por qué. Si un campo no tiene una razón que quepa
+     en una línea, sobra:
+
+       nombre, código y documento — quién eres, para el documento del programa;
+       teléfono y correo          — por dónde te ubica tu director;
+       semestre de la carrera     — el único requisito de entrada;
+       título tentativo           — de qué quieres que sea, aunque cambie;
+       perfil                     — con cuál de los cuatro te sientes cómodo;
+       asesor                     — con quién ya hablaste, si hablaste.
+
+     Lo que NO se pide es la propuesta. Se construye CON un asesor durante
+     semanas en el formato G-01-SEM, y meterla en un formulario web daría la
+     impresión de que se llena de una sentada.
+
+     Y lo que NO se dice, en ninguna parte de esta página: que al enviarla
+     quedó hecho algo. No queda hecho nada. Por eso el aviso de "ve a la
+     dirección del programa" va ARRIBA del formulario y no debajo del botón:
+     quien no lo lea completo tiene que haber visto al menos eso.
+
+     Dos integrantes por defecto porque así son la mayoría, y el segundo
+     bloque se puede dejar entero en blanco: las filas vacías se descartan al
+     guardar.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="sam angosto">
+  <section class="sam-sec">
+    <p class="eyebrow">Semillero SAMI</p>
+    <h1 style="font-size:clamp(26px,5vw,40px)">Deja tus datos</h1>
+    <p class="sec-lead">
+      Esto le adelanta trabajo al semillero: deja escritos tus datos y lo que quieres hacer,
+      para no tener que volver a copiarlos en cada puerta. <strong>No te vincula al
+      semillero</strong> —eso se formaliza con el docente que te asesore la propuesta— y no
+      reemplaza ninguno de los cuatro pasos del trámite.
+    </p>
+  </section>
+
+  <div class="aviso ojo" style="margin-top:20px">
+    <div class="t">Antes que esto</div>
+    <p style="margin:0 0 10px">
+      Ve a la dirección del programa y notifica en persona que quieres pertenecer al
+      semillero. Es el paso que abre todo lo demás, y este formulario no lo hace por ti.
+    </p>
+    <div class="ficha">
+      <div class="f">
+        <div class="k">Con quién</div>
+        <div class="v"><%= sami.direccion.nombre %><%= sami.direccion.cargo ? " · " + sami.direccion.cargo : "" %></div>
+      </div>
+      <div class="f"><div class="k">Dónde</div><div class="v"><%= sami.direccion.donde %></div></div>
+      <div class="f"><div class="k">Correo</div><div class="v"><a href="mailto:<%= sami.direccion.email %>"><%= sami.direccion.email %></a></div></div>
+    </div>
+  </div>
+
+  <% if (errores.length) { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0"><strong>Falta algo:</strong></p>
+      <ul>
+        <% errores.forEach(function (e) { %><li><%= e %></li><% }); %>
+      </ul>
+    </div>
+  <% } %>
+
+  <% if (!abierto) { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0">
+        El registro al semillero está cerrado en este momento. Escríbele a
+        <a href="mailto:<%= sami.direccion.email %>"><%= sami.direccion.email %></a>
+        o vuelve a <a href="/semillero">la página del semillero</a>.
+      </p>
+    </div>
+  <% } else { %>
+
+    <form method="POST" action="/semillero/registro" style="margin-top:26px">
+      <%/* Dos bloques de estudiante. El segundo puede quedar en blanco: un
+           proyecto de una persona es lo normal y no hay por qué obligar a
+           borrar campos. */%>
+      <% [0, 1].forEach(function (i) {
+           const e = valores.estudiantes[i] || {};
+      %>
+        <fieldset class="integrante">
+          <p class="quien"><%= i === 0 ? "Estudiante" : "Segundo estudiante · opcional" %></p>
+
+          <div class="campo">
+            <label for="nombre<%= i %>">Nombre completo</label>
+            <input type="text" name="est_nombre" id="nombre<%= i %>" maxlength="120"
+                   <%= i === 0 ? "required autofocus" : "" %>
+                   value="<%= e.nombre || "" %>" placeholder="Como aparece en tu documento" />
+          </div>
+
+          <div class="fila">
+            <div class="campo">
+              <label for="codigo<%= i %>">Código estudiantil</label>
+              <input type="text" name="est_codigo" id="codigo<%= i %>" maxlength="20"
+                     inputmode="numeric" <%= i === 0 ? "required" : "" %>
+                     value="<%= e.codigo_estudiante || "" %>" />
+            </div>
+
+            <div class="campo">
+              <label for="documento<%= i %>">Número de documento</label>
+              <input type="text" name="est_documento" id="documento<%= i %>" maxlength="20"
+                     inputmode="numeric" <%= i === 0 ? "required" : "" %>
+                     value="<%= e.documento || "" %>" />
+            </div>
+          </div>
+
+          <div class="fila">
+            <div class="campo">
+              <label for="telefono<%= i %>">Teléfono</label>
+              <input type="tel" name="est_telefono" id="telefono<%= i %>" maxlength="25"
+                     <%= i === 0 ? "required" : "" %>
+                     value="<%= e.telefono || "" %>" placeholder="300 000 0000" />
+            </div>
+
+            <div class="campo">
+              <label for="semestre<%= i %>">Semestre que cursas</label>
+              <input type="number" name="est_semestre" id="semestre<%= i %>" min="1" max="12"
+                     <%= i === 0 ? "required" : "" %>
+                     value="<%= e.semestre_academico || "" %>" placeholder="<%= sami.semestre_minimo %>" />
+              <p class="ayuda">Al semillero se entra desde <%= sami.semestre_minimo %>.º.</p>
+            </div>
+          </div>
+
+          <div class="campo">
+            <label for="email<%= i %>">Correo institucional</label>
+            <input type="email" name="est_email" id="email<%= i %>" maxlength="160"
+                   pattern="<%= PATRON_CORREO %>" <%= i === 0 ? "required" : "" %>
+                   value="<%= e.email || "" %>" placeholder="tunombre@<%= DOMINIO %>" />
+            <% if (i === 0) { %>
+              <p class="ayuda">Ahí te llega el código y, después, quién quedó de director.</p>
+            <% } %>
+          </div>
+        </fieldset>
+      <% }); %>
+
+      <div class="campo">
+        <label for="titulo">Título tentativo del proyecto</label>
+        <input type="text" name="titulo" id="titulo" required maxlength="300"
+               value="<%= valores.titulo %>"
+               placeholder="Prototipo de… / Aplicación móvil para… / Videojuego que…" />
+        <p class="ayuda">
+          Tentativo de verdad: casi ningún proyecto se sustenta con el título con el que
+          se registró. Escribe lo que quieres hacer, aunque todavía no sepas cómo.
+        </p>
+      </div>
+
+      <div class="campo">
+        <label for="perfil">¿Con qué perfil te sientes cómodo?</label>
+        <select name="perfil" id="perfil">
+          <option value="">Todavía no sé</option>
+          <% sami.perfiles.forEach(function (p) { %>
+            <option value="<%= p.clave %>" <%= valores.perfil === p.clave ? "selected" : "" %>>
+              <%= p.nombre %> — <%= p.texto %>
+            </option>
+          <% }); %>
+        </select>
+        <p class="ayuda">
+          No decide qué proyecto vas a hacer ni te encierra en nada: sirve para saber a
+          quién ponerte a hablar. La línea y la sublínea de investigación no se eligen
+          —son las del programa, iguales para todos— y te las da tu asesor para el G-01-SEM.
+        </p>
+      </div>
+
+      <div class="campo">
+        <label for="asesor">Docente con quien ya hablaste</label>
+        <input type="text" name="asesor" id="asesor" maxlength="120"
+               value="<%= valores.asesor %>" placeholder="Opcional" />
+        <p class="ayuda">
+          Si ya tienes un docente asesorándote, escríbelo. No es tu director: el director lo
+          asigna el comité junto con la aprobación de la propuesta.
+        </p>
+      </div>
+
+      <div class="aviso">
+        <div class="t">Lo que falta después de esto</div>
+        <p style="margin:0 0 8px">
+          Notificar tu intención <strong>en persona</strong> en la dirección del programa,
+          <strong>radicar una carta al Consejo de Facultad</strong> indicando que tomarás
+          Semillero de Investigación como tu alternativa de grado, y construir tu propuesta
+          con un asesor en el formato <a href="<%= sami.formato %>" download>G-01-SEM</a>.
+        </p>
+        <p style="margin:0">
+          El semillero son <%= sami.semestres %> semestres de trabajo con reuniones de
+          seguimiento y una nota cada semestre.
+        </p>
+      </div>
+
+      <button type="submit" class="btn block">Dejar mis datos</button>
+    </form>
+
+    <p class="mini" style="margin-top:22px;text-align:center">
+      ¿Ya te registraste? <a href="/semillero/estado">Consulta tu código</a>.
+    </p>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

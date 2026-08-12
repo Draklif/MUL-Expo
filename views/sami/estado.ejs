@@ -1,0 +1,220 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA CONSULTA DEL CÓDIGO
+
+     Sirve para dos momentos y por eso es una sola página: justo después de
+     registrarse (recienHecho) y meses después, cuando alguien quiere saber en
+     qué va. Lo que ve es lo mismo; lo que cambia es el saludo de arriba.
+
+     Lo que SÍ se muestra: en qué va el trámite, quién quedó de director y
+     codirector, las fechas que ya pasaron, el concepto de los jurados y lo que
+     se comprometió a entregar en la última reunión.
+
+     Lo que NO: ninguna calificación ni nota de semestre. Seis caracteres que
+     se dictan por teléfono y se comparten por WhatsApp no son una contraseña,
+     y una nota no es un dato de trámite. Las notas viven en el panel.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/top') %>
+
+<main class="sam angosto">
+  <section class="sam-sec">
+    <% if (recienHecho) { %>
+      <%/* Lo primero que se lee después de enviar el formulario NO puede ser
+           un "listo": esto no terminó nada. Es a dónde hay que ir. El código
+           va después, que es donde de verdad importa —se puede volver a
+           consultar, la visita a la dirección del programa no—. */%>
+      <p class="eyebrow">Quedaste en el registro del semillero</p>
+      <h1 style="font-size:clamp(26px,5vw,40px)">Ahora ve a la dirección del programa</h1>
+      <p class="sec-lead">
+        Tienes que notificar <strong>en persona</strong> que quieres pertenecer al semillero.
+        Este formulario no lo hace por ti: lo que hizo fue dejar tus datos escritos para que
+        no tengas que repetirlos.
+      </p>
+
+      <div class="aviso ojo" style="margin-top:22px">
+        <div class="t">Con quién hablar</div>
+        <p style="margin:0 0 10px">
+          <strong><%= sami.direccion.nombre %></strong><%= sami.direccion.cargo ? ", " + sami.direccion.cargo : "" %>.
+        </p>
+        <div class="ficha">
+          <div class="f"><div class="k">Dónde</div><div class="v"><%= sami.direccion.donde %></div></div>
+          <div class="f"><div class="k">Correo</div><div class="v"><a href="mailto:<%= sami.direccion.email %>"><%= sami.direccion.email %></a></div></div>
+        </div>
+      </div>
+
+      <p class="sec-lead" style="margin-top:26px">
+        Guarda este código: con él consultas en qué va tu proyecto en cualquier momento.
+        <% if (correoActivo) { %>También te llegó por correo.<% } %>
+      </p>
+      <p class="codigo-grande" style="margin-top:14px"><%= proyecto.codigo %></p>
+      <p class="mini" style="text-align:center">
+        Se dicta y se teclea a mano: no lleva ni la letra I, ni la O, ni el cero, ni el uno.
+      </p>
+    <% } else { %>
+      <p class="eyebrow">Semillero SAMI</p>
+      <h1 style="font-size:clamp(26px,5vw,40px)">Mi proyecto</h1>
+      <p class="sec-lead">Escribe el código que te quedó al registrar tu intención.</p>
+
+      <form method="GET" action="/semillero/estado" style="margin-top:22px">
+        <div class="fila">
+          <div class="campo">
+            <label for="codigo">Código</label>
+            <input type="text" name="codigo" id="codigo" maxlength="6" required autofocus
+                   value="<%= codigo %>" placeholder="ABC234"
+                   style="font-family:var(--mono);letter-spacing:.18em;text-transform:uppercase" />
+          </div>
+          <div class="campo" style="display:flex;align-items:flex-end">
+            <button type="submit" class="btn block">Consultar</button>
+          </div>
+        </div>
+      </form>
+
+      <% if (error) { %>
+        <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+      <% } %>
+    <% } %>
+  </section>
+
+  <% if (proyecto) { %>
+    <%
+      // En cuál de los cuatro pasos va. Se deduce del estado y no de una
+      // columna aparte: dos verdades sobre lo mismo terminan contradiciéndose.
+      //
+      // 'registro' cuenta CERO pasos hechos: haber llenado este formulario no
+      // es haber ido a la dirección del programa, y marcarlo como cumplido
+      // sería darle por hecho a alguien un trámite que no ha hecho.
+      const HECHOS = { registro: 0, intencion: 1, carta: 2, propuesta: 3 };
+      const hechos = proyecto.vinculado || proyecto.cerrado ? 4 : HECHOS[proyecto.estado] || 0;
+    %>
+
+    <section class="sam-sec">
+      <div class="tarjeta">
+        <p class="eyebrow" style="margin-bottom:6px">Proyecto <span class="cod"><%= proyecto.codigo %></span></p>
+        <h2 style="font-size:clamp(19px,3vw,26px)"><%= proyecto.titulo %></h2>
+
+        <div class="chips">
+          <span class="chip <%= proyecto.estado_info.cls %>"><%= proyecto.estado_info.label %></span>
+          <% if (proyecto.semestre) { %>
+            <span class="chip">Semestre <%= proyecto.semestre %> de <%= sami.semestres %></span>
+          <% } %>
+        </div>
+
+        <%- include('partials/escalera', { estados: estados, actual: proyecto.estado_info }) %>
+
+        <div class="ficha" style="margin-top:16px">
+          <div class="f">
+            <div class="k">Director</div>
+            <div class="v"><%= proyecto.director || "Todavía sin asignar" %></div>
+          </div>
+          <% if (proyecto.codirector) { %>
+            <div class="f"><div class="k">Codirector</div><div class="v"><%= proyecto.codirector %></div></div>
+          <% } %>
+          <% if (proyecto.perfil_info) { %>
+            <div class="f"><div class="k">Perfil</div><div class="v"><%= proyecto.perfil_info.nombre %></div></div>
+          <% } %>
+          <div class="f">
+            <div class="k">Integrantes</div>
+            <div class="v">
+              <% estudiantes.filter(function (e) { return e.activo; }).map(function (e) { return e.nombre; }).forEach(function (n, i) { %><%= i ? " · " : "" %><%= n %><% }); %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <%/* Las fechas del trámite. Solo salen las que ya pasaron: una lista de
+         siete renglones diciendo "—" no informa, abruma. */%>
+    <%
+      const hitos = [
+        { k: "Carta radicada al Consejo",   v: proyecto.fechas.carta },
+        { k: "Propuesta presentada",        v: proyecto.fechas.propuesta },
+        { k: "Propuesta aprobada",          v: proyecto.fechas.aprobacion },
+        { k: "Sustentación de anteproyecto", v: proyecto.fechas.anteproyecto },
+        { k: "Aprobación del CEB",          v: proyecto.fechas.ceb },
+        { k: "Aprobación del CPI",          v: proyecto.fechas.cpi },
+        { k: "Sustentación del proyecto",   v: proyecto.fechas.sustentacion },
+      ].filter(function (h) { return h.v; });
+    %>
+    <% if (hitos.length) { %>
+      <section class="sam-sec">
+        <div class="sec-top"><div><p class="eyebrow">Lo que ya pasó</p><h2>Fechas</h2></div></div>
+        <div class="tarjeta">
+          <div class="ficha">
+            <% hitos.forEach(function (h) { %>
+              <div class="f"><div class="k"><%= h.k %></div><div class="v"><%= h.v.dia %></div></div>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+    <% } %>
+
+    <% if (jurados.length && jurados.some(function (j) { return j.concepto; })) { %>
+      <section class="sam-sec">
+        <div class="sec-top"><div><p class="eyebrow">Anteproyecto</p><h2>Concepto de los jurados</h2></div></div>
+        <div class="tarjeta">
+          <div class="ficha">
+            <% jurados.forEach(function (j) { %>
+              <div class="f">
+                <div class="k"><%= j.nombre %></div>
+                <div class="v">
+                  <% if (j.concepto_info) { %>
+                    <span class="chip <%= j.concepto_info.cls %>"><%= j.concepto_info.label %></span>
+                  <% } else { %>
+                    <span class="mini">Sin concepto todavía</span>
+                  <% } %>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </section>
+    <% } %>
+
+    <% if (ultima && (ultima.compromisos || ultima.adelantos)) { %>
+      <section class="sam-sec">
+        <div class="sec-top">
+          <div>
+            <p class="eyebrow">Última reunión · <%= ultima.cuando ? ultima.cuando.dia : "" %></p>
+            <h2>Lo que quedó</h2>
+          </div>
+        </div>
+        <div class="tarjeta">
+          <div class="ficha">
+            <% if (ultima.adelantos) { %>
+              <div class="f"><div class="k">Adelantos</div><div class="v" style="white-space:pre-line"><%= ultima.adelantos %></div></div>
+            <% } %>
+            <% if (ultima.compromisos) { %>
+              <div class="f"><div class="k">Te comprometiste a</div><div class="v" style="white-space:pre-line"><%= ultima.compromisos %></div></div>
+            <% } %>
+          </div>
+        </div>
+      </section>
+    <% } %>
+
+    <%/* El mapa de los cuatro pasos, otra vez y al final. Aquí no es una
+         explicación sino una respuesta: en cuál de los cuatro va.
+
+         Y desaparece en cuanto los cuatro están hechos. Cuatro casillas todas
+         palomeadas no le dicen nada a quien ya está en su segundo semestre de
+         proyecto: lo que necesita a esas alturas es lo de arriba —su director,
+         sus fechas, lo que se comprometió a entregar—, y dejarle un trámite
+         terminado ocupando media pantalla es hacerle leer dos veces para
+         llegar a lo que sí le sirve. */%>
+    <% if (!proyecto.vinculado && !proyecto.cerrado) { %>
+      <section class="sam-sec">
+        <div class="sec-top"><div><p class="eyebrow">Tu trámite</p><h2>Qué sigue</h2></div></div>
+        <%- include('partials/pasos', { pasos: sami.pasos, hasta: hechos }) %>
+        <div class="aviso ojo" style="margin-top:20px">
+          <p style="margin:0">
+            Necesitas la guía <a href="<%= sami.formato %>" download>G-01-SEM</a> para armar
+            tu propuesta. Cualquier duda del trámite va a
+            <a href="mailto:<%= sami.direccion.email %>"><%= sami.direccion.email %></a>.
+          </p>
+        </div>
+      </section>
+    <% } %>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

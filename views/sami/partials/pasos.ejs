@@ -1,0 +1,23 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     Los cuatro pasos de la vinculación.
+
+     Se usa en tres páginas —la portada, el registro y la consulta del
+     código— y es el mismo dibujo en las tres a propósito: quien vuelve a
+     mirar en qué va tiene que reconocer el mapa que ya vio.
+
+     Locals:
+       pasos  — la lista de config.SAMI.pasos.
+       hasta  — cuántos ya están hechos (0..4). El siguiente se marca como
+                "ahora". Sin este local no se pinta ninguno: en la portada
+                todavía no hay proyecto de quien hablar. */%>
+<%
+  const hechos = typeof hasta === "number" ? hasta : -1;
+%>
+<ol class="pasos">
+  <% pasos.forEach(function (p, i) { %>
+    <li class="paso <%= i < hechos ? "hecho" : i === hechos ? "ahora" : "" %>">
+      <div class="t"><%= p.titulo %></div>
+      <div class="d"><%= p.texto %></div>
+    </li>
+  <% }); %>
+</ol>

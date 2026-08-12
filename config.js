@@ -565,6 +565,178 @@ const INK = {
   nomenclatura: "{CODIGO}_{DIA}_{TECNICA}",
 };
 
+// ---------------------------------------------------------------------
+//  SEMILLERO DE INVESTIGACIÓN — SAMI
+// ---------------------------------------------------------------------
+// Tampoco es un evento. Es una alternativa de grado que dura TRES semestres y
+// que está andando siempre, así que no va en EVENTOS, no le pelea la raíz "/"
+// a nadie y no la apaga SOLO_EVENTO_ACTIVO. Vive en /semillero.
+//
+// QUÉ ES ESTA PARTE DEL SITIO, que conviene tener claro antes de tocarla: una
+// herramienta del semillero para adelantar trabajo, no un trámite. El trámite
+// se hace en persona —en la dirección del programa, en el Consejo de Facultad y
+// con el docente que asesora la propuesta— y aquí no se sustituye ninguno de
+// esos pasos. Lo que hace el formulario es dejar los datos del estudiante
+// escritos una sola vez, para que cuando llegue a esas puertas no haya que
+// volver a copiarlos.
+//
+// De ahí sale una regla que se nota en varios sitios: la página NUNCA dice que
+// algo "ya quedó hecho". Dice qué sigue y a dónde hay que ir.
+//
+// El trámite en sí está escrito en el código —es el mismo desde hace años y no
+// lo cambia un docente— pero el TEXTO con el que se le cuenta al estudiante sí
+// está aquí abajo, en `pasos` y `etapas`, porque eso sí se reescribe.
+//
+// Lo que NO está aquí y conviene saber dónde está: la escalera de estados del
+// proyecto (de "intención registrada" hasta "finalizado") vive en lib/sami.js.
+// Es una máquina de estados, no una preferencia: si estuviera aquí, cambiar una
+// clave rompería los proyectos ya guardados sin avisar.
+//
+//   inscripciones   — true mientras el formulario de intención reciba gente.
+//                     Cerrarlo no borra nada: los proyectos en curso siguen
+//                     igual y el panel sigue funcionando.
+//   semestre_minimo — desde qué semestre de la carrera se puede entrar. El
+//                     formulario rechaza a quien escriba menos.
+//   semestres       — cuántos dura el proyecto. Es el tope que el panel avisa
+//                     cuando alguien va por el IV.
+//   horas_semestre  — las que pide el plan de trabajo del G-01-SEM por
+//                     semestre. Solo se muestra; no se lleva la cuenta.
+//   calendario      — LA FECHA DE INICIO del semestre de reuniones, y cuántas
+//                     semanas dura. Las dieciséis semanas NO se escriben en
+//                     ninguna parte: salen solas de esa fecha, una cada siete
+//                     días, y con ellas los rótulos "S1 · 3 a 7 de agosto" que
+//                     hoy titulan cada hoja del archivo de seguimiento.
+//                     Es lo ÚNICO que hay que cambiar al empezar semestre,
+//                     junto con PERIODO.
+//   desde           — el semestre más antiguo del que hay datos del semillero.
+//                     El panel no ofrece semestres anteriores: la base tiene
+//                     periodos viejos de otros módulos, y un selector con
+//                     semestres en los que el semillero no existía solo sirve
+//                     para abrir páginas vacías.
+//   direccion       — a dónde hay que ir a notificar la intención. Es el dato
+//                     más importante de la página: sin eso el estudiante se
+//                     queda con un código y sin saber qué hacer con él.
+//   formato         — la guía de propuesta, servida desde public/.
+//   perfiles        — con qué se siente cómodo el estudiante. NO es la línea
+//                     de investigación ni decide qué proyecto va a hacer.
+//   linea/sublinea  — las del programa, que son fijas y las mismas para todos.
+//                     Se muestran para que el estudiante las copie en su
+//                     G-01-SEM; no se le preguntan ni se guardan por proyecto.
+const SAMI = {
+  nombre: "SAMI",
+  completo:
+    "Semillero de investigación en aplicaciones, ambientes interactivos, " +
+    "animación y contenido multimedia",
+  lema: "Investigar en multimedia como alternativa de grado.",
+
+  inscripciones: true,
+  semestre_minimo: 6,
+  semestres: 3,
+  horas_semestre: 64,
+
+  // El lunes de la S1 y cuántas semanas dura. Todo lo demás se calcula.
+  calendario: { inicio: "2026-08-03", semanas: 16 },
+
+  // Del semillero solo hay datos desde este semestre.
+  desde: "2025-20",
+
+  formato: "/documents/G-01-SEM.docx",
+
+  direccion: {
+    nombre: "Ing. Mauricio Ochoa Echeverría",
+    cargo: "Director del Programa de Ingeniería en Multimedia",
+    email: "ingenmultimedia@uniboyaca.edu.co",
+    donde: "Oficina de Dirección del Programa · EM2",
+  },
+
+  // La línea y la sublínea del semillero son las del programa: fijas y las
+  // mismas para todos los proyectos. Por eso son dos textos y no una lista de
+  // opciones, y por eso no se le preguntan al estudiante: se le muestran para
+  // que las copie tal cual en su G-01-SEM.
+  //
+  // Vacías = no se muestran. Llénalas con las que estén aprobadas.
+  linea: "",
+  sublinea: "",
+
+  // Los cuatro perfiles del semillero, que son los cuatro que trae su propio
+  // nombre. Es con cuál se siente cómodo el estudiante, no la línea de
+  // investigación y no lo que va a terminar haciendo: sirve para saber a quién
+  // ponerlo a hablar con quién, y nada más.
+  perfiles: [
+    {
+      clave: "aplicaciones",
+      nombre: "Aplicaciones",
+      texto: "Software a la medida: aplicaciones móviles, web y de escritorio.",
+    },
+    {
+      clave: "interactivos",
+      nombre: "Ambientes interactivos",
+      texto: "Realidad virtual y aumentada, recorridos, videojuegos e instalaciones.",
+    },
+    {
+      clave: "animacion",
+      nombre: "Animación",
+      texto: "Animación 2D y 3D, modelado y dirección de arte.",
+    },
+    {
+      clave: "contenido",
+      nombre: "Contenido multimedia",
+      texto: "Audiovisual, sonido, narrativas interactivas y divulgación.",
+    },
+  ],
+
+  // El trámite, tal como se le cuenta al estudiante. Cuatro pasos, y los cuatro
+  // se hacen FUERA de esta página: el orden importa y la página los numera
+  // sola.
+  pasos: [
+    {
+      titulo: "Notificas tu intención en la dirección del programa",
+      texto:
+        "Desde sexto semestre vas a hablar con la dirección del programa y le dices que quieres pertenecer al semillero. Es en persona y es el paso que abre todo lo demás.",
+    },
+    {
+      titulo: "Radicas la carta al Consejo de Facultad",
+      texto:
+        "Una carta donde indicas que tomarás Semillero de Investigación como tu alternativa de grado. Sin ese radicado el proceso no avanza.",
+    },
+    {
+      titulo: "Construyes la propuesta con un asesor",
+      texto:
+        "Contactas a un docente del programa para que te asesore y diligencias con él la guía G-01-SEM, que descargas de esta página. Con ese docente queda formalizada tu vinculación al semillero.",
+    },
+    {
+      titulo: "Estudian tu propuesta",
+      texto:
+        "El comité la revisa y te informa si queda aprobada y quiénes serán tu director y —si aplica— tu codirector. Ahí empieza tu primer semestre en el semillero.",
+    },
+  ],
+
+  // Las tres etapas de los tres semestres. Varían según el proyecto, y por eso
+  // se dicen como lo que son: lo que usualmente ocupa cada semestre.
+  etapas: [
+    {
+      titulo: "Anteproyecto y comités",
+      texto:
+        "Presentación y sustentación del anteproyecto ante jurados, y aprobación del Comité de Ética y Bioética y —si aplica— del Comité de Propiedad Intelectual.",
+    },
+    {
+      titulo: "Desarrollo y documentación",
+      texto:
+        "El grueso del trabajo: construir lo que se propuso y dejarlo escrito en el documento del proyecto.",
+    },
+    {
+      titulo: "Sustentaciones y ajustes finales",
+      texto:
+        "Radicación del documento, sustentación final del proyecto y las correcciones que dejen los jurados.",
+    },
+  ],
+};
+
+// Contraseña del panel del semillero (PASSWORD_SAMI en el .env). Séptima
+// herramienta, séptima clave. Aquí se guardan calificaciones y notas de
+// semestre, que es dato de otra naturaleza que una inscripción a un torneo.
+const PASSWORD_SAMI = String(process.env.PASSWORD_SAMI || "").trim();
+
 // Contraseña del panel de Virtual Champions. Es DISTINTA a la de la Expo a
 // propósito: los mismos docentes, pero dos herramientas separadas. Va en el
 // .env (PASSWORD_VC). Sin ella el panel del torneo queda cerrado, pero el
@@ -648,6 +820,7 @@ module.exports = {
   MUSIC,
   SALIDAS,
   INK,
+  SAMI,
   PATROCINIOS,
   PASSWORD,
   PASSWORD_VC,
@@ -655,6 +828,7 @@ module.exports = {
   PASSWORD_MUSIC,
   PASSWORD_SALIDAS,
   PASSWORD_INK,
+  PASSWORD_SAMI,
   DOCENTES,
   CORREO,
   CRITERIOS,

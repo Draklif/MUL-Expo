@@ -1,0 +1,173 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA PORTADA DEL PANEL
+
+     Tres bloques y en este orden, que es el orden en que le importan a
+     quien entra:
+
+       1. MIS PROYECTOS — donde soy director. Son los que puedo tocar y los
+          únicos donde tengo trabajo pendiente. Van arriba y con el aviso de
+          cuántas reuniones llevo registradas este semestre.
+       2. TODO EL SEMILLERO — de lectura. No está escondido a propósito: es
+          el documento del programa, y quien dirige el semillero necesita ver
+          el mapa completo sin pedirle permiso a nadie.
+       3. LO CERRADO — finalizados y retirados, al final y plegado en una
+          tabla: ya no hay nada que hacerles.
+
+     Las cifras de arriba son lo que en las hojas había que contar a mano
+     cada vez que alguien preguntaba.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="sam">
+  <% if (aviso.ok) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Guardado.</p></div>
+  <% } %>
+  <% if (aviso.borrado) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se borró la reunión.</p></div>
+  <% } %>
+  <% if (aviso.creados !== undefined) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Se cargaron <strong><%= aviso.creados %></strong> proyecto<%= Number(aviso.creados) === 1 ? "" : "s" %>.
+        <% if (Number(aviso.omitidos)) { %>
+          Se omitieron <%= aviso.omitidos %> porque sus integrantes ya estaban en el semillero.
+        <% } %>
+      </p>
+    </div>
+  <% } %>
+
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %></p>
+        <h2>Semillero SAMI</h2>
+      </div>
+      <div class="acciones">
+        <a href="/semillero/panel/seguimiento.csv" class="btn ghost chico">Seguimiento en CSV</a>
+        <a href="/semillero/panel/reuniones.csv" class="btn ghost chico">Reuniones en CSV</a>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="datos">
+        <div class="dato">
+          <div class="k">En curso</div>
+          <div class="v grande"><%= resumen.activos %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Estudiantes</div>
+          <div class="v grande"><%= estudiantes %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Semestre I · II · III</div>
+          <div class="v grande"><%= resumen.sem_i %> · <%= resumen.sem_ii %> · <%= resumen.sem_iii %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Finalizados</div>
+          <div class="v grande ok"><%= resumen.finalizados %></div>
+        </div>
+      </div>
+
+      <%/* La segunda fila son las cosas que hay que perseguir. Van aparte y
+           solo cuando existen: un cero con un rótulo alarmante enseña a
+           ignorar el rótulo. */%>
+      <% const pendientes = [
+           { n: intenciones,             k: "Intenciones por tramitar", url: "/semillero/panel/solicitudes" },
+           { n: resumen.sin_director,    k: "Sin director",             url: null },
+           { n: resumen.ceb_pendiente,   k: "CEB pendiente",            url: null },
+           { n: resumen.cpi_pendiente,   k: "CPI pendiente",            url: null },
+           { n: resumen.sem_iv,          k: "Pasados de los tres semestres", url: null },
+         ].filter(function (x) { return x.n; }); %>
+      <% if (pendientes.length) { %>
+        <div class="datos" style="margin-top:20px;padding-top:18px;border-top:1px dotted var(--linea-fuerte)">
+          <% pendientes.forEach(function (x) { %>
+            <div class="dato">
+              <div class="k"><%= x.k %></div>
+              <div class="v grande alerta">
+                <% if (x.url) { %><a href="<%= x.url %>"><%= x.n %></a><% } else { %><%= x.n %><% } %>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Los que dirijo</p>
+        <h2>Mis proyectos</h2>
+      </div>
+      <span class="chip"><%= mios.length %></span>
+    </div>
+
+    <% if (!mios.length) { %>
+      <div class="vacio">
+        No diriges ningún proyecto en curso. Las reuniones y las notas solo se
+        registran donde uno es director.
+      </div>
+    <% } else { %>
+      <p class="sec-lead">
+        Aquí registras reuniones y cierras notas de semestre. En los demás proyectos
+        del semillero puedes ver todo y mover el trámite, pero no calificar.
+      </p>
+      <div class="grid dos">
+        <% mios.forEach(function (p) { %>
+          <%- include('partials/tarjeta-proyecto', { p: p, mio: true, estados: estados }) %>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <% if (otros.length) { %>
+    <section class="sam-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">De los demás · solo lectura para calificar</p>
+          <h2>Todo el semillero</h2>
+        </div>
+        <span class="chip"><%= otros.length %></span>
+      </div>
+      <div class="grid dos">
+        <% otros.forEach(function (p) { %>
+          <%- include('partials/tarjeta-proyecto', { p: p, mio: false, estados: estados }) %>
+        <% }); %>
+      </div>
+    </section>
+  <% } %>
+
+  <% if (cerrados.length) { %>
+    <section class="sam-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Ya no están en curso</p>
+          <h2>Finalizados y retirados</h2>
+        </div>
+        <a href="/semillero/panel/finalizados.csv" class="btn ghost chico">Finalizados en CSV</a>
+      </div>
+
+      <div class="tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr><th>Proyecto</th><th>Estudiantes</th><th>Director</th><th>Publicado</th><th>Estado</th></tr>
+          </thead>
+          <tbody>
+            <% cerrados.forEach(function (p) { %>
+              <tr>
+                <td><a href="/semillero/panel/proyecto/<%= p.id %>"><%= p.titulo %></a></td>
+                <td class="mini"><%= p.estudiantes.map(function (e) { return e.nombre; }).join(" · ") %></td>
+                <td><%= p.director || "—" %></td>
+                <td class="cod"><%= p.publicacion || "—" %></td>
+                <td><span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+</main>
+
+<%- include('../partials/footer') %>

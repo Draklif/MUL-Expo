@@ -1,0 +1,46 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+
+<main class="sam angosto" style="max-width:430px;padding-top:64px">
+  <p class="eyebrow">Semillero SAMI</p>
+  <h2 style="margin-bottom:28px">Acceso docentes</h2>
+
+  <% if (!configurado) { %>
+    <div class="aviso malo">
+      <p style="margin:0">
+        El panel todavía no está habilitado. Falta <code>PASSWORD_SAMI</code>
+        en el archivo <code>.env</code> del servidor.
+      </p>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <form method="POST" action="/semillero/acceso">
+    <div class="campo">
+      <label for="email">Correo institucional</label>
+      <%/* Solo el nombre de usuario: el dominio va pegado al lado y lo completa
+           el servidor. Si alguien pega el correo entero también entra —lo
+           resuelve conDominio() en lib/correos.js—, así que el autocompletado
+           del navegador no deja a nadie fuera. */%>
+      <div class="correo">
+        <input type="text" name="email" id="email" required autofocus
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="tunombre" value="<%= email %>" />
+        <span class="dominio">@<%= DOMINIO %></span>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="password">Contraseña del semillero</label>
+      <input type="password" name="password" id="password" required />
+    </div>
+    <button type="submit" class="btn block">Entrar</button>
+  </form>
+
+  <p style="margin-top:28px;text-align:center">
+    <a href="/semillero" class="foot-acceso">Volver al semillero</a>
+  </p>
+</main>
+
+<%- include('../partials/footer') %>

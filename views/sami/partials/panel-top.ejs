@@ -1,0 +1,35 @@
+<%/* Cabecera del panel. Deliberadamente distinta a la del sitio público: aquí
+     no hay marca grande ni barra de pestañas, solo dónde estás, quién eres y
+     qué semestre estás mirando.
+
+     El selector de semestre va aquí arriba y no dentro de cada página porque
+     es el contexto de TODO lo que se ve del semillero: las reuniones y las
+     notas son de un semestre, y mirar otro es mirar otro documento. */%>
+<header class="sam-top panel-top">
+  <div class="sam-top-in">
+    <a href="/semillero/panel" class="sam-marca">Panel <em>SAMI</em></a>
+    <nav class="sam-nav">
+      <a href="/semillero/panel">Proyectos</a>
+      <a href="/semillero/panel/solicitudes">Intenciones</a>
+      <a href="/semillero/panel/importar">Cargar lote</a>
+      <a href="/semillero">Ver el sitio</a>
+    </nav>
+    <div class="panel-quien">
+      <% if (typeof periodos !== "undefined" && periodos && periodos.length > 1) { %>
+        <form method="GET" action="<%= rutaPeriodo || '/semillero/panel' %>">
+          <select name="periodo" onchange="this.form.submit()" aria-label="Semestre">
+            <% periodos.forEach(function (p) { %>
+              <option value="<%= p.id %>" <%= periodo && p.id === periodo.id ? "selected" : "" %>>
+                <%= p.codigo %><%= p.activo ? " · en curso" : "" %>
+              </option>
+            <% }); %>
+          </select>
+        </form>
+      <% } %>
+      <span class="mini"><%= docenteSami.name %></span>
+      <form method="POST" action="/semillero/salir">
+        <button type="submit" class="btn ghost chico">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

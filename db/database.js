@@ -571,6 +571,212 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_sal_reg ON salida_registros(salida, created_at);
 
   -- =================================================================
+  --  SEMILLERO DE INVESTIGACIÓN — SAMI
+  --  Todo lo suyo lleva el prefijo sami_ y no comparte tablas con nadie.
+  --
+  --  Esto reemplaza dos hojas de cálculo que el programa llevaba a mano:
+  --  una con el estado de cada proyecto semestre por semestre, y otra con
+  --  las dieciséis reuniones del semestre. Las dos se sostenían con
+  --  IMPORTRANGE y XLOOKUP entre archivos, y las cifras que el programa
+  --  necesita —cuántos van, cuántos terminaron, a quién le falta CEB— había
+  --  que sacarlas a mano. Aquí son una consulta.
+  --
+  --  A diferencia de las salidas, aquí NO hay un config del que salga la
+  --  cosa: una salida es un objeto de config.SALIDAS y solo se guarda quién
+  --  se apuntó, pero un proyecto de semillero dura tres semestres, cambia de
+  --  director, de estado y de integrantes. Eso es una fila, no una línea de
+  --  configuración.
+  -- =================================================================
+
+  -- El proyecto es la unidad. Dura tres semestres, lo hacen uno o dos
+  -- estudiantes, lo dirige un docente del programa y a veces lo codirige
+  -- alguien de fuera.
+  --
+  -- El título entra como "tentativo" —así lo pide la guía G-01-SEM— y se
+  -- corrige después desde el panel: el que se registra casi nunca es el que
+  -- se sustenta tres semestres más tarde.
+  CREATE TABLE IF NOT EXISTS sami_proyectos (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    codigo       TEXT NOT NULL UNIQUE,
+    titulo       TEXT NOT NULL,
+    -- Con qué perfil del semillero se siente cómodo el estudiante. NO es la
+    -- línea de investigación: esa es del programa, es fija y es la misma para
+    -- todos los proyectos, así que vive en config.SAMI y no en una columna que
+    -- podría terminar diciendo cuatro cosas distintas.
+    perfil       TEXT,
+    ods          TEXT,
+    -- La escalera de estados vive en lib/sami.js. Aquí solo se guarda en cuál
+    -- va, como texto: una clave y no un número, para que la fila se pueda leer
+    -- sin tener el código al lado.
+    --
+    -- 'registro' es donde caen los que llenan el formulario público: dejaron
+    -- sus datos y nada más. Notificar la intención en la dirección del programa
+    -- es el siguiente peldaño y se hace en persona.
+    estado       TEXT NOT NULL DEFAULT 'registro',
+    -- El semestre DENTRO del semillero (I, II, III y el IV de quien se pasó).
+    -- No es el semestre de la carrera: ese es de cada estudiante y está en la
+    -- otra tabla.
+    semestre     TEXT,
+    -- NULL es "NO ASIGNADO", que es un estado normal y no un dato faltante:
+    -- así llega todo proyecto nuevo y así se queda hasta que el comité decide.
+    director_id  INTEGER,
+    -- Texto libre y no una llave a docentes: el codirector suele ser de otro
+    -- programa o de otra universidad, y NO entra al sistema. Guardar su
+    -- nombre es todo lo que hay que hacer con él.
+    codirector   TEXT,
+    -- Las fechas del trámite, cada una una columna del documento del programa.
+    -- Nulas mientras no pasen, y ese nulo es información: un proyecto en
+    -- desarrollo sin anteproyecto_at es un proyecto al que le falta un papel.
+    carta_at         DATE,  -- radicación al Consejo de Facultad
+    propuesta_at     DATE,  -- presentación de la propuesta G-01-SEM
+    aprobacion_at    DATE,  -- concepto del Comité de Investigación
+    anteproyecto_at  DATE,  -- sustentación del anteproyecto
+    -- Los dos comités. 'na' y no NULL porque "no aplica" es una decisión que
+    -- alguien tomó, distinta de "todavía no lo hemos mirado" (que es
+    -- 'pendiente'). Es la misma lección del asistio de las salidas.
+    ceb              TEXT NOT NULL DEFAULT 'na',
+    ceb_at           DATE,
+    cpi              TEXT NOT NULL DEFAULT 'na',
+    cpi_at           DATE,
+    sustentacion_at  DATE,  -- sustentación final del proyecto
+    publicacion      TEXT,  -- semestre de publicación, al quedar finalizado
+    -- El semestre en que entró. No se mueve nunca: es de dónde viene, no
+    -- dónde está.
+    periodo_id   INTEGER,
+    nota         TEXT,      -- nota interna, solo para docentes
+    -- Se marca al mandar el correo de "propuesta aprobada". Nulo es lo que
+    -- permite reintentarlo sin repetírselo a quien ya lo recibió.
+    avisado_at   DATETIME,
+    created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (director_id) REFERENCES docentes(id),
+    FOREIGN KEY (periodo_id)  REFERENCES periodos(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sami_proy ON sami_proyectos(estado, created_at);
+
+  -- Uno o dos por proyecto. 'activo' en 0 es quien se retiró: la fila NO se
+  -- borra, porque sus reuniones y sus notas siguen siendo ciertas y son la
+  -- constancia de lo que sí trabajó mientras estuvo.
+  CREATE TABLE IF NOT EXISTS sami_estudiantes (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    proyecto_id        INTEGER NOT NULL,
+    nombre             TEXT NOT NULL,
+    codigo_estudiante  TEXT NOT NULL,
+    documento          TEXT,
+    telefono           TEXT,
+    email              TEXT NOT NULL COLLATE NOCASE,
+    -- El semestre de la CARRERA al vincularse. Se guarda tal como estaba ese
+    -- día: sirve para saber que cumplía el mínimo, no para saber en cuál va
+    -- hoy.
+    semestre_academico INTEGER,
+    activo             INTEGER NOT NULL DEFAULT 1,
+    orden              INTEGER NOT NULL DEFAULT 0,
+    created_at         DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- Una persona, un cupo en su proyecto. El correo institucional es la
+    -- identidad, igual que en el resto del sitio.
+    UNIQUE (proyecto_id, email),
+    FOREIGN KEY (proyecto_id) REFERENCES sami_proyectos(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sami_est ON sami_estudiantes(proyecto_id, orden);
+
+  -- Los jurados del anteproyecto con su concepto. Tabla y no dos columnas
+  -- porque a veces son tres, porque cada uno concluye por separado y porque
+  -- uno puede aprobar mientras el otro pide volver a presentar.
+  --
+  -- docente_id puede ser NULL: un jurado invitado no está en config.DOCENTES
+  -- y no por eso deja de haber firmado un concepto.
+  CREATE TABLE IF NOT EXISTS sami_jurados (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    proyecto_id INTEGER NOT NULL,
+    docente_id  INTEGER,
+    nombre      TEXT NOT NULL,
+    concepto    TEXT,
+    concepto_at DATE,
+    orden       INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (proyecto_id) REFERENCES sami_proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (docente_id)  REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sami_jur ON sami_jurados(proyecto_id, orden);
+
+  -- Una reunión es del PROYECTO: los adelantos mostrados y lo que se
+  -- comprometen a entregar son del trabajo, no de una persona. Por eso van
+  -- aquí y no en la tabla de al lado.
+  --
+  -- 'semana' se calcula al guardar, con el calendario de config.SAMI, y se
+  -- guarda ya resuelta: es lo que titula cada hoja del archivo viejo (S1…S16)
+  -- y lo que hace que el CSV se pueda pegar ahí sin traducir nada. Recalcularla
+  -- al leer cambiaría el pasado cada vez que se corrija el calendario.
+  CREATE TABLE IF NOT EXISTS sami_reuniones (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    proyecto_id INTEGER NOT NULL,
+    periodo_id  INTEGER NOT NULL,
+    fecha       DATE NOT NULL,
+    semana      INTEGER,
+    adelantos   TEXT,
+    compromisos TEXT,
+    -- El docente a cargo, que es quien la registró. Sustituye a la "firma
+    -- docente" de la hoja: una fila escrita desde una sesión con nombre y
+    -- fecha dice más que una firma escaneada.
+    docente_id  INTEGER NOT NULL,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id) REFERENCES sami_proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (periodo_id)  REFERENCES periodos(id),
+    FOREIGN KEY (docente_id)  REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sami_reu ON sami_reuniones(proyecto_id, periodo_id, fecha);
+
+  -- La asistencia y la calificación SÍ son de cada estudiante: en un proyecto
+  -- de dos, uno puede haber faltado y el otro no.
+  --
+  -- 'asistio' con tres valores, como en las salidas: NULL es "todavía no lo he
+  -- mirado", que no es lo mismo que "no vino". Sin ese nulo, una reunión a
+  -- medio registrar se lee como si nadie hubiera ido.
+  CREATE TABLE IF NOT EXISTS sami_asistencias (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    reunion_id    INTEGER NOT NULL,
+    estudiante_id INTEGER NOT NULL,
+    asistio       INTEGER,
+    calificacion  REAL,
+    UNIQUE (reunion_id, estudiante_id),
+    FOREIGN KEY (reunion_id)    REFERENCES sami_reuniones(id)   ON DELETE CASCADE,
+    FOREIGN KEY (estudiante_id) REFERENCES sami_estudiantes(id) ON DELETE CASCADE
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sami_asis ON sami_asistencias(estudiante_id);
+
+  -- La nota del semestre: una por estudiante y por periodo.
+  --
+  -- Se escribe a mano. El panel muestra al lado el promedio de las reuniones y
+  -- el porcentaje de asistencia, pero no los precarga en la casilla: son un
+  -- insumo para el docente, que también pesa cosas que no están en esta base.
+  --
+  -- 'semestre' se copia del proyecto al guardarla y se congela ahí: dentro de
+  -- un año hay que poder decir que esta nota fue la del semestre II, aunque el
+  -- proyecto ya vaya en el III.
+  CREATE TABLE IF NOT EXISTS sami_notas (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    estudiante_id   INTEGER NOT NULL,
+    periodo_id      INTEGER NOT NULL,
+    semestre        TEXT,
+    nota_director   REAL,
+    -- NULL cuando no hay codirector. La nota final es el promedio de las dos
+    -- cuando están las dos, y la del director sola cuando no.
+    nota_codirector REAL,
+    observacion     TEXT,
+    -- Quién la puso y cuándo. Una nota se puede corregir, pero no se borra ni
+    -- se vuelve anónima.
+    cerrada_por     INTEGER,
+    cerrada_at      DATETIME,
+    UNIQUE (estudiante_id, periodo_id),
+    FOREIGN KEY (estudiante_id) REFERENCES sami_estudiantes(id) ON DELETE CASCADE,
+    FOREIGN KEY (periodo_id)    REFERENCES periodos(id),
+    FOREIGN KEY (cerrada_por)   REFERENCES docentes(id)
+  );
+
+  -- =================================================================
   --  PATROCINIOS
   --  Marcas que escriben ofreciendo acompañar la Expo. Esto NO es la
   --  lista de patrocinadores que se ve en la página: esa se cura a mano
@@ -759,6 +965,20 @@ agregarColumna("certificados", "avisado_at", "DATETIME");
 // La asistencia llegó después de que ya hubiera salidas con gente inscrita.
 agregarColumna("salida_registros", "asistio", "INTEGER");
 agregarColumna("salida_registros", "asistencia_at", "DATETIME");
+
+// El semillero arrancó preguntándole al estudiante por la línea y la sublínea
+// de investigación, y eso estaba mal: la línea es del PROGRAMA, es fija y es la
+// misma para todos los proyectos, así que preguntarla proyecto por proyecto
+// solo servía para que cuatro filas dijeran cuatro cosas distintas de algo que
+// tiene una sola respuesta. Ahora vive en config.SAMI.
+//
+// Lo que sí es de cada proyecto es el PERFIL —con cuál de los cuatro se siente
+// cómodo el estudiante—, que es otra pregunta y no decide qué va a hacer.
+//
+// Las dos columnas viejas se quedan donde están en vez de reconstruir la tabla:
+// no las lee nadie, y una reconstrucción con llaves foráneas apuntando a esta
+// tabla es mucho riesgo para ganar dos columnas de espacio.
+agregarColumna("sami_proyectos", "perfil", "TEXT");
 
 // ---------- Semestres ----------
 // La base tiene que tener al menos uno antes de poder repartir nada.

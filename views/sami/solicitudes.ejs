@@ -1,0 +1,149 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LAS INTENCIONES
+
+     Lo que todavía no es un proyecto: alguien dijo que quiere entrar y el
+     trámite va en alguno de los cuatro pasos. Es la bandeja de entrada del
+     semillero, y por eso vive en su propia página y no mezclada con los
+     proyectos en curso: lo que se hace aquí es otra cosa —mover un trámite,
+     asignar un director— y se hace de tanto en tanto, no cada semana.
+
+     Cada fila trae los datos completos de quien se registró, porque eso es
+     justo lo que hace falta para llamarlo o escribirle, y el formulario corto
+     para lo único que se decide aquí: en qué paso va y quién lo va a dirigir.
+     Al aprobar la propuesta, el estudiante recibe el correo con su director.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="sam">
+  <% if (aviso.ok) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Guardado.</p></div>
+  <% } %>
+
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Bandeja del semillero</p>
+        <h2>Intenciones por tramitar</h2>
+      </div>
+      <a href="/semillero/panel" class="btn ghost chico">Ver los proyectos</a>
+    </div>
+
+    <p class="sec-lead">
+      Estos todavía no cuentan como proyectos del semillero: están en alguno de los cuatro
+      pasos de la vinculación. Al pasar uno a <strong>Propuesta aprobada</strong> se le
+      manda al estudiante el correo con su director y empieza a correr su semestre I.
+    </p>
+
+    <div class="aviso" style="margin-top:18px">
+      <p style="margin:0">
+        <strong>En el registro</strong> es quien llenó el formulario de la página y nada más.
+        Pasarlo a <strong>Intención notificada</strong> es afirmar que sí fue a la dirección
+        del programa: ese paso se hace en persona y el sitio no lo puede saber solo.
+      </p>
+    </div>
+
+    <% if (!pendientes.length) { %>
+      <div class="vacio" style="margin-top:22px">
+        No hay ninguna intención pendiente. Las nuevas llegan por
+        <a href="/semillero/registro">el formulario público</a>.
+      </div>
+    <% } else { %>
+      <div class="regs" style="margin-top:22px">
+        <% pendientes.forEach(function (p) { %>
+          <article class="reg abierta" id="p<%= p.id %>">
+            <div class="reg-cab">
+              <div class="reg-quien">
+                <p class="nom"><%= p.titulo %></p>
+                <div class="reg-meta">
+                  <span class="m cod"><%= p.codigo %></span>
+                  <span class="m"><b><%= p.estudiantes.length %></b> estudiante<%= p.estudiantes.length === 1 ? "" : "s" %></span>
+                  <% if (p.perfil_info) { %><span class="m"><%= p.perfil_info.nombre %></span><% } %>
+                </div>
+              </div>
+              <div class="reg-marcas">
+                <span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span>
+              </div>
+            </div>
+
+            <div class="reg-mas">
+              <div class="ficha" style="margin-bottom:14px">
+                <% p.estudiantes.forEach(function (e) { %>
+                  <div class="f">
+                    <div class="k"><%= e.nombre %></div>
+                    <div class="v mini">
+                      <%= e.codigo_estudiante %> · doc. <%= e.documento || "—" %>
+                      · <%= e.semestre_academico ? e.semestre_academico + ".º sem." : "sin semestre" %>
+                      · <%= e.telefono || "—" %>
+                      · <a href="mailto:<%= e.email %>"><%= e.email %></a>
+                    </div>
+                  </div>
+                <% }); %>
+                <% if (p.nota) { %>
+                  <div class="f"><div class="k">Al registrarse</div><div class="v mini"><%= p.nota %></div></div>
+                <% } %>
+              </div>
+
+              <%/* Dos formularios y no uno: mover el trámite y asignar director
+                   son decisiones distintas y casi nunca se toman el mismo día.
+                   Los dos vuelven a la ficha del proyecto, que es donde uno
+                   quiere estar después de asignarle un director a alguien. */%>
+              <form method="POST" action="/semillero/panel/proyecto/<%= p.id %>/direccion">
+                <div class="fila">
+                  <div class="campo">
+                    <label for="dir<%= p.id %>">Director</label>
+                    <select name="director_id" id="dir<%= p.id %>">
+                      <option value="">NO ASIGNADO</option>
+                      <% docentes.forEach(function (d) { %>
+                        <option value="<%= d.id %>" <%= p.director_id === d.id ? "selected" : "" %>><%= d.name %></option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  <div class="campo">
+                    <label for="codir<%= p.id %>">Codirector</label>
+                    <input type="text" name="codirector" id="codir<%= p.id %>" maxlength="160"
+                           value="<%= p.codirector || "" %>" placeholder="Opcional · texto libre" />
+                  </div>
+                  <div class="campo" style="display:flex;align-items:flex-end">
+                    <button type="submit" class="btn ghost block">Guardar dirección</button>
+                  </div>
+                </div>
+              </form>
+
+              <form method="POST" action="/semillero/panel/proyecto/<%= p.id %>/estado">
+                <div class="fila">
+                  <div class="campo">
+                    <label for="est<%= p.id %>">Paso del trámite</label>
+                    <select name="estado" id="est<%= p.id %>">
+                      <% estados.forEach(function (e) { %>
+                        <option value="<%= e.clave %>" <%= p.estado === e.clave ? "selected" : "" %>><%= e.label %></option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  <div class="campo">
+                    <label for="sem<%= p.id %>">Semestre en el semillero</label>
+                    <select name="semestre" id="sem<%= p.id %>">
+                      <option value="">Todavía no aplica</option>
+                      <% semestres.forEach(function (s) { %>
+                        <option value="<%= s %>" <%= p.semestre === s ? "selected" : "" %>><%= s %></option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  <div class="campo" style="display:flex;align-items:flex-end">
+                    <button type="submit" class="btn block">Guardar paso</button>
+                  </div>
+                </div>
+              </form>
+
+              <div class="reg-acciones">
+                <a href="/semillero/panel/proyecto/<%= p.id %>" class="btn ghost chico">Abrir la ficha completa</a>
+              </div>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

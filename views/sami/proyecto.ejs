@@ -1,0 +1,665 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA FICHA DE UN PROYECTO
+
+     Es el archivo grande del módulo y reemplaza las dos hojas de una vez: la
+     de seguimiento (estado, jurados, fechas, comités) y la de reuniones.
+
+     El orden no es el de las hojas sino el de lo que se hace más seguido:
+
+       1. la cabeza, con el estado y la escalera — se mira siempre;
+       2. las reuniones — se registra una por semana;
+       3. las notas del semestre — una vez al final, con el promedio al lado;
+       4. el trámite: dirección, datos, fechas, comités, jurados — se toca de
+          tanto en tanto, así que va abajo.
+
+     El permiso está dicho de frente arriba y no solo escondiendo botones. Un
+     docente que no es el director de este proyecto ve TODO —es el documento
+     del programa— pero no puede registrar reuniones ni notas, y es mejor que
+     lea por qué que encontrarse una página sin botones.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<%
+  const MALOS = {
+    no_director: "Solo el director de este proyecto puede registrar reuniones y notas.",
+    calificacion: `Las calificaciones van de 0 a ${escala}. Revisa la que escribiste.`,
+    fecha: "Escribe la fecha de la reunión.",
+    titulo: "El proyecto necesita un título.",
+    estado: "Ese estado no existe.",
+    estudiante: "Para agregar un integrante hacen falta al menos el nombre y el correo institucional.",
+    ya_vinculado: "Ese correo ya está en otro proyecto del semillero.",
+  };
+  const malo = MALOS[aviso.error];
+  const activos = estudiantes.filter(function (e) { return e.activo; });
+%>
+
+<main class="sam">
+  <% if (aviso.ok) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Guardado.</p></div>
+  <% } %>
+  <% if (aviso.borrado) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se borró la reunión.</p></div>
+  <% } %>
+  <% if (malo) { %>
+    <div class="aviso malo" style="margin-top:24px"><p style="margin:0"><%= malo %></p></div>
+  <% } %>
+
+  <%/* ── 1. La cabeza ─────────────────────────────────────────────── */%>
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">
+          <a href="/semillero/panel">Semillero</a> ·
+          <span class="cod"><%= proyecto.codigo %></span> ·
+          semestre <%= periodo ? periodo.codigo : "—" %>
+        </p>
+        <h2><%= proyecto.titulo %></h2>
+      </div>
+      <div class="acciones">
+        <span class="chip <%= proyecto.estado_info.cls %>"><%= proyecto.estado_info.label %></span>
+        <% if (proyecto.semestre) { %>
+          <span class="chip <%= proyecto.excedido ? "alerta" : "" %>">Semestre <%= proyecto.semestre %></span>
+        <% } %>
+      </div>
+    </div>
+
+    <%- include('partials/escalera', { estados: estados, actual: proyecto.estado_info }) %>
+
+    <% if (proyecto.excedido) { %>
+      <div class="aviso ojo">
+        <p style="margin:0">
+          Va en el semestre IV: se pasó de los <%= sami.semestres %> que dura el semillero.
+          No hay nada bloqueado —esto pasa—, pero conviene que quede dicho en el acta.
+        </p>
+      </div>
+    <% } %>
+
+    <% if (!puedeCalificar) { %>
+      <div class="aviso">
+        <p style="margin:0">
+          <strong>Lo estás viendo como lectura para calificar.</strong>
+          El director de este proyecto es <%= proyecto.director || "nadie todavía" %>, y las
+          reuniones y las notas del semestre solo las registra él. El trámite —estado,
+          fechas, jurados, comités y dirección— sí lo puedes mover tú.
+        </p>
+      </div>
+    <% } %>
+
+    <div class="tarjeta">
+      <div class="ficha">
+        <div class="f"><div class="k">Director</div><div class="v"><%= proyecto.director || "Sin asignar" %></div></div>
+        <div class="f"><div class="k">Codirector</div><div class="v"><%= proyecto.codirector || "N/A" %></div></div>
+        <div class="f">
+          <div class="k">Perfil</div>
+          <div class="v"><%= proyecto.perfil_info ? proyecto.perfil_info.nombre : "Sin definir" %></div>
+        </div>
+        <%/* La línea y la sublínea no salen por proyecto: son las del programa,
+             fijas y las mismas para todos, y viven en config.SAMI. */%>
+        <% if (proyecto.ods) { %>
+          <div class="f"><div class="k">ODS</div><div class="v"><%= proyecto.ods %></div></div>
+        <% } %>
+        <div class="f">
+          <div class="k">Entró en</div>
+          <div class="v cod"><%= proyecto.periodo_codigo || "—" %></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <%/* ── 2. Las reuniones ─────────────────────────────────────────── */%>
+  <section class="sam-sec" id="reuniones">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">
+          Semestre <%= periodo ? periodo.codigo : "—" %> ·
+          <%= reuniones.length %> de <%= sami.calendario.semanas %> semanas
+        </p>
+        <h2>Reuniones</h2>
+      </div>
+      <a href="/semillero/panel/reuniones.csv" class="btn ghost chico">Este semestre en CSV</a>
+    </div>
+
+    <%/* El calendario del semestre, calculado de la fecha de inicio: dieciséis
+         casillas y cuáles ya tienen reunión. Responde de un vistazo la
+         pregunta del director en noviembre —"¿de qué semanas me falta?"— sin
+         tener que cruzar fechas a mano contra una lista.
+
+         Las semanas no están escritas en ninguna parte: salen de
+         config.SAMI.calendario.inicio, una cada siete días. */%>
+    <% if (semanas.length) { %>
+      <%
+        const conReunion = new Set(reuniones.map(function (r) { return r.semana; }));
+        const hechas = semanas.filter(function (w) { return conReunion.has(w.n); }).length;
+      %>
+      <div class="tarjeta" style="margin-bottom:18px">
+        <div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap">
+          <h3 style="margin:0;flex:1 1 auto">Calendario del semestre</h3>
+          <span class="mini"><%= hechas %> de <%= semanas.length %> semanas con reunión</span>
+        </div>
+        <div class="semanas">
+          <% semanas.forEach(function (w) { %>
+            <span class="sem <%= conReunion.has(w.n) ? "hecha" : "" %>" title="<%= w.label %>">
+              <b>S<%= w.n %></b><span class="cuando"><%= w.label %></span>
+            </span>
+          <% }); %>
+        </div>
+      </div>
+    <% } %>
+
+    <% if (puedeCalificar && activos.length) { %>
+      <%- include('partials/reunion-form', {
+            accion: `/semillero/panel/proyecto/${proyecto.id}/reuniones`,
+            reunion: null,
+            activos: activos,
+            escala: escala,
+            sami: sami,
+          }) %>
+    <% } %>
+
+    <% if (!reuniones.length) { %>
+      <div class="vacio" style="margin-top:18px">
+        Todavía no hay reuniones registradas en <%= periodo ? periodo.codigo : "este semestre" %>.
+      </div>
+    <% } else { %>
+      <div class="regs" style="margin-top:18px">
+        <% reuniones.forEach(function (r) { %>
+          <article class="reg" id="r<%= r.id %>">
+            <div class="reg-cab">
+              <div class="reg-quien">
+                <p class="nom">
+                  <%= r.semana ? "S" + r.semana : "Fuera del calendario" %> ·
+                  <%= r.cuando ? r.cuando.dia : r.fecha %>
+                </p>
+                <div class="reg-meta">
+                  <span class="m"><b><%= r.docente || "—" %></b></span>
+                  <% if (r.compromisos) { %>
+                    <span class="m">Se comprometió a entregar algo</span>
+                  <% } %>
+                </div>
+              </div>
+              <div class="reg-marcas">
+                <% r.marcas.forEach(function (m) { %>
+                  <span class="chip <%= m.asistencia ? m.asistencia.cls : "no" %>">
+                    <%= m.nombre.split(" ")[0] %><%= m.calificacion === null ? "" : " · " + m.calificacion %>
+                  </span>
+                <% }); %>
+              </div>
+              <button type="button" class="reg-abrir" aria-expanded="false"
+                      aria-label="Abrir la reunión">▾</button>
+            </div>
+
+            <div class="reg-mas">
+              <% if (puedeCalificar) { %>
+                <%- include('partials/reunion-form', {
+                      accion: `/semillero/panel/reuniones/${r.id}`,
+                      reunion: r,
+                      activos: activos,
+                      escala: escala,
+                      sami: sami,
+                    }) %>
+
+                <div class="reg-acciones">
+                  <form method="POST" action="/semillero/panel/reuniones/<%= r.id %>/borrar"
+                        onsubmit="return confirm('¿Borrar esta reunión? Se pierden la asistencia y las calificaciones de ese día.')">
+                    <button type="submit" class="btn peligro chico">Borrar la reunión</button>
+                  </form>
+                </div>
+              <% } else { %>
+                <div class="ficha">
+                  <% if (r.adelantos) { %>
+                    <div class="f"><div class="k">Adelantos</div><div class="v" style="white-space:pre-line"><%= r.adelantos %></div></div>
+                  <% } %>
+                  <% if (r.compromisos) { %>
+                    <div class="f"><div class="k">Se compromete a</div><div class="v" style="white-space:pre-line"><%= r.compromisos %></div></div>
+                  <% } %>
+                  <% r.marcas.forEach(function (m) { %>
+                    <div class="f">
+                      <div class="k"><%= m.nombre %></div>
+                      <div class="v">
+                        <%= m.asistencia ? m.asistencia.label : "Sin marcar" %>
+                        <%= m.calificacion === null ? "" : " · " + m.calificacion %>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } %>
+            </div>
+          </article>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* ── 3. Las notas del semestre ────────────────────────────────── */%>
+  <section class="sam-sec" id="notas">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %></p>
+        <h2>Notas del semestre</h2>
+      </div>
+    </div>
+
+    <p class="sec-lead">
+      La nota la escribes tú. Al lado va lo que llevan de reuniones y asistencia para que lo
+      tengas en cuenta junto con todo lo demás; el sistema no la calcula ni la precarga.
+    </p>
+
+    <% estudiantes.forEach(function (e) { %>
+      <div class="nota-sem" id="n<%= e.id %>">
+        <h4><%= e.nombre %><%= e.activo ? "" : " · retirado" %></h4>
+        <p class="mini" style="margin:0">
+          <%= e.codigo_estudiante %> · <a href="mailto:<%= e.email %>"><%= e.email %></a>
+        </p>
+
+        <div class="rendimiento">
+          <span><b><%= e.rendimiento.sesiones %></b> reuniones</span>
+          <span>asistió a <b><%= e.rendimiento.asistio %></b><%= e.rendimiento.pct === null ? "" : ` (${e.rendimiento.pct} %)` %></span>
+          <% if (e.rendimiento.sin_pasar) { %>
+            <span><b><%= e.rendimiento.sin_pasar %></b> sin marcar</span>
+          <% } %>
+          <span>promedio <b><%= e.rendimiento.promedio === null ? "—" : e.rendimiento.promedio %></b></span>
+        </div>
+
+        <% if (puedeCalificar) { %>
+          <form method="POST" action="/semillero/panel/estudiantes/<%= e.id %>/nota">
+            <div class="fila tres">
+              <div class="campo">
+                <label for="nd<%= e.id %>">Nota del director</label>
+                <input type="number" name="nota_director" id="nd<%= e.id %>"
+                       min="0" max="<%= escala %>" step="0.01"
+                       value="<%= e.nota && e.nota.nota_director !== null ? e.nota.nota_director : "" %>" />
+              </div>
+              <div class="campo">
+                <label for="nc<%= e.id %>">Nota del codirector</label>
+                <input type="number" name="nota_codirector" id="nc<%= e.id %>"
+                       min="0" max="<%= escala %>" step="0.01"
+                       <%= proyecto.codirector ? "" : "disabled" %>
+                       value="<%= e.nota && e.nota.nota_codirector !== null ? e.nota.nota_codirector : "" %>"
+                       placeholder="<%= proyecto.codirector ? "" : "Sin codirector" %>" />
+                <p class="ayuda">
+                  <%= proyecto.codirector
+                        ? "La nota final es el promedio de las dos."
+                        : "Este proyecto no tiene codirector." %>
+                </p>
+              </div>
+              <div class="campo">
+                <label>Nota final</label>
+                <p class="nota-final" style="margin:6px 0 0"><%= e.final === null ? "—" : e.final %></p>
+              </div>
+            </div>
+
+            <div class="campo">
+              <label for="ob<%= e.id %>">Observación del semestre</label>
+              <textarea name="observacion" id="ob<%= e.id %>" maxlength="600"
+                        placeholder="Lo que hay que decir del semestre y no cabe en un número."><%= e.nota && e.nota.observacion ? e.nota.observacion : "" %></textarea>
+            </div>
+
+            <div class="acciones">
+              <button type="submit" class="btn">Guardar la nota</button>
+              <% if (e.nota && e.nota.cerrada_at) { %>
+                <span class="mini">
+                  Última vez: <%= e.nota.cerrada_por_nombre || "—" %> · <%= e.nota.cerrada_at %>
+                  <%= e.nota.semestre ? " · semestre " + e.nota.semestre : "" %>
+                </span>
+              <% } %>
+            </div>
+          </form>
+        <% } else { %>
+          <div class="ficha">
+            <div class="f">
+              <div class="k">Nota final</div>
+              <div class="v"><strong><%= e.final === null ? "Sin cerrar" : e.final %></strong></div>
+            </div>
+            <% if (e.nota && e.nota.observacion) { %>
+              <div class="f"><div class="k">Observación</div><div class="v"><%= e.nota.observacion %></div></div>
+            <% } %>
+            <% if (e.nota && e.nota.cerrada_at) { %>
+              <div class="f">
+                <div class="k">La cerró</div>
+                <div class="v mini"><%= e.nota.cerrada_por_nombre || "—" %> · <%= e.nota.cerrada_at %></div>
+              </div>
+            <% } %>
+          </div>
+        <% } %>
+      </div>
+    <% }); %>
+  </section>
+
+  <%/* ── 4. El trámite ────────────────────────────────────────────── */%>
+  <section class="sam-sec" id="tramite">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Abierto a cualquier docente del panel</p>
+        <h2>El trámite</h2>
+      </div>
+    </div>
+
+    <div class="grid dos">
+      <div class="tarjeta">
+        <h3>Estado y semestre</h3>
+        <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/estado" style="margin-top:14px">
+          <div class="campo">
+            <label for="estado">En qué va</label>
+            <select name="estado" id="estado">
+              <% estados.forEach(function (s) { %>
+                <option value="<%= s.clave %>" <%= proyecto.estado === s.clave ? "selected" : "" %>><%= s.label %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="semestre">Semestre en el semillero</label>
+            <select name="semestre" id="semestre">
+              <option value="">Todavía no aplica</option>
+              <% semestres.forEach(function (s) { %>
+                <option value="<%= s %>" <%= proyecto.semestre === s ? "selected" : "" %>><%= s %></option>
+              <% }); %>
+            </select>
+            <p class="ayuda">
+              Solo cuenta desde que la propuesta queda aprobada.
+              <%= proyecto.avisado_at ? "Al estudiante ya se le avisó quién es su director." : "" %>
+            </p>
+          </div>
+          <button type="submit" class="btn block">Guardar</button>
+        </form>
+      </div>
+
+      <div class="tarjeta">
+        <h3>Dirección</h3>
+        <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/direccion" style="margin-top:14px">
+          <div class="campo">
+            <label for="director_id">Director</label>
+            <select name="director_id" id="director_id">
+              <option value="">NO ASIGNADO</option>
+              <% docentes.forEach(function (d) { %>
+                <option value="<%= d.id %>" <%= proyecto.director_id === d.id ? "selected" : "" %>><%= d.name %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="codirector">Codirector</label>
+            <input type="text" name="codirector" id="codirector" maxlength="160"
+                   value="<%= proyecto.codirector || "" %>" placeholder="Nombre completo · opcional" />
+            <p class="ayuda">
+              Texto libre a propósito: el codirector no entra al sistema y casi siempre es
+              de otro programa o de otra universidad.
+            </p>
+          </div>
+          <button type="submit" class="btn block">Guardar</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="tarjeta" style="margin-top:18px">
+      <h3>Fechas y comités</h3>
+      <p class="mini" style="margin:6px 0 0">
+        Se llenan juntas porque se llenan juntas: quien pone al día un proyecto tiene el
+        acta delante. Lo que no haya pasado se deja en blanco.
+      </p>
+      <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/fechas" style="margin-top:16px">
+        <div class="fila tres">
+          <div class="campo">
+            <label for="carta_at">Carta al Consejo</label>
+            <input type="date" name="carta_at" id="carta_at" value="<%= proyecto.carta_at || "" %>" />
+          </div>
+          <div class="campo">
+            <label for="propuesta_at">Propuesta presentada</label>
+            <input type="date" name="propuesta_at" id="propuesta_at" value="<%= proyecto.propuesta_at || "" %>" />
+          </div>
+          <div class="campo">
+            <label for="aprobacion_at">Propuesta aprobada</label>
+            <input type="date" name="aprobacion_at" id="aprobacion_at" value="<%= proyecto.aprobacion_at || "" %>" />
+          </div>
+        </div>
+
+        <div class="fila tres">
+          <div class="campo">
+            <label for="anteproyecto_at">Sustentación anteproyecto</label>
+            <input type="date" name="anteproyecto_at" id="anteproyecto_at" value="<%= proyecto.anteproyecto_at || "" %>" />
+          </div>
+          <div class="campo">
+            <label for="sustentacion_at">Sustentación del proyecto</label>
+            <input type="date" name="sustentacion_at" id="sustentacion_at" value="<%= proyecto.sustentacion_at || "" %>" />
+          </div>
+          <div class="campo"></div>
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="ceb">Comité de Ética y Bioética</label>
+            <select name="ceb" id="ceb">
+              <% comites.forEach(function (c) { %>
+                <option value="<%= c.clave %>" <%= proyecto.ceb === c.clave ? "selected" : "" %>><%= c.label %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="ceb_at">Fecha del CEB</label>
+            <input type="date" name="ceb_at" id="ceb_at" value="<%= proyecto.ceb_at || "" %>" />
+          </div>
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="cpi">Comité de Propiedad Intelectual</label>
+            <select name="cpi" id="cpi">
+              <% comites.forEach(function (c) { %>
+                <option value="<%= c.clave %>" <%= proyecto.cpi === c.clave ? "selected" : "" %>><%= c.label %></option>
+              <% }); %>
+            </select>
+          </div>
+          <div class="campo">
+            <label for="cpi_at">Fecha del CPI</label>
+            <input type="date" name="cpi_at" id="cpi_at" value="<%= proyecto.cpi_at || "" %>" />
+          </div>
+        </div>
+
+        <button type="submit" class="btn">Guardar fechas y comités</button>
+      </form>
+    </div>
+
+    <div class="tarjeta" style="margin-top:18px" id="jurados">
+      <h3>Jurados del anteproyecto</h3>
+      <p class="mini" style="margin:6px 0 0">
+        Se guardan los tres de una vez. Un jurado que no esté en la lista del programa se
+        escribe igual: cuenta lo mismo.
+      </p>
+      <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/jurados" style="margin-top:16px">
+        <% [0, 1, 2].forEach(function (i) {
+             const j = jurados[i] || {};
+        %>
+          <div class="fila tres">
+            <div class="campo">
+              <label for="jn<%= i %>">Jurado <%= i + 1 %><%= i === 2 ? " · opcional" : "" %></label>
+              <input type="text" name="jurado_nombre" id="jn<%= i %>" maxlength="120"
+                     list="lista-docentes" value="<%= j.nombre || "" %>" />
+            </div>
+            <div class="campo">
+              <label for="jc<%= i %>">Concepto</label>
+              <select name="jurado_concepto" id="jc<%= i %>">
+                <option value="">Sin concepto todavía</option>
+                <% conceptos.forEach(function (c) { %>
+                  <option value="<%= c.clave %>" <%= j.concepto === c.clave ? "selected" : "" %>><%= c.label %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="jf<%= i %>">Fecha del concepto</label>
+              <input type="date" name="jurado_fecha" id="jf<%= i %>" value="<%= j.concepto_at || "" %>" />
+            </div>
+          </div>
+        <% }); %>
+
+        <datalist id="lista-docentes">
+          <% docentes.forEach(function (d) { %><option value="<%= d.name %>"></option><% }); %>
+        </datalist>
+
+        <button type="submit" class="btn">Guardar jurados</button>
+      </form>
+    </div>
+
+    <div class="grid dos" style="margin-top:18px">
+      <div class="tarjeta">
+        <h3>Datos del proyecto</h3>
+        <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/datos" style="margin-top:14px">
+          <div class="campo">
+            <label for="titulo">Título</label>
+            <input type="text" name="titulo" id="titulo" required maxlength="300" value="<%= proyecto.titulo %>" />
+            <p class="ayuda">Casi ningún proyecto se sustenta con el título con el que se registró.</p>
+          </div>
+          <div class="campo">
+            <label for="perfil">Perfil</label>
+            <select name="perfil" id="perfil">
+              <option value="">Sin definir</option>
+              <% perfiles.forEach(function (p) { %>
+                <option value="<%= p.clave %>" <%= proyecto.perfil === p.clave ? "selected" : "" %>><%= p.nombre %></option>
+              <% }); %>
+            </select>
+            <p class="ayuda">
+              Con cuál se siente cómodo el estudiante. La línea y la sublínea son las del
+              programa, iguales para todos, y viven en <code>config.SAMI</code>.
+            </p>
+          </div>
+          <div class="fila">
+            <div class="campo">
+              <label for="ods">ODS</label>
+              <input type="text" name="ods" id="ods" maxlength="160" value="<%= proyecto.ods || "" %>"
+                     placeholder="Si aplica" />
+            </div>
+            <div class="campo">
+              <label for="publicacion">Semestre de publicación</label>
+              <input type="text" name="publicacion" id="publicacion" maxlength="20"
+                     value="<%= proyecto.publicacion || "" %>" placeholder="2026-20" />
+              <p class="ayuda">Solo cuando quede finalizado.</p>
+            </div>
+          </div>
+          <button type="submit" class="btn block">Guardar datos</button>
+        </form>
+      </div>
+
+      <div class="tarjeta">
+        <h3>Nota interna</h3>
+        <p class="mini" style="margin:6px 0 14px">
+          Solo la ven los docentes. El estudiante no la ve nunca.
+        </p>
+        <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/nota">
+          <div class="campo">
+            <textarea name="nota" maxlength="600" style="min-height:140px"
+                      placeholder="Lo que hay que recordar de este proyecto."><%= proyecto.nota || "" %></textarea>
+          </div>
+          <button type="submit" class="btn ghost block">Guardar la nota</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <%/* ── 5. Los integrantes ───────────────────────────────────────── */%>
+  <section class="sam-sec" id="integrantes">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Quiénes lo hacen</p>
+        <h2>Integrantes</h2>
+      </div>
+    </div>
+
+    <div class="tabla-envoltura">
+      <table class="tabla">
+        <thead>
+          <tr><th>Nombre</th><th>Código</th><th>Documento</th><th>Teléfono</th><th>Correo</th><th></th></tr>
+        </thead>
+        <tbody>
+          <% estudiantes.forEach(function (e) { %>
+            <tr style="<%= e.activo ? "" : "opacity:.55" %>">
+              <td><%= e.nombre %><%= e.activo ? "" : " · retirado" %></td>
+              <td class="cod"><%= e.codigo_estudiante %></td>
+              <td class="cod"><%= e.documento || "—" %></td>
+              <td><%= e.telefono || "—" %></td>
+              <td><a href="mailto:<%= e.email %>"><%= e.email %></a></td>
+              <td>
+                <%/* Nunca se borra la fila: sus reuniones y sus notas siguen
+                     siendo ciertas. El mismo botón deshace, que es lo que hace
+                     falta cuando alguien se marca por error. */%>
+                <form method="POST" action="/semillero/panel/estudiantes/<%= e.id %>/activo"
+                      onsubmit="return confirm('<%= e.activo ? "¿Marcar que se retiró del semillero?" : "¿Reincorporarlo al proyecto?" %>')">
+                  <button type="submit" class="btn <%= e.activo ? "peligro" : "ghost" %> chico">
+                    <%= e.activo ? "Se retiró" : "Reincorporar" %>
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+
+    <details style="margin-top:18px">
+      <summary class="mini" style="cursor:pointer">Agregar un integrante</summary>
+      <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/estudiantes"
+            class="tarjeta" style="margin-top:12px">
+        <div class="fila tres">
+          <div class="campo">
+            <label for="ne_nombre">Nombre completo</label>
+            <input type="text" name="est_nombre" id="ne_nombre" required maxlength="120" />
+          </div>
+          <div class="campo">
+            <label for="ne_codigo">Código estudiantil</label>
+            <input type="text" name="est_codigo" id="ne_codigo" maxlength="20" inputmode="numeric" />
+          </div>
+          <div class="campo">
+            <label for="ne_doc">Documento</label>
+            <input type="text" name="est_documento" id="ne_doc" maxlength="20" inputmode="numeric" />
+          </div>
+        </div>
+        <div class="fila tres">
+          <div class="campo">
+            <label for="ne_tel">Teléfono</label>
+            <input type="tel" name="est_telefono" id="ne_tel" maxlength="25" />
+          </div>
+          <div class="campo">
+            <label for="ne_sem">Semestre de la carrera</label>
+            <input type="number" name="est_semestre" id="ne_sem" min="1" max="12" />
+          </div>
+          <div class="campo">
+            <label for="ne_mail">Correo institucional</label>
+            <input type="email" name="est_email" id="ne_mail" required maxlength="160"
+                   pattern="<%= PATRON_CORREO %>" placeholder="nombre@<%= DOMINIO %>" />
+          </div>
+        </div>
+        <button type="submit" class="btn">Agregar</button>
+      </form>
+    </details>
+  </section>
+</main>
+
+<%/* Abrir una reunión con un clic en cualquier parte de su cabecera. Dentro
+     viven campos y botones, así que tocar cualquiera de esos es usarlos, no
+     cerrar la ficha. Sin este script la página sigue funcionando: el chevron
+     es un botón de verdad. */%>
+<script>
+  document.querySelectorAll(".reg").forEach(function (ficha) {
+    const chevron = ficha.querySelector(".reg-abrir");
+    if (!chevron) return;
+
+    function alternar() {
+      const abierta = ficha.classList.toggle("abierta");
+      chevron.setAttribute("aria-expanded", abierta ? "true" : "false");
+    }
+
+    ficha.addEventListener("click", function (e) {
+      if (e.target.closest(".reg-abrir")) return alternar();
+      // Lo desplegado ya está abierto: ahí dentro nadie quiere cerrarlo sin
+      // querer mientras escribe los adelantos de la semana.
+      if (e.target.closest(".reg-mas")) return;
+      if (e.target.closest("a, button, input, select, textarea, label")) return;
+      alternar();
+    });
+  });
+
+  // Una reunión enlazada por #r<id> llega abierta: se viene de guardarla.
+  if (location.hash.startsWith("#r")) {
+    const destino = document.querySelector(location.hash);
+    if (destino) destino.classList.add("abierta");
+  }
+</script>
+
+<%- include('../partials/footer') %>

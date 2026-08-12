@@ -1,0 +1,1019 @@
+/* =====================================================================
+   SEMILLERO DE INVESTIGACIÓN SAMI
+   Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
+
+   Las caras del sitio, y de dónde sale esta:
+
+     Expo Multimedia   — editorial, serif, papel.
+     Virtual Champions — negro, condensada, esports.
+     Jam de Altura     — píxel, verde consola sobre violeta.
+     Music Fest        — afiche, Anton, mayúsculas.
+     INKreible         — marcador y cuaderno.
+     Salidas           — papel crema con pauta: un formato institucional.
+     SAMI              — esto: CUADERNO DE INVESTIGACIÓN.
+
+   Es primo de la hoja de salidas —las dos son documentos y no afiches— pero
+   no es la misma, y eso importa: quien está mirando el semillero tiene que
+   saber en el primer vistazo que no está en la salida a SOFA.
+
+   La diferencia es el papel. Salidas usa pauta de renglones, la del formato
+   que se llena a mano. Aquí es CUADRÍCULA, la del cuaderno de laboratorio:
+   lo que se lleva encima es un registro de avances semana a semana, no un
+   permiso que se firma una vez. Y la tinta es fría —azul de bolígrafo en vez
+   de crema y verde monte—, que es como se ve una libreta de trabajo.
+
+   Lo demás se hereda a propósito: los mismos nombres de clase que el resto
+   del sitio (.tarjeta, .btn, .chip, .campo, .datos, .aviso, .reg) y los
+   mismos tres colores semánticos —verde lo aprobado, ámbar lo que falta,
+   ladrillo lo que salió mal—, porque un docente que ya usó el panel de
+   salidas no tiene por qué reaprender qué significa un chip ámbar.
+
+   LA PIEZA CLAVE es .escalera: los doce peldaños del trámite dibujados como
+   una barra. Es lo único que esta hoja tiene y las otras no, y responde a la
+   pregunta que todo el mundo hace primero —"¿en qué va este proyecto?"— sin
+   que nadie tenga que leer una tabla.
+   ===================================================================== */
+
+:root {
+  --papel: #f2f5fa;
+  --papel-hondo: #e7ecf5;
+  --papel-alto: #ffffff;
+  --linea: #d7dee9;
+  --linea-fuerte: #b3bfd2;
+
+  --tinta: #151b28;
+  --tinta-dim: #46536a;
+  --tinta-mute: #7c879a;
+
+  /* El azul de la casa: el mismo del favicon del sitio. Es el color de la
+     marca y de los enlaces, y NO significa nada por sí solo —lo que está bien
+     y lo que falta se dicen con los tres de abajo—. */
+  --tinte: #2b47b4;
+  --tinte-hondo: #21389a;
+  --tinte-claro: #e6ebfa;
+
+  --monte: #17795a;      /* aprobado, cerrado, lo que ya está */
+  --monte-claro: #e3f1eb;
+  --ambar: #a86a0c;      /* en curso, pendiente, lo que falta */
+  --ambar-claro: #fbf1de;
+  --ladrillo: #a3271c;   /* rechazado, retirado, lo que salió mal */
+  --ladrillo-claro: #fbe9e7;
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  /* Space Mono para códigos, notas y rótulos de dato. Es la que le da a la
+     página el aire de libreta de trabajo sin pedir una fuente nueva: ya venía
+     descargada para la jam. */
+  --mono: "Space Mono", "SFMono-Regular", Consolas, monospace;
+
+  --sombra: 0 2px 0 rgba(21, 27, 40, .05), 0 1px 3px rgba(21, 27, 40, .07);
+  --radio: 5px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--body);
+  font-size: 15.5px;
+  line-height: 1.65;
+  /* La cuadrícula del cuaderno: 26 px, tan tenue que solo se nota como
+     textura. Dos gradientes cruzados y no una imagen, para no pedir un
+     archivo por una trama de dos líneas. */
+  background-image:
+    linear-gradient(rgba(179, 191, 210, .20) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(179, 191, 210, .20) 1px, transparent 1px);
+  background-size: 100% 26px, 26px 100%;
+  background-attachment: fixed;
+}
+
+a { color: var(--tinte); }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+
+h1 { font-size: clamp(29px, 5.4vw, 46px); }
+h2 { font-size: clamp(21px, 3.2vw, 30px); }
+h3 { font-size: 17px; }
+h4 { font-size: 14px; }
+
+p { margin: 0 0 1em; }
+img { max-width: 100%; }
+
+/* ---------------------------------------------------------------------
+   Piezas base
+   --------------------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--tinte);
+  margin: 0 0 10px;
+}
+
+.sec-lead {
+  color: var(--tinta-dim);
+  max-width: 64ch;
+  margin: 12px 0 0;
+}
+
+.mini { font-size: 12.5px; color: var(--tinta-mute); }
+.cod { font-family: var(--mono); letter-spacing: .06em; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  color: var(--tinta-dim);
+  white-space: nowrap;
+}
+
+.chip.ok     { color: var(--monte);    border-color: var(--monte);    background: var(--monte-claro); }
+.chip.pend   { color: var(--tinte);    border-color: var(--tinte);    background: var(--tinte-claro); }
+.chip.alerta { color: var(--ambar);    border-color: var(--ambar);    background: var(--ambar-claro); }
+.chip.malo   { color: var(--ladrillo); border-color: var(--ladrillo); background: var(--ladrillo-claro); }
+.chip.no     { color: var(--tinta-mute); }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* ---------------------------------------------------------------------
+   Botones
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 13px 22px;
+  border: 1px solid var(--tinte);
+  border-radius: var(--radio);
+  background: var(--tinte);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+  transition: background .12s ease, border-color .12s ease, transform .06s ease;
+}
+
+.btn:hover { background: var(--tinte-hondo); border-color: var(--tinte-hondo); }
+.btn:active { transform: translateY(1px); }
+
+.btn.ghost {
+  background: var(--papel-alto);
+  color: var(--tinta);
+  border-color: var(--linea-fuerte);
+}
+
+.btn.ghost:hover { background: var(--papel-hondo); border-color: var(--tinta-mute); }
+
+.btn.ambar { background: var(--ambar); border-color: var(--ambar); }
+.btn.ambar:hover { background: #8d5809; border-color: #8d5809; }
+
+.btn.peligro { background: var(--papel-alto); color: var(--ladrillo); border-color: #e0bdb8; }
+.btn.peligro:hover { background: var(--ladrillo-claro); border-color: var(--ladrillo); }
+
+.btn.chico { font-size: 12.5px; padding: 8px 13px; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+
+/* ---------------------------------------------------------------------
+   Estructura
+   --------------------------------------------------------------------- */
+.sam {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px 80px;
+}
+
+.sam.angosto { max-width: 780px; }
+
+.sam-sec { padding: 44px 0 0; }
+
+.sec-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  margin-top: 20px;
+}
+
+.grid.dos { grid-template-columns: repeat(auto-fill, minmax(min(400px, 100%), 1fr)); }
+
+.tarjeta {
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 20px;
+  box-shadow: var(--sombra);
+}
+
+a.tarjeta { text-decoration: none; color: inherit; display: block; }
+a.tarjeta:hover { border-color: var(--tinte); }
+
+.vacio {
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: var(--radio);
+  padding: 26px 20px;
+  text-align: center;
+  color: var(--tinta-mute);
+  background: var(--papel-alto);
+}
+
+.vacio code {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--papel-hondo);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--tinta-dim);
+}
+
+/* ---------------------------------------------------------------------
+   Cabecera
+   --------------------------------------------------------------------- */
+.sam-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--papel-alto);
+  border-bottom: 1px solid var(--linea-fuerte);
+}
+
+/* Un renglón y punto: una barra pegajosa que envuelve se come media pantalla
+   en cada scroll. Lo que cede cuando no cabe se decide en el media query. */
+.sam-top-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 62px;
+  flex-wrap: nowrap;
+}
+
+.sam-marca {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -.01em;
+  text-decoration: none;
+  color: var(--tinta);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.sam-marca em { font-style: normal; color: var(--tinte); }
+
+/* El sello: un círculo con un punto dentro, que es como se marca una muestra
+   en una libreta de campo. */
+.sam-marca::before {
+  content: "";
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 3px solid var(--tinte);
+  flex: 0 0 auto;
+}
+
+.sam-nav {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.sam-nav a {
+  font-family: var(--display);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--tinta-dim);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: var(--radio);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sam-nav a:hover { background: var(--papel-hondo); color: var(--tinta); }
+.sam-nav a.on { background: var(--tinte-claro); color: var(--tinte); }
+.sam-nav .ic { display: none; }
+
+.panel-top { background: var(--papel-hondo); }
+
+.panel-quien {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  min-width: 0;
+}
+
+.panel-quien .mini { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.panel-quien form { margin: 0; flex: 0 0 auto; }
+.panel-quien select { font-size: 12.5px; padding: 7px 9px; }
+
+/* ---------------------------------------------------------------------
+   Portada
+   --------------------------------------------------------------------- */
+.hero {
+  padding: 52px 0 8px;
+  border-bottom: 1px dotted var(--linea-fuerte);
+}
+
+/* La sigla es el h1: pisa el tamaño de h1 porque aquí el título no es un
+   renglón de texto sino la marca del semillero. */
+.hero h1.sigla {
+  font-family: var(--display);
+  font-size: clamp(56px, 14vw, 128px);
+  font-weight: 700;
+  line-height: .9;
+  letter-spacing: -.04em;
+  color: var(--tinte);
+  margin: 0 0 6px;
+}
+
+.hero .largo {
+  color: var(--tinta-dim);
+  max-width: 60ch;
+  font-size: 17px;
+  margin: 14px 0 0;
+}
+
+/* ---------------------------------------------------------------------
+   Datos: la rejilla de rótulo + valor
+   --------------------------------------------------------------------- */
+.datos {
+  display: grid;
+  gap: 18px 26px;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+}
+
+.dato .k {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  margin-bottom: 5px;
+}
+
+.dato .v { font-size: 15.5px; line-height: 1.45; }
+.dato .v strong { font-weight: 700; }
+.dato .v.grande { font-family: var(--display); font-size: 22px; font-weight: 700; }
+.dato .v.ok     { color: var(--monte); }
+.dato .v.alerta { color: var(--ambar); }
+.dato .v.malo   { color: var(--ladrillo); }
+.dato .v.apagado { color: var(--tinta-mute); }
+
+/* Una lista de rótulo y valor en columna, para las fichas angostas. */
+.ficha { margin: 0; }
+
+.ficha .f {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px dotted var(--linea-fuerte);
+}
+
+.ficha .f:last-child { border-bottom: 0; }
+
+.ficha .f .k {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  flex: 0 0 34%;
+  max-width: 190px;
+}
+
+.ficha .f .v { flex: 1; min-width: 0; word-break: break-word; }
+
+/* ---------------------------------------------------------------------
+   La escalera del trámite
+   Los doce peldaños dibujados como una barra segmentada. Responde de un
+   vistazo la única pregunta que todo el mundo hace primero: ¿en qué va?
+
+   Los tramos van con un hueco entre sí porque son fases distintas —la
+   vinculación y el proyecto— y verlas pegadas haría pensar que radicar
+   una carta y sustentar un anteproyecto pesan lo mismo.
+   --------------------------------------------------------------------- */
+.escalera {
+  display: flex;
+  gap: 3px;
+  margin: 16px 0 10px;
+  list-style: none;
+  padding: 0;
+}
+
+.escalera li {
+  flex: 1;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--papel-hondo);
+  border: 1px solid var(--linea);
+  min-width: 0;
+}
+
+.escalera li.pasado { background: var(--tinte-claro); border-color: #b9c5ee; }
+.escalera li.aqui   { background: var(--tinte); border-color: var(--tinte-hondo); }
+.escalera li.corte  { margin-right: 10px; }
+
+.escalera.cerrada li.pasado { background: var(--monte-claro); border-color: #b6dcca; }
+.escalera.cerrada li.aqui   { background: var(--monte); border-color: var(--monte); }
+.escalera.malo li.pasado { background: var(--ladrillo-claro); border-color: #e8c4c0; }
+.escalera.malo li.aqui   { background: var(--ladrillo); border-color: var(--ladrillo); }
+
+/* ---------------------------------------------------------------------
+   Los pasos del trámite
+   Cuatro casillas en fila. Es el mapa de la vinculación y va arriba del
+   todo: quien llega tiene que ver antes que nada que esto son cuatro
+   trámites y no un botón.
+   --------------------------------------------------------------------- */
+.pasos {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  counter-reset: p;
+}
+
+.pasos.tres { grid-template-columns: repeat(3, 1fr); }
+
+.paso {
+  counter-increment: p;
+  position: relative;
+  padding: 18px 15px 15px;
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+}
+
+.paso::before {
+  content: counter(p);
+  position: absolute;
+  top: -12px;
+  left: 14px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--papel-alto);
+  border: 1px solid var(--linea-fuerte);
+  color: var(--tinta-dim);
+}
+
+.paso .t {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14.5px;
+  margin: 6px 0 6px;
+  line-height: 1.25;
+}
+
+.paso .d { font-size: 13px; color: var(--tinta-dim); line-height: 1.5; }
+
+.paso.hecho { border-color: var(--monte); background: var(--monte-claro); }
+.paso.hecho::before { content: "✓"; background: var(--monte); border-color: var(--monte); color: #fff; }
+.paso.ahora { border-color: var(--tinte); background: var(--tinte-claro); }
+.paso.ahora::before { background: var(--tinte); border-color: var(--tinte); color: #fff; }
+
+/* ---------------------------------------------------------------------
+   Avisos
+   --------------------------------------------------------------------- */
+.aviso {
+  border: 1px solid var(--linea-fuerte);
+  border-left: 4px solid var(--tinta-mute);
+  border-radius: var(--radio);
+  background: var(--papel-alto);
+  padding: 14px 16px;
+  margin: 0 0 18px;
+}
+
+.aviso p:last-child { margin-bottom: 0; }
+.aviso ul { margin: 8px 0 0; padding-left: 20px; }
+.aviso li { margin-bottom: 4px; }
+.aviso.bueno { border-left-color: var(--monte); background: var(--monte-claro); border-color: #b6dcca; }
+.aviso.malo  { border-left-color: var(--ladrillo); background: var(--ladrillo-claro); border-color: #e8c4c0; }
+.aviso.ojo   { border-left-color: var(--ambar); background: var(--ambar-claro); border-color: #e8d3a8; }
+
+.aviso .t {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+fieldset { border: 0; margin: 0; padding: 0; }
+
+label {
+  display: block;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-dim);
+  margin-bottom: 7px;
+}
+
+input, select, textarea {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 15.5px;
+  color: var(--tinta);
+  background: var(--papel-alto);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  padding: 11px 13px;
+  line-height: 1.4;
+}
+
+textarea { min-height: 84px; resize: vertical; }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--tinte);
+  box-shadow: 0 0 0 3px var(--tinte-claro);
+}
+
+input::placeholder, textarea::placeholder { color: var(--tinta-mute); }
+
+input[type="checkbox"], input[type="radio"] { width: auto; }
+
+.campo { margin-bottom: 20px; }
+.campo .ayuda { font-size: 12.5px; color: var(--tinta-mute); margin: 7px 0 0; }
+
+.fila {
+  display: grid;
+  gap: 0 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+}
+
+.fila.tres { grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); }
+
+/* El correo institucional con el dominio pegado al lado: se teclea el usuario
+   y no veinte caracteres que siempre son los mismos. */
+.correo { display: flex; align-items: stretch; min-width: 0; }
+
+.correo input {
+  border-radius: var(--radio) 0 0 var(--radio);
+  border-right: 0;
+  min-width: 0;
+}
+
+.correo .dominio {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--tinta-mute);
+  background: var(--papel-hondo);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 0 var(--radio) var(--radio) 0;
+  white-space: nowrap;
+}
+
+.correo:focus-within input,
+.correo:focus-within .dominio { border-color: var(--tinte); }
+
+/* Un integrante del formulario: su propio bloque, para que se vea que son
+   dos personas y no diez campos sueltos. */
+.integrante {
+  border: 1px solid var(--linea);
+  border-left: 3px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  background: var(--papel-alto);
+  padding: 18px 18px 2px;
+  margin-bottom: 16px;
+}
+
+.integrante > .quien {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  margin: 0 0 14px;
+}
+
+/* ---------------------------------------------------------------------
+   El código de seis caracteres
+   --------------------------------------------------------------------- */
+.codigo-grande {
+  font-family: var(--mono);
+  font-size: clamp(30px, 8vw, 46px);
+  font-weight: 700;
+  letter-spacing: .16em;
+  color: var(--tinte);
+  background: var(--papel-alto);
+  border: 2px dashed var(--tinte);
+  border-radius: var(--radio);
+  padding: 16px 20px;
+  text-align: center;
+  margin: 0 0 8px;
+}
+
+/* ---------------------------------------------------------------------
+   Filas desplegables (proyectos en el panel, reuniones en la ficha)
+   Dieciséis reuniones abiertas no se leen: se abre la que se va a tocar.
+   --------------------------------------------------------------------- */
+.regs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+
+.reg {
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  box-shadow: var(--sombra);
+  overflow: hidden;
+}
+
+.reg:hover { border-color: var(--linea-fuerte); }
+.reg.abierta { border-color: var(--tinta-mute); }
+.reg:target { border-color: var(--tinte); box-shadow: 0 0 0 3px var(--tinte-claro); }
+
+.reg-cab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  flex-wrap: wrap;
+}
+
+.reg-quien { flex: 1 1 auto; min-width: 0; }
+
+.reg .nom {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.reg-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-size: 12.5px;
+  color: var(--tinta-mute);
+  margin-top: 3px;
+}
+
+.reg-meta .m { flex: 0 0 auto; }
+.reg-meta .m b { color: var(--tinta-dim); font-weight: 600; }
+
+.reg-marcas { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.reg-marcas .chip { flex: 0 0 auto; }
+
+.reg-abrir {
+  flex: 0 0 auto;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  color: var(--tinta-mute);
+  border-radius: var(--radio);
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: transform .15s ease;
+}
+
+.reg-abrir:hover { background: var(--papel-hondo); color: var(--tinta); }
+.reg.abierta .reg-abrir { transform: rotate(180deg); }
+
+.reg-mas {
+  display: none;
+  padding: 4px 16px 16px;
+  border-top: 1px dotted var(--linea-fuerte);
+}
+
+.reg.abierta .reg-mas { display: block; }
+.reg-mas form { margin: 0 0 14px; }
+.reg-mas .campo { margin-bottom: 14px; }
+
+.reg-acciones {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dotted var(--linea-fuerte);
+}
+
+.reg-acciones > form { margin: 0; }
+
+/* ---------------------------------------------------------------------
+   La rejilla de una reunión: adelantos y compromisos arriba, una fila
+   por estudiante abajo. Es el reemplazo directo de la hoja semanal.
+   --------------------------------------------------------------------- */
+.marcas { display: grid; gap: 10px; margin: 4px 0 0; }
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 11px 13px;
+  background: var(--papel-hondo);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+}
+
+.marca .quien { flex: 1 1 180px; min-width: 0; font-weight: 600; font-size: 14.5px; }
+.marca .campo { margin: 0; flex: 0 0 auto; }
+.marca label { margin-bottom: 4px; }
+.marca input[type="number"] { width: 90px; }
+
+/* Los tres botones de asistencia: asistió / no vino / sin marcar. Van juntos
+   como un solo control porque son un solo dato de tres valores.
+
+   El radio de verdad sigue ahí, solo que corrido fuera de la vista: se pinta
+   con :has(:checked) y no con una clase del servidor, para que el botón
+   responda al dedo en el momento en que se toca y no después de guardar. Con
+   el input a display:none el teclado no llegaría nunca al control. */
+.pasa {
+  position: relative;
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 8px 12px;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  color: var(--tinta-mute);
+  cursor: pointer;
+  margin: 0;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.pasa input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+}
+
+.pasa:first-child { border-radius: var(--radio) 0 0 var(--radio); }
+.pasa:last-child { border-radius: 0 var(--radio) var(--radio) 0; }
+.pasa:not(:first-child) { border-left: 0; }
+.pasa:hover { background: var(--papel-hondo); color: var(--tinta); }
+.pasa:focus-within { box-shadow: 0 0 0 3px var(--tinte-claro); z-index: 1; }
+
+.pasa.vino:has(input:checked)   { background: var(--monte);    border-color: var(--monte);    color: #fff; }
+.pasa.falto:has(input:checked)  { background: var(--ladrillo); border-color: var(--ladrillo); color: #fff; }
+.pasa.limpio:has(input:checked) { background: var(--papel-hondo); color: var(--tinta); }
+
+.lista { display: flex; margin: 0; }
+
+/* ---------------------------------------------------------------------
+   El calendario del semestre
+   Dieciséis casillas, una por semana, calculadas de la fecha de inicio.
+   Las que ya tienen reunión se llenan; las demás son el trabajo que falta.
+   --------------------------------------------------------------------- */
+.semanas {
+  display: grid;
+  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(min(112px, 100%), 1fr));
+  margin-top: 14px;
+}
+
+.sem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  background: var(--papel-hondo);
+  color: var(--tinta-mute);
+  min-width: 0;
+}
+
+.sem b { font-family: var(--display); font-size: 13px; }
+.sem .cuando { font-size: 10.5px; line-height: 1.3; }
+
+.sem.hecha {
+  background: var(--monte-claro);
+  border-color: #b6dcca;
+  color: var(--monte);
+}
+
+/* ---------------------------------------------------------------------
+   El bloque de la nota del semestre
+   El promedio va AL LADO de las casillas y en gris, nunca dentro: es un
+   insumo para el docente, no la nota. Precargarlo sería ponerla solo.
+   --------------------------------------------------------------------- */
+.nota-sem {
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  background: var(--papel-alto);
+  padding: 18px;
+  margin-bottom: 14px;
+}
+
+.nota-sem > h4 { margin-bottom: 4px; }
+
+.rendimiento {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--tinta-dim);
+  background: var(--papel-hondo);
+  border-radius: var(--radio);
+  padding: 10px 13px;
+  margin: 10px 0 16px;
+}
+
+.rendimiento b { color: var(--tinta); font-size: 14px; }
+
+.nota-final {
+  font-family: var(--display);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--tinte);
+  line-height: 1;
+}
+
+/* ---------------------------------------------------------------------
+   Tabla del semillero (la vista de lectura de todo el programa)
+   --------------------------------------------------------------------- */
+.tabla-envoltura { overflow-x: auto; margin-top: 18px; }
+
+table.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--papel-alto);
+  font-size: 13.5px;
+  min-width: 720px;
+}
+
+table.tabla th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  text-align: left;
+  padding: 11px 12px;
+  border-bottom: 2px solid var(--linea-fuerte);
+  white-space: nowrap;
+}
+
+table.tabla td {
+  padding: 11px 12px;
+  border-bottom: 1px dotted var(--linea-fuerte);
+  vertical-align: top;
+}
+
+table.tabla tr:last-child td { border-bottom: 0; }
+table.tabla tbody tr:hover { background: var(--papel-hondo); }
+table.tabla a { text-decoration: none; font-weight: 600; }
+table.tabla a:hover { text-decoration: underline; }
+
+/* ---------------------------------------------------------------------
+   Pie
+   --------------------------------------------------------------------- */
+body:has(> .sam-foot) { display: flex; flex-direction: column; min-height: 100vh; }
+body:has(> .sam-foot) > main { flex: 1 0 auto; min-width: 0; }
+
+.sam-foot {
+  border-top: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  padding: 26px 0;
+  margin-top: auto;
+  font-size: 13px;
+}
+
+.sam-foot-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.sam-foot strong { display: block; font-family: var(--display); color: var(--tinta); }
+.sam-foot span { display: block; color: var(--tinta-mute); }
+.sam-foot a { color: var(--tinta-dim); }
+.sam-foot .der { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+
+.foot-acceso { color: var(--tinta-mute); text-decoration: none; font-size: 12.5px; }
+.foot-acceso:hover { color: var(--tinte); }
+
+/* ---------------------------------------------------------------------
+   Celular
+   La barra de arriba se queda con la marca sola y el menú baja al pie de
+   la pantalla, al alcance del pulgar. Mismo marcado, otro sitio: no hay
+   dos menús que mantener sincronizados.
+   --------------------------------------------------------------------- */
+@media (max-width: 720px) {
+  .pasos, .pasos.tres { grid-template-columns: 1fr; }
+  .hero { padding-top: 34px; }
+
+  .sam-nav.tabs {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    z-index: 30;
+    background: var(--papel-alto);
+    border-top: 1px solid var(--linea-fuerte);
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    gap: 2px;
+  }
+
+  .sam-nav.tabs a {
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    justify-content: center;
+    font-size: 11px;
+    padding: 7px 4px;
+  }
+
+  .sam-nav.tabs .ic { display: block; width: 18px; height: 18px; }
+
+  /* Sitio para la barra de abajo, para que no tape el último botón. */
+  body:has(.sam-nav.tabs) .sam { padding-bottom: 96px; }
+
+  .marca { align-items: flex-start; }
+  .ficha .f { flex-direction: column; gap: 3px; }
+  .ficha .f .k { flex: none; max-width: none; }
+}
+
+@media print {
+  .sam-top, .sam-nav, .sam-foot, .btn, .reg-abrir { display: none !important; }
+  body { background: #fff; }
+  .reg-mas { display: block !important; }
+}

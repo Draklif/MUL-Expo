@@ -1,0 +1,217 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor, descripcion: descripcion }) %>
+<%- include('partials/top') %>
+
+<main class="sam">
+  <section class="hero">
+    <p class="eyebrow">Alternativa de grado · Ingeniería en Multimedia</p>
+    <%/* La sigla ES el título de la página. Es como lo llama todo el mundo, y
+         un h1 que diga "Semillero de Investigación SAMI" con la sigla enorme
+         debajo sería decir lo mismo dos veces. El nombre completo va abajo,
+         que es donde alguien lo lee una sola vez. */%>
+    <h1 class="sigla">SAMI</h1>
+    <p class="largo"><%= sami.completo %>.</p>
+
+    <div class="chips">
+      <span class="chip"><%= sami.semestres %> semestres</span>
+      <span class="chip"><%= sami.horas_semestre %> horas por semestre</span>
+      <span class="chip">Desde <%= sami.semestre_minimo %>.º semestre</span>
+      <% if (encurso.length) { %>
+        <span class="chip ok"><%= encurso.length %> proyecto<%= encurso.length === 1 ? "" : "s" %> en curso</span>
+      <% } %>
+    </div>
+
+    <div class="acciones" style="margin:26px 0 34px">
+      <% if (abierto) { %>
+        <a href="/semillero/registro" class="btn">Dejar mis datos</a>
+      <% } else { %>
+        <span class="chip alerta">El registro está cerrado por ahora</span>
+      <% } %>
+      <a href="<%= sami.formato %>" class="btn ghost" download>Descargar el formato G-01-SEM</a>
+    </div>
+  </section>
+
+  <%/* El trámite va primero y no al final, porque es lo que de verdad viene a
+       averiguar quien entra: no "qué es un semillero" sino "qué tengo que
+       hacer para entrar".
+
+       Y va con el paso 1 marcado como el que sigue, aunque todavía no haya
+       proyecto de quien hablar: lo que hay que dejar claro es que se empieza
+       yendo a una oficina, no llenando este formulario. */%>
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Cómo se entra</p>
+        <h2>El trámite, en cuatro pasos</h2>
+      </div>
+    </div>
+    <p class="sec-lead">
+      Los cuatro se hacen en persona y empiezan en la dirección del programa. Tu vinculación
+      al semillero queda formalizada con el docente que te asesore la propuesta.
+    </p>
+
+    <%- include('partials/pasos', { pasos: sami.pasos, hasta: 0 }) %>
+
+    <div class="aviso ojo" style="margin-top:22px">
+      <div class="t">Empieza aquí</div>
+      <p style="margin:0 0 10px">
+        Ve a hablar con <strong><%= sami.direccion.nombre %></strong><%= sami.direccion.cargo ? ", " + sami.direccion.cargo : "" %>,
+        y dile que quieres pertenecer al semillero.
+      </p>
+      <div class="ficha">
+        <div class="f"><div class="k">Dónde</div><div class="v"><%= sami.direccion.donde %></div></div>
+        <div class="f"><div class="k">Correo</div><div class="v"><a href="mailto:<%= sami.direccion.email %>"><%= sami.direccion.email %></a></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Y después</p>
+        <h2>Tres semestres</h2>
+      </div>
+    </div>
+    <p class="sec-lead">
+      Una vez aprobada la propuesta tienes <%= sami.semestres %> semestres para hacer el
+      proyecto. Las actividades cambian según lo que necesite cada uno, pero casi siempre
+      se reparten así. Cada semestre recibes una nota, y durante todo el proceso asistes a
+      las reuniones que programe tu director para revisar avances.
+    </p>
+
+    <ol class="pasos tres">
+      <% sami.etapas.forEach(function (e) { %>
+        <li class="paso">
+          <div class="t"><%= e.titulo %></div>
+          <div class="d"><%= e.texto %></div>
+        </li>
+      <% }); %>
+    </ol>
+  </section>
+
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Por dónde te mueves</p>
+        <h2>Los perfiles del semillero</h2>
+      </div>
+    </div>
+    <p class="sec-lead">
+      Son los cuatro que trae el nombre del semillero. <strong>No deciden qué proyecto vas a
+      hacer</strong> ni te encierran en nada: sirven para saber con qué te sientes cómodo y a
+      quién ponerte a hablar. La mayoría de proyectos terminan tocando dos o tres.
+    </p>
+
+    <div class="grid dos">
+      <% sami.perfiles.forEach(function (p) { %>
+        <div class="tarjeta">
+          <h3><%= p.nombre %></h3>
+          <p class="mini" style="margin:8px 0 0"><%= p.texto %></p>
+        </div>
+      <% }); %>
+    </div>
+
+    <%/* La línea y la sublínea SÍ son fijas: son del programa y las mismas para
+         todos. Se muestran para que se copien en el G-01-SEM, no para elegir.
+         Si están vacías en config, esto no aparece. */%>
+    <% if (sami.linea || sami.sublinea) { %>
+      <div class="tarjeta" style="margin-top:18px">
+        <p class="eyebrow" style="margin-bottom:6px">Para tu G-01-SEM</p>
+        <p class="mini" style="margin:0 0 12px">
+          La línea y la sublínea del semillero son las mismas para todos los proyectos.
+          Cópialas tal cual.
+        </p>
+        <div class="ficha">
+          <% if (sami.linea) { %>
+            <div class="f"><div class="k">Línea de investigación</div><div class="v"><%= sami.linea %></div></div>
+          <% } %>
+          <% if (sami.sublinea) { %>
+            <div class="f"><div class="k">Sublínea</div><div class="v"><%= sami.sublinea %></div></div>
+          <% } %>
+        </div>
+      </div>
+    <% } %>
+  </section>
+
+  <%/* Los proyectos. Título, director y semestre, y nada más: esta página la
+       ve cualquiera, y el correo o el documento de un estudiante no tienen por
+       qué estar en una página pública. */%>
+  <% if (encurso.length) { %>
+    <section class="sam-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Ahora mismo</p>
+          <h2>Lo que se está investigando</h2>
+        </div>
+        <span class="chip"><%= estudiantes %> estudiante<%= estudiantes === 1 ? "" : "s" %></span>
+      </div>
+
+      <div class="tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr><th>Proyecto</th><th>Director</th><th>Semestre</th><th>Va en</th></tr>
+          </thead>
+          <tbody>
+            <% encurso.forEach(function (p) { %>
+              <tr>
+                <td><%= p.titulo %></td>
+                <td><%= p.director || "Por asignar" %></td>
+                <td><%= p.semestre || "—" %></td>
+                <td><span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span></td>
+              </tr>
+              <%/* El perfil no sale en esta tabla: lo que le sirve a quien mira
+                   desde afuera es de qué son los proyectos, y eso lo dice el
+                   título mucho mejor que una etiqueta de cuatro. */%>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+
+  <% if (finalizados.length) { %>
+    <section class="sam-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Ya sustentados</p>
+          <h2>Proyectos finalizados</h2>
+        </div>
+        <span class="chip ok"><%= finalizados.length %></span>
+      </div>
+
+      <div class="tabla-envoltura">
+        <table class="tabla">
+          <thead>
+            <tr><th>Proyecto</th><th>Director</th><th>Codirector</th><th>Publicado</th></tr>
+          </thead>
+          <tbody>
+            <% finalizados.forEach(function (p) { %>
+              <tr>
+                <td><%= p.titulo %></td>
+                <td><%= p.director || "—" %></td>
+                <td><%= p.codirector || "—" %></td>
+                <td class="cod"><%= p.publicacion || "—" %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="sam-sec">
+    <div class="tarjeta">
+      <p class="eyebrow" style="margin-bottom:6px">A quién preguntarle</p>
+      <h3><%= sami.direccion.nombre %></h3>
+      <% if (sami.direccion.cargo) { %>
+        <p class="mini" style="margin:4px 0 0"><%= sami.direccion.cargo %></p>
+      <% } %>
+      <div class="ficha" style="margin-top:12px">
+        <div class="f"><div class="k">Correo</div><div class="v"><a href="mailto:<%= sami.direccion.email %>"><%= sami.direccion.email %></a></div></div>
+        <div class="f"><div class="k">Dónde</div><div class="v"><%= sami.direccion.donde %></div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

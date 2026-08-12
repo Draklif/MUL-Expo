@@ -126,14 +126,18 @@ Abre `http://localhost:3000` en el navegador del PC.
 | `/salidas/:id/registro` | Estudiantes, sin login | Registro para una salida |
 | `/salidas/estado` | Estudiantes, sin login | Consulta del código: en qué va el trámite y qué pago falta |
 | `/salidas/acceso`, `/salidas/panel` | Docentes | Panel de salidas: confirmar pagos, con la suya |
+| `/semillero` | Cualquiera, sin login | El [semillero SAMI](#semillero-de-investigación-sami): qué es, el trámite y en qué se está investigando |
+| `/semillero/registro` | Estudiantes, sin login | Registro de la intención de entrar al semillero |
+| `/semillero/estado` | Estudiantes, sin login | Consulta del código: en qué va el trámite y qué se comprometió a entregar |
+| `/semillero/acceso`, `/semillero/panel` | Docentes | Panel del semillero: el trámite, las reuniones y las notas, con la suya |
 
-Son **seis herramientas con seis contraseñas**: la de la Expo
+Son **siete herramientas con siete contraseñas**: la de la Expo
 (`PASSWORD_DOCENTES`), la del torneo (`PASSWORD_VC`), la de la jam
 (`PASSWORD_JAM`), la del festival (`PASSWORD_MUSIC`), la del reto de dibujo
-(`PASSWORD_INK`) y la de las salidas (`PASSWORD_SALIDAS`). Los docentes son los
-mismos —la lista de `config.js`— pero entrar a una no abre las otras. Si a una le
-falta su clave en el `.env`, ese panel queda cerrado y todo lo demás funciona
-igual.
+(`PASSWORD_INK`), la de las salidas (`PASSWORD_SALIDAS`) y la del semillero
+(`PASSWORD_SAMI`). Los docentes son los mismos —la lista de `config.js`— pero
+entrar a una no abre las otras. Si a una le falta su clave en el `.env`, ese panel
+queda cerrado y todo lo demás funciona igual.
 
 ## Los eventos
 
@@ -500,6 +504,311 @@ todas: son de la universidad, no de la feria) y `advertencias`.
 | `costos` | `transporte` y `poliza`, en pesos. Vacío = "consultar con el docente" |
 | `docente` | `nombre`, `email`, `telefono`, `donde`. Es el dato más importante de la página: sin eso nadie puede pagar |
 | `consentimiento` | Ruta del archivo servido desde `public/` |
+
+## Semillero de Investigación (SAMI)
+
+Tampoco es un evento, y por la razón contraria a las salidas: **no tiene fecha
+porque no termina nunca**. SAMI —Semillero de investigación en aplicaciones,
+ambientes interactivos, animación y contenido multimedia— es una **alternativa de
+grado que dura tres semestres**, con proyectos que se solapan. Vive siempre en
+`/semillero`.
+
+Esto reemplaza **dos hojas de cálculo** que el programa venía llevando a mano y
+que están en `public/documents/`:
+
+- `Seguimiento Proyectos SAMI.xlsx` — una hoja por semestre con el estado de cada
+  proyecto, sus jurados, sus fechas y sus comités;
+- `202620 - Seguimiento y Evaluación.xlsx` — dieciséis hojas, una por semana de
+  reunión, con los adelantos, los compromisos y la calificación de cada quien.
+
+Las dos se sostenían con `IMPORTRANGE`, `INDIRECT` y `XLOOKUP` **entre archivos**,
+y las cifras que el programa necesita —cuántos van, cuántos terminaron, a quién le
+falta el CEB— había que sacarlas a mano cada vez. Aquí son una consulta.
+
+### El trámite de vinculación, que esta app NO hace
+
+Conviene tenerlo claro antes de tocar cualquier texto de estas páginas: **el
+sitio no es parte del trámite**. Los cuatro pasos se hacen en persona y ninguno
+se puede cumplir desde aquí. Lo que hace el formulario es dejar los datos del
+estudiante escritos una sola vez, para que cuando llegue a esas puertas no haya
+que volver a copiarlos, y para que el semillero los tenga desde antes.
+
+De ahí sale la regla que se repite en todo el módulo: **la página nunca dice que
+algo ya quedó hecho.** Dice qué sigue y a dónde hay que ir. Que se sintiera como
+un trámite terminado sería el peor resultado posible —alguien se quedaría
+esperando una respuesta que nadie le va a mandar—.
+
+Los cuatro pasos:
+
+1. **El estudiante notifica su intención en la dirección del programa**, en
+   persona, desde 6.º semestre. Es el paso que abre todo lo demás.
+2. **Radica una carta al Consejo de Facultad** indicando que tomará Semillero de
+   Investigación como su alternativa de grado.
+3. **Contacta a un docente** que lo asesore y arma con él la propuesta en el
+   formato `G-01-SEM.docx`, que se descarga de la página. **Con ese docente queda
+   formalizada su vinculación al semillero.**
+4. **El comité estudia la propuesta** y le informa quién será su director y —si
+   aplica— su codirector. Cuando el panel pasa el proyecto a *Propuesta aprobada*,
+   al estudiante le sale el correo que se lo dice, **una sola vez**.
+
+Lo que sí hace `/semillero/registro`: guarda los datos, el título tentativo y el
+perfil, y le entrega al estudiante un código de seis caracteres —el mismo invento
+del resto del sitio—. Lo primero que ve al enviarlo, antes que el código, es a
+quién tiene que ir a buscar y dónde.
+
+> **A la dirección del programa no se le manda ningún correo**, y no es un
+> olvido. El paso 1 es que el estudiante vaya en persona; un correo automático
+> diciendo lo mismo dejaría a las dos partes creyendo que el aviso ya lo dio el
+> otro, que es la mejor forma de perder a alguien en un trámite. El único correo
+> del registro va al estudiante, y lo que hace es recordarle a dónde ir.
+
+> **La propuesta tampoco se llena en el sitio.** Se construye con un asesor
+> durante semanas en el Word del formato; meterla en un formulario daría la
+> impresión de que se llena de una sentada.
+
+Después vienen **tres semestres**, que suelen repartirse en anteproyecto y
+comités, desarrollo y documentación, y sustentación y ajustes finales. Cada
+semestre el estudiante recibe una nota y asiste a las reuniones que programe su
+director.
+
+### Perfiles, que no son líneas
+
+Los cuatro **perfiles** son los que trae el nombre del semillero —aplicaciones,
+ambientes interactivos, animación y contenido multimedia—. El estudiante elige
+con cuál se siente cómodo, y eso **no decide qué proyecto va a hacer** ni lo
+encierra en nada: sirve para saber a quién ponerlo a hablar con quién. La mayoría
+de proyectos terminan tocando dos o tres.
+
+La **línea** y la **sublínea** de investigación son otra cosa: son del programa,
+son fijas y son las mismas para todos los proyectos. Por eso viven en
+`config.SAMI` como dos textos y no como una lista de opciones, no se le preguntan
+al estudiante y no se guardan por proyecto —una columna que puede decir cuatro
+cosas distintas de algo que tiene una sola respuesta es una columna que tarde o
+temprano miente—. Se muestran en la página para que se copien tal cual en el
+G-01-SEM; si están vacías en el config, esa parte no aparece.
+
+### La escalera de estados
+
+Trece peldaños, en `lib/sami.js`. Los ocho del final son los del documento del
+programa; los cinco primeros son el trámite de vinculación, que hasta ahora no
+estaba en ninguna hoja. **No está en `config.js` a propósito**: es una máquina de
+estados y no una preferencia, y cambiar una clave rompería los proyectos ya
+guardados sin avisar.
+
+El primero, **En el registro**, es donde caen los que llenan el formulario, y va
+separado de **Intención notificada** por lo mismo de arriba: llenar un formulario
+no es haber ido a una oficina. A *Intención notificada* lo mueve un docente
+cuando conste que sí fue.
+
+| En el panel | En la hoja del programa |
+|---|---|
+| En el registro · Intención notificada · Carta radicada · Propuesta en construcción · Propuesta aprobada | `1. Propuesta` |
+| Anteproyecto | `2. Anteproyecto` |
+| Sustentación de anteproyecto | `3. Sustentación anteproyecto` |
+| Aprobación de comités | `4. Aprobación CB` |
+| Desarrollo del proyecto | `5. Desarrollo proyecto` |
+| Radicación del proyecto | `6. Radicación proyecto` |
+| Sustentación del proyecto | `7. Sustentación proyecto` |
+| Finalizado · Retirado del semillero | — |
+
+La columna de la derecha existe solo para el CSV: lo exportado se pega en el
+documento viejo sin traducir nada. Un proyecto no cuenta como activo hasta que le
+aprueban la propuesta, que es por lo que cinco estados de aquí son un solo
+`1. Propuesta` allá.
+
+El estado **se guarda**, no se calcula —al revés que en las salidas—. Allá el
+estado sale de dos casillas de pago, que son hechos verificables; aquí "en qué va"
+es un juicio del comité que ninguna columna puede deducir. Una fecha de
+sustentación no dice si el anteproyecto quedó aprobado.
+
+### Lo que el estudiante ve
+
+`/semillero/estado` con su código: en qué va el trámite, quién quedó de director y
+codirector, las fechas que ya pasaron, el concepto de los jurados y **lo que se
+comprometió a entregar en la última reunión**.
+
+El mapa de los cuatro pasos **desaparece en cuanto le aprueban la propuesta**.
+Cuatro casillas todas palomeadas no le dicen nada a quien ya está en su segundo
+semestre de proyecto: lo que necesita a esas alturas es su director, sus fechas y
+sus compromisos, y dejarle un trámite terminado ocupando media pantalla es
+hacerle leer dos veces para llegar a lo que sí le sirve.
+
+**No ve calificaciones ni notas de semestre.** Seis caracteres que se dictan por
+teléfono y se comparten por WhatsApp no son una contraseña, y una nota no es un
+dato de trámite. Las notas viven en el panel.
+
+### El panel
+
+`/semillero/acceso`, con **su propia contraseña** (`PASSWORD_SAMI` en el `.env`).
+Séptima herramienta, séptima clave: aquí se guardan calificaciones y notas de
+semestre de estudiantes con nombre propio.
+
+**Dos permisos y no uno**, que es lo que lo diferencia del panel de salidas:
+
+- **todo docente que entra VE el semillero entero.** Es el documento del programa;
+  esconderle a un docente en qué van los proyectos de los demás no protege a nadie
+  y le quita el mapa a quien dirige el semillero;
+- **pero registrar reuniones y notas solo se puede donde uno es director.**
+  Calificar el trabajo de un semestre es del director, y un panel que deja hacerlo
+  a cualquiera termina con notas que nadie sabe quién puso. Se comprueba en el
+  servidor y no escondiendo el botón.
+
+Lo administrativo —estado, semestre, jurados, fechas, comités, asignar director—
+queda abierto a todos: son actos del comité que registra quien esté a la mano.
+
+Las herramientas, en orden de uso:
+
+- **la portada** parte en *mis proyectos* (editables) y *todo el semillero*
+  (lectura), con las cifras arriba y, aparte, solo las cosas que hay que
+  perseguir: intenciones sin tramitar, proyectos sin director, comités pendientes
+  y quien se pasó de los tres semestres. Un cero con un rótulo alarmante enseña a
+  ignorar el rótulo, así que esas cifras aparecen únicamente cuando existen;
+- **`/semillero/panel/solicitudes`** es la bandeja: las intenciones que todavía no
+  son proyecto, con los datos completos de quien se registró y lo único que se
+  decide ahí —en qué paso va y quién lo dirige—;
+- **la ficha de un proyecto** tiene arriba lo que se toca cada semana (las
+  reuniones), en medio las notas del semestre y abajo el trámite, que se toca de
+  tanto en tanto.
+
+**El selector de semestre** solo ofrece los semestres desde `SAMI.desde`. La
+tabla `periodos` es de la app entera y arrastra semestres viejos de la Expo y del
+torneo; ofrecer aquí uno en el que el semillero no existía solo sirve para abrir
+una página vacía y hacer dudar a quien la abre.
+
+### El calendario, que no se escribe
+
+Lo único que se configura es **la fecha de inicio** (`SAMI.calendario.inicio`, el
+lunes de la S1) y cuántas semanas dura. Las dieciséis salen de ahí, una cada
+siete días, y con ellas los rótulos `S1 · 3 a 7 de agosto` que hoy titulan a mano
+cada hoja del archivo de seguimiento —dieciséis títulos escritos a mano por
+semestre son dieciséis oportunidades de equivocarse—.
+
+La ficha de cada proyecto enseña las dieciséis casillas y cuáles ya tienen
+reunión registrada, que es la pregunta que se hace un director en noviembre.
+
+El número de semana **se guarda resuelto** en cada reunión, no se recalcula al
+leer: corregir el calendario del semestre no puede cambiar la semana de reuniones
+que ya pasaron.
+
+### Cargar un lote desde la hoja
+
+`/semillero/panel/importar`. El semillero lleva años en un Excel, así que el
+módulo tiene que poder arrancar con lo que ya hay adentro y no con la base en
+cero. Se abre la hoja del semestre en *Seguimiento Proyectos SAMI*, se
+seleccionan las filas de la `A` a la `O` y se pegan ahí: el portapapeles de Excel
+trae las celdas separadas por tabuladores, que es justo lo que espera el parser.
+
+Respeta el formato de la hoja tal como está: **los datos del proyecto van solo en
+su primera fila**, y las de abajo traen el segundo estudiante o el segundo jurado
+con lo demás en blanco. Una fila con nombre de proyecto empieza uno nuevo; las
+que siguen le pertenecen. La cabecera, si se pega, se ignora sola.
+
+**Son dos pasos, no uno.** Primero se ve qué va a entrar y solo entonces se
+guarda: importar treinta proyectos no se deshace con un botón. La vista previa
+marca los dos choques que importan —un estudiante que ya está en otro proyecto y
+un director que no se reconoce—, y el paso de confirmar vuelve a parsear el mismo
+texto en vez de fiarse de lo que se calculó antes, así que lo que se guarda es
+exactamente lo que se vio.
+
+Tres traducciones que hace solo:
+
+- **el estado**, de la etiqueta de la hoja a la de aquí (`4. Aprobación CB` →
+  *Aprobación de comités*). `1. Propuesta` entra como *Propuesta en construcción*:
+  quien ya está en la hoja de seguimiento evidentemente notificó su intención y
+  radicó su carta, y meterlo en *En el registro* le borraría dos pasos que sí
+  hizo;
+- **el director**, contra `config.DOCENTES`, sin tildes y comparando primer
+  nombre y último apellido —en la hoja el mismo docente aparece como *Oscar
+  Leonardo Peréz*, *Oscar Peréz* y *Oscar Pérez* según quién llenó la celda—. El
+  que no se reconoce entra sin director y la vista previa lo avisa, porque un
+  proyecto sin director es un proyecto que nadie puede calificar;
+- **las fechas**, en `d/m/aaaa` o `aaaa-mm-dd`. Lo que no tenga forma de fecha se
+  descarta callado: en la hoja real esa celda tiene cosas como *"Se retira de
+  semillero"*, y rechazar el lote entero por eso sería inútil.
+
+Los errores son **de fila y no cortan el lote**: se importa lo que sirve y se dice
+qué se quedó fuera. Un lote de treinta proyectos rechazado entero por un correo
+mal escrito es un lote que nadie va a volver a intentar.
+
+No hay subida de archivos, y es la misma decisión del resto del sitio: pegar no
+pide una dependencia nueva, funciona desde cualquier equipo y no deja un `.xlsx`
+del semestre pasado tirado en el servidor.
+
+**Una reunión se registra entera y en un solo guardado**: la fecha, los adelantos,
+los compromisos y —por cada estudiante— si vino y qué nota sacó. Los adelantos y
+los compromisos son **del proyecto**; la asistencia y la calificación son **de cada
+estudiante**, porque en un proyecto de dos el avance es del trabajo pero la falta
+es de una persona. La semana (S1…S16) sale sola del calendario y se guarda ya
+resuelta, para que corregir el calendario no cambie las reuniones que ya pasaron.
+
+La asistencia tiene **tres valores y no dos**, igual que en las salidas: sin marcar
+no es lo mismo que no vino. Y una reunión sin calificación **no vale cero**: vale
+que no está, y no entra en el promedio.
+
+**La nota del semestre se escribe a mano, siempre.** Al lado de las casillas va lo
+que llevan de reuniones, el porcentaje de asistencia y el promedio —lo que en la
+hoja eran las columnas `#S`, `ASIST` y `PROM`—, pero **no se precargan**: el
+docente pesa cosas que no están en esta base, y una nota puesta sola por un
+promedio sería una nota que nadie decidió. Cuando hay codirector, la nota final es
+el promedio de las dos; cuando no, la del director sola —un codirector que no
+respondió no tiene por qué bajarle la nota a nadie a la mitad—.
+
+Tres reglas que el panel no deja saltarse:
+
+- **a un integrante no se le borra la fila.** Si se retiró se marca, y sus
+  reuniones y sus notas quedan: son la constancia de lo que sí trabajó mientras
+  estuvo. El mismo botón deshace.
+- **una nota se corrige, pero nunca queda anónima**: se guarda quién la cerró y
+  cuándo, y el semestre (I, II, III) se congela al guardarla —dentro de un año hay
+  que poder decir que esta fue la nota del II, aunque el proyecto ya vaya en el
+  III—.
+- **el correo de propuesta aprobada sale una sola vez.** Mover el estado de ida y
+  vuelta no se lo repite al estudiante.
+
+### Los tres CSV
+
+Reproducen columna por columna las hojas de siempre, con las **mismas etiquetas**
+(`4. Aprobación CB`, no `aprobacion_cb`), con `;` y BOM para que Excel en español
+los abra en columnas:
+
+| Archivo | Qué reemplaza |
+|---|---|
+| `seguimiento.csv` | La hoja del semestre de *Seguimiento Proyectos SAMI* |
+| `finalizados.csv` | La hoja *Proyectos Finalizados* |
+| `reuniones.csv` | Las hojas `S1…S16` de *Seguimiento y Evaluación*, más las columnas `#S`, `ASIST` y `PROM` ya calculadas |
+
+### Lo que se configura
+
+En `config.js`, el bloque `SAMI`.
+
+| Campo | Para qué |
+|---|---|
+| `inscripciones` | `true` mientras el formulario de intención reciba gente. Cerrarlo no borra nada: los proyectos en curso siguen igual |
+| `semestre_minimo` | Desde qué semestre de la carrera se puede entrar. El formulario rechaza a quien escriba menos |
+| `semestres` | Cuántos dura el proyecto. Es el tope que el panel señala cuando alguien va por el IV |
+| `horas_semestre` | Las que pide el plan de trabajo del G-01-SEM. Solo se muestra; no se lleva la cuenta |
+| `calendario` | `inicio` (el lunes de la S1) y `semanas`. Las dieciséis salen de ahí; no se escriben en ninguna parte. **Es lo único que hay que cambiar al empezar semestre, junto con `PERIODO`** |
+| `desde` | El semestre más antiguo del que hay datos del semillero. El selector del panel no ofrece anteriores |
+| `direccion` | A dónde hay que ir a notificar la intención: nombre, cargo, oficina y correo. Es el dato más importante de la página —sin eso el estudiante se queda con un código y sin saber qué hacer con él— |
+| `formato` | La guía de propuesta, servida desde `public/` |
+| `perfiles` | Los cuatro del semillero. El selector del formulario sale de esta lista |
+| `linea`, `sublinea` | Las del programa, fijas. Se muestran para copiar en el G-01-SEM; vacías = no aparecen |
+| `pasos`, `etapas` | El texto con el que se le cuenta el trámite y los tres semestres al estudiante. Texto, no lógica |
+
+### Lo que no hace, y por qué
+
+- **No guarda archivos.** Ni el G-01-SEM diligenciado ni el documento del
+  proyecto. Es la misma decisión de INKreible: [los archivos no viven en esta
+  app](#los-archivos-no-viven-en-esta-app). Si hace falta, se guarda un enlace.
+- **No emite certificados.** El semillero es alternativa de grado: lo que se emite
+  al final es un acta, no una constancia de participación.
+- **El codirector no entra al sistema.** Se guarda su nombre como texto libre
+  porque casi siempre es de otro programa o de otra universidad, y su nota la
+  transcribe el director.
+- **No hay datos de prueba en `datos-de-prueba/sembrar.js`**, y no hacen falta:
+  los proyectos reales entran por [cargar un lote](#cargar-un-lote-desde-la-hoja).
+  Los nombres, documentos y teléfonos de las hojas tampoco podrían quedar ahí:
+  son datos personales de estudiantes y ese archivo va a git.
 
 ## INKreible
 

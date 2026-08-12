@@ -1,0 +1,187 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     CARGAR UN LOTE
+
+     Para arrancar el módulo con los proyectos que ya están en curso, que
+     viven en el Excel del programa. Se seleccionan las filas allá, se copian
+     y se pegan aquí: el portapapeles de Excel trae las celdas separadas por
+     tabuladores, que es justo lo que espera el parser.
+
+     Dos pasos y no uno. Primero se ve qué va a entrar —con los choques
+     marcados en rojo—, y solo entonces se guarda. Importar treinta proyectos
+     no se deshace con un botón.
+
+     No hay subida de archivos, y es la misma decisión del resto del sitio:
+     pegar no pide una dependencia nueva, funciona desde cualquier equipo y no
+     deja un .xlsx del semestre pasado tirado en el servidor.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="sam">
+  <section class="sam-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %></p>
+        <h2>Cargar un lote</h2>
+      </div>
+      <a href="/semillero/panel" class="btn ghost chico">Volver al panel</a>
+    </div>
+
+    <p class="sec-lead">
+      Para traer los proyectos que ya están en curso desde
+      <strong>Seguimiento Proyectos SAMI</strong>. Abre la hoja del semestre, selecciona las
+      filas de la <code>A</code> a la <code>O</code> —sin la cabecera, aunque si la incluyes
+      se ignora sola— y pégalas aquí. Entran en
+      <strong><%= periodo ? periodo.codigo : "el semestre en curso" %></strong>.
+    </p>
+
+    <details style="margin-top:16px">
+      <summary class="mini" style="cursor:pointer">Las columnas que espera, en orden</summary>
+      <div class="tabla-envoltura" style="margin-top:10px">
+        <table class="tabla">
+          <thead>
+            <tr><% columnas.forEach(function (c, i) { %><th><%= String.fromCharCode(65 + i) %></th><% }); %></tr>
+          </thead>
+          <tbody>
+            <tr><% columnas.forEach(function (c) { %><td class="mini"><%= c.rotulo %></td><% }); %></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="mini" style="margin-top:10px">
+        Como en la hoja: los datos del proyecto van solo en su primera fila, y las de abajo
+        traen el segundo estudiante o el segundo jurado con lo demás en blanco.
+      </p>
+    </details>
+  </section>
+
+  <% if (errores.length) { %>
+    <div class="aviso ojo">
+      <div class="t">Esto se va a quedar fuera</div>
+      <ul style="margin:0;padding-left:20px">
+        <% errores.forEach(function (e) { %><li><%= e %></li><% }); %>
+      </ul>
+    </div>
+  <% } %>
+
+  <section class="sam-sec">
+    <form method="POST" action="/semillero/panel/importar">
+      <div class="campo">
+        <label for="pegado">Pega aquí las filas</label>
+        <textarea name="pegado" id="pegado" style="min-height:220px;font-family:var(--mono);font-size:13px;white-space:pre"
+                  placeholder="Recorrido virtual del edificio 4&#9;55823010&#9;Daniel Felipe Sainea&#9;…"><%= pegado %></textarea>
+      </div>
+      <button type="submit" class="btn">Ver qué va a entrar</button>
+    </form>
+  </section>
+
+  <% if (proyectos) { %>
+    <%
+      // Un estudiante que ya está en otro proyecto vivo no se importa: casi
+      // siempre es la misma persona repetida en la hoja del semestre pasado.
+      const conChoque = proyectos.filter(function (p) {
+        return p.estudiantes.some(function (e) { return e.ya; });
+      });
+      const enteros = proyectos.filter(function (p) {
+        return p.estudiantes.every(function (e) { return e.ya; });
+      });
+      const sinDirector = proyectos.filter(function (p) { return p.director && !p.director_id; });
+    %>
+
+    <section class="sam-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Vista previa · todavía no se ha guardado nada</p>
+          <h2><%= proyectos.length %> proyecto<%= proyectos.length === 1 ? "" : "s" %></h2>
+        </div>
+      </div>
+
+      <% if (!proyectos.length) { %>
+        <div class="vacio">
+          No se reconoció ningún proyecto. Revisa que hayas copiado las columnas de la
+          <code>A</code> a la <code>O</code> y que cada proyecto traiga su nombre en la primera.
+        </div>
+      <% } else { %>
+
+        <% if (sinDirector.length) { %>
+          <div class="aviso ojo">
+            <div class="t">Directores que no están en la lista del programa</div>
+            <p style="margin:0">
+              <% sinDirector.forEach(function (p, i) { %><%= i ? " · " : "" %><%= p.director %><% }); %>.
+              Esos proyectos entran <strong>sin director</strong>, así que nadie va a poder
+              registrarles reuniones ni notas hasta que se les asigne uno. Si es un problema
+              de cómo está escrito el nombre, corrígelo en la hoja y vuelve a pegar; si el
+              docente no está en <code>config.DOCENTES</code>, agrégalo y reinicia.
+            </p>
+          </div>
+        <% } %>
+
+        <% if (enteros.length) { %>
+          <div class="aviso malo">
+            <div class="t"><%= enteros.length %> se van a omitir</div>
+            <p style="margin:0">
+              Todos sus integrantes ya están en un proyecto del semillero. Suele pasar al
+              pegar la hoja de un semestre que ya se cargó.
+            </p>
+          </div>
+        <% } %>
+
+        <div class="tabla-envoltura">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th></th><th>Proyecto</th><th>Estudiantes</th><th>Director</th>
+                <th>Sem.</th><th>Estado</th><th>Jurados</th><th>CEB · CPI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% proyectos.forEach(function (p) {
+                   const omitido = p.estudiantes.every(function (e) { return e.ya; });
+              %>
+                <tr style="<%= omitido ? "opacity:.5" : "" %>">
+                  <td><span class="chip <%= omitido ? "malo" : "ok" %>"><%= omitido ? "Se omite" : "Entra" %></span></td>
+                  <td><%= p.titulo %></td>
+                  <td class="mini">
+                    <% p.estudiantes.forEach(function (e) { %>
+                      <div>
+                        <%= e.nombre %>
+                        <% if (e.ya) { %>
+                          <span class="chip malo">ya está en <%= e.ya.codigo %></span>
+                        <% } %>
+                      </div>
+                    <% }); %>
+                  </td>
+                  <td class="mini">
+                    <%= p.director || "—" %>
+                    <% if (p.director && !p.director_id) { %>
+                      <span class="chip alerta">sin reconocer</span>
+                    <% } %>
+                    <% if (p.codirector) { %><div>co: <%= p.codirector %></div><% } %>
+                  </td>
+                  <td><%= p.semestre || "—" %></td>
+                  <td class="mini"><%= estados.filter(function (e) { return e.clave === p.estado; })[0].label %></td>
+                  <td class="mini">
+                    <% p.jurados.forEach(function (j) { %><div><%= j.nombre %></div><% }); %>
+                    <%= p.jurados.length ? "" : "—" %>
+                  </td>
+                  <td class="mini"><%= p.ceb %> · <%= p.cpi %></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+
+        <% if (proyectos.length > enteros.length) { %>
+          <form method="POST" action="/semillero/panel/importar/confirmar" style="margin-top:22px"
+                onsubmit="return confirm('Se van a crear <%= proyectos.length - enteros.length %> proyectos en <%= periodo ? periodo.codigo : "" %>. Esto no se deshace con un botón. ¿Seguimos?')">
+            <input type="hidden" name="pegado" value="<%= pegado %>" />
+            <button type="submit" class="btn">
+              Crear <%= proyectos.length - enteros.length %> proyecto<%= proyectos.length - enteros.length === 1 ? "" : "s" %>
+            </button>
+          </form>
+        <% } %>
+      <% } %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('../partials/footer') %>
