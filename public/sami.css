@@ -1126,6 +1126,50 @@ table.tabla td {
   vertical-align: top;
 }
 
+/* ── Una línea por celda, y lo que no quepa con puntos suspensivos ──
+
+   Las columnas se reparten con `fixed` y no según lo que traiga cada fila.
+   Así la tabla se ve igual con un proyecto que con veinte, y cambiar de
+   semestre no la reordena entera: sin esto, un título largo se lleva media
+   pantalla y empuja al director contra el borde.
+
+   Nada envuelve. Una fila que crece a tres renglones porque un nombre es
+   largo desalinea todo lo que tiene al lado, y estas tablas son para barrer
+   con la vista —"¿de quién es este proyecto?"—, no para leerlas despacio.
+
+   Lo truncado no se pierde: cada celda lleva el texto completo en su
+   `title`, que es lo que sale al dejar el puntero encima. */
+table.tabla { table-layout: fixed; }
+
+table.tabla td,
+table.tabla td > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Dos integrantes en una celda van uno debajo del otro, cada uno en su
+   renglón y de alto fijo: así una fila de dos mide exactamente el doble que
+   una de uno, y las columnas de al lado siguen cuadrando en vez de quedar
+   flotando a media altura. */
+table.tabla td > div { line-height: 1.6; }
+
+/* Los chips no se truncan por dentro: o cabe entero o no cabe. Un
+   "Sustentación de anteproyect…" no se lee mejor que el chip completo, y con
+   `inline-block` dentro de una celda que ya trunca no hace falta. */
+table.tabla td .chip { max-width: 100%; }
+
+/* La celda que lleva un campo no recorta: el borde de foco se dibuja por fuera
+   del control, y recortarlo dejaría el campo activo sin señal de estarlo. */
+table.tabla td:has(input, select, textarea, button) { overflow: visible; }
+
+/* La excepción: las tablas de referencia que enseñan las columnas de la hoja
+   —quince rótulos, uno por columna— no se reparten a partes iguales, porque a
+   cuarenta píxeles cada una no se lee ninguna. Esas van al ancho de su
+   contenido y se arrastran de lado, que es para lo que están en un desplegable. */
+table.tabla.auto { table-layout: auto; }
+table.tabla.auto td { white-space: normal; overflow: visible; }
+
 /* Una tabla de dos o tres columnas no necesita los 720 px de ancho mínimo
    que pide la del panel: cabe en cualquier pantalla y así se lee sin
    arrastrarla de lado. */

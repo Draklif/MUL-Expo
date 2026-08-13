@@ -158,14 +158,30 @@
       <div class="tabla-envoltura">
         <table class="tabla">
           <thead>
-            <tr><th>Proyecto</th><th>Estudiantes</th><th>Director</th><th>Publicado</th><th>Estado</th></tr>
+            <%/* Los anchos van escritos y en porcentaje: con columnas fijas hay
+                 que repartirlas a mano, y a partes iguales el título —que es lo
+                 que uno viene a leer— quedaría igual de estrecho que la fecha
+                 de publicación. */%>
+            <tr>
+              <th style="width:34%">Proyecto</th><th style="width:24%">Estudiantes</th>
+              <th style="width:18%">Director</th><th style="width:10%">Publicado</th>
+              <th style="width:14%">Estado</th>
+            </tr>
           </thead>
           <tbody>
             <% cerrados.forEach(function (p) { %>
+              <%/* Cada integrante en su renglón y no separados por un punto:
+                   con dos nombres largos en una línea no se lee ninguno, y en
+                   una tabla que no envuelve el segundo se perdía entero. */%>
               <tr>
-                <td><a href="/semillero/panel/proyecto/<%= p.id %>"><%= p.titulo %></a></td>
-                <td class="mini"><%= p.estudiantes.map(function (e) { return e.nombre; }).join(" · ") %></td>
-                <td><%= p.director || "—" %></td>
+                <td><a href="/semillero/panel/proyecto/<%= p.id %>" title="<%= p.titulo %>"><%= p.titulo %></a></td>
+                <td class="mini">
+                  <% p.estudiantes.forEach(function (e) { %>
+                    <div title="<%= e.nombre %>"><%= e.nombre %></div>
+                  <% }); %>
+                  <%= p.estudiantes.length ? "" : "—" %>
+                </td>
+                <td title="<%= p.director || "" %>"><%= p.director || "—" %></td>
                 <td class="cod"><%= p.publicacion || "—" %></td>
                 <td><span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span></td>
               </tr>

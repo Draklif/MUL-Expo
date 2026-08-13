@@ -87,12 +87,19 @@
           </div>
         </div>
 
+        <%/* La casilla enseña lo ESCRITO, no el cero automático de la falta: si
+             ahí saliera el cero, guardar sin tocar nada lo dejaría escrito a
+             mano y corregir la asistencia después ya no lo quitaría. Lo que se
+             hace es decirlo. */%>
         <div class="campo">
           <label for="<%= pre %>_n<%= e.id %>">Calificación</label>
           <input type="number" name="marca_nota_<%= e.id %>" id="<%= pre %>_n<%= e.id %>"
                  min="0" max="<%= escala %>" step="0.01"
                  value="<%= m.calificacion === null || m.calificacion === undefined ? "" : m.calificacion %>"
-                 placeholder="0 a <%= escala %>" />
+                 placeholder="<%= asistio === 0 ? "0 por la falta" : "0 a " + escala %>" />
+          <% if (asistio === 0 && (m.calificacion === null || m.calificacion === undefined)) { %>
+            <p class="ayuda">No haber venido ya cuenta como 0. Escribe una nota solo si entregó igual.</p>
+          <% } %>
         </div>
       </div>
     <% }); %>

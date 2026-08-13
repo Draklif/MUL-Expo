@@ -37,8 +37,11 @@
 
     <details style="margin-top:16px">
       <summary class="mini" style="cursor:pointer">Las columnas que espera, en orden</summary>
+      <%/* Al ancho de su contenido y no a partes iguales: son quince rótulos, y
+           repartidos en columnas fijas no se leería ninguno. Se arrastra de
+           lado, que para eso está metida en un desplegable. */%>
       <div class="tabla-envoltura" style="margin-top:10px">
-        <table class="tabla">
+        <table class="tabla auto">
           <thead>
             <tr><% columnas.forEach(function (c, i) { %><th><%= String.fromCharCode(65 + i) %></th><% }); %></tr>
           </thead>
@@ -129,8 +132,9 @@
           <table class="tabla">
             <thead>
               <tr>
-                <th></th><th>Proyecto</th><th>Estudiantes</th><th>Director</th>
-                <th>Sem.</th><th>Estado</th><th>Jurados</th><th>CEB · CPI</th>
+                <th style="width:6rem"></th><th>Proyecto</th><th>Estudiantes</th><th>Director</th>
+                <th style="width:4rem">Sem.</th><th style="width:11rem">Estado</th>
+                <th>Jurados</th><th style="width:8rem">CEB · CPI</th>
               </tr>
             </thead>
             <tbody>
@@ -139,10 +143,10 @@
               %>
                 <tr style="<%= omitido ? "opacity:.5" : "" %>">
                   <td><span class="chip <%= omitido ? "malo" : "ok" %>"><%= omitido ? "Se omite" : "Entra" %></span></td>
-                  <td><%= p.titulo %></td>
+                  <td title="<%= p.titulo %>"><%= p.titulo %></td>
                   <td class="mini">
                     <% p.estudiantes.forEach(function (e) { %>
-                      <div>
+                      <div title="<%= e.nombre %>">
                         <%= e.nombre %>
                         <% if (e.ya) { %>
                           <span class="chip malo">ya está en <%= e.ya.codigo %></span>
@@ -151,16 +155,18 @@
                     <% }); %>
                   </td>
                   <td class="mini">
-                    <%= p.director || "—" %>
-                    <% if (p.director && !p.director_id) { %>
-                      <span class="chip alerta">sin reconocer</span>
-                    <% } %>
-                    <% if (p.codirector) { %><div>co: <%= p.codirector %></div><% } %>
+                    <div title="<%= p.director || "" %>">
+                      <%= p.director || "—" %>
+                      <% if (p.director && !p.director_id) { %>
+                        <span class="chip alerta">sin reconocer</span>
+                      <% } %>
+                    </div>
+                    <% if (p.codirector) { %><div title="<%= p.codirector %>">co: <%= p.codirector %></div><% } %>
                   </td>
                   <td><%= p.semestre || "—" %></td>
                   <td class="mini"><%= estados.filter(function (e) { return e.clave === p.estado; })[0].label %></td>
                   <td class="mini">
-                    <% p.jurados.forEach(function (j) { %><div><%= j.nombre %></div><% }); %>
+                    <% p.jurados.forEach(function (j) { %><div title="<%= j.nombre %>"><%= j.nombre %></div><% }); %>
                     <%= p.jurados.length ? "" : "—" %>
                   </td>
                   <td class="mini"><%= p.ceb %> · <%= p.cpi %></td>

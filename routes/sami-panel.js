@@ -836,6 +836,142 @@ function escribirMarcas(reunionId, proyectoId, marcas) {
 }
 
 // ---------------------------------------------------------------------
+//  Cargar un lote de reuniones — solo el director
+//
+//  El semestre empezó en "Seguimiento y Evaluación", con una hoja por semana,
+//  así que hay que poder recoger lo que ya se llenó ahí en vez de volver a
+//  teclearlo reunión por reunión.
+//
+//  Va POR PROYECTO y no en una página global como el lote de proyectos, y esa
+//  es la diferencia que lo hace simple: en la hoja la fila es del estudiante y
+//  aquí la reunión es del proyecto, así que hay que resolver nombres. Desde la
+//  ficha se resuelven contra SUS integrantes —dos como mucho— y no contra los
+//  veintitantos del semillero, donde dos "Daniel" se confunden solos.
+//
+//  Dos pasos, como el otro: primero se ve qué va a entrar y solo entonces se
+//  guarda. El de confirmar vuelve a parsear el mismo texto en vez de guardarse
+//  lo calculado en la vista previa: sin estado que sincronizar no hay forma de
+//  que lo que se confirmó sea distinto de lo que se vio.
+// ---------------------------------------------------------------------
+function vistaImportarReuniones(req, proyecto, extra = {}) {
+  return marco({
+    title: `Cargar reuniones · ${proyecto.titulo}`,
+    rutaPeriodo: `/semillero/panel/proyecto/${proyecto.id}/reuniones/importar`,
+    proyecto,
+    // Contra quiénes se resuelven los nombres de la hoja. Se enseñan en la
+    // página: media hora buscando por qué no entra una fila se ahorra viendo
+    // cómo están escritos aquí los dos nombres que sí se reconocen.
+    integrantes: sami.estudiantesDe(proyecto.id).filter((e) => e.activo),
+    columnas: sami.COLUMNAS_REUNIONES,
+    pegado: "",
+    reuniones: null,
+    errores: [],
+    ...extra,
+  });
+}
+
+/** Las fechas que ese proyecto YA tiene registradas en el semestre. */
+function fechasConReunion(proyectoId, periodoId) {
+  return new Set(
+    db
+      .prepare("SELECT fecha FROM sami_reuniones WHERE proyecto_id = ? AND periodo_id = ?")
+      .all(Number(proyectoId), Number(periodoId))
+      .map((r) => r.fecha)
+  );
+}
+
+router.get("/panel/proyecto/:id/reuniones/importar", (req, res) => {
+  const proyecto = sami.porId(req.params.id);
+  if (!proyecto) return res.redirect("/semillero/panel");
+  if (!soloDirector(req, res, proyecto)) return;
+  if (!desdeElIngreso(req, res, proyecto)) return;
+
+  res.render("sami/importar-reuniones", vistaImportarReuniones(req, proyecto));
+});
+
+// Vista previa: parsea y enseña, sin escribir nada.
+router.post("/panel/proyecto/:id/reuniones/importar", (req, res) => {
+  const proyecto = sami.porId(req.params.id);
+  if (!proyecto) return res.redirect("/semillero/panel");
+  if (!soloDirector(req, res, proyecto)) return;
+  if (!desdeElIngreso(req, res, proyecto)) return;
+
+  const pegado = String(req.body.pegado || "");
+  const integrantes = sami.estudiantesDe(proyecto.id).filter((e) => e.activo);
+  const { reuniones, errores } = sami.parsearReuniones(pegado, integrantes);
+  const ya = fechasConReunion(proyecto.id, req.periodo.id);
+
+  // La semana y los choques solo se pueden ver aquí: la primera necesita el
+  // calendario del semestre que se está mirando y los segundos son una
+  // pregunta a la base, no una cuestión de formato.
+  const conContexto = reuniones.map((r) => ({
+    ...r,
+    semana: sami.semanaDe(r.fecha, req.periodo.codigo),
+    cuando: sami.dia(r.fecha),
+    ya: ya.has(r.fecha),
+  }));
+
+  res.render(
+    "sami/importar-reuniones",
+    vistaImportarReuniones(req, proyecto, { pegado, reuniones: conContexto, errores })
+  );
+});
+
+router.post("/panel/proyecto/:id/reuniones/importar/confirmar", (req, res) => {
+  const proyecto = sami.porId(req.params.id);
+  if (!proyecto) return res.redirect("/semillero/panel");
+  if (!soloDirector(req, res, proyecto)) return;
+  if (!desdeElIngreso(req, res, proyecto)) return;
+
+  const integrantes = sami.estudiantesDe(proyecto.id).filter((e) => e.activo);
+  const { reuniones } = sami.parsearReuniones(String(req.body.pegado || ""), integrantes);
+  const ya = fechasConReunion(proyecto.id, req.periodo.id);
+
+  let creadas = 0;
+  let omitidas = 0;
+
+  sami.enTransaccion(() => {
+    const nueva = db.prepare(
+      `INSERT INTO sami_reuniones
+         (proyecto_id, periodo_id, fecha, semana, adelantos, compromisos, docente_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    );
+
+    for (const r of reuniones) {
+      // Un día que ya tiene reunión no se importa dos veces. Pegar la misma
+      // hoja otra vez —para completar una semana que faltaba— es lo más normal
+      // del mundo, y duplicar la reunión de ese día sería lo peor que podría
+      // hacer: dos filas con la misma fecha y las notas repartidas entre ellas.
+      if (ya.has(r.fecha)) {
+        omitidas++;
+        continue;
+      }
+
+      // El docente a cargo que dice la hoja, si se reconoce; si no, el que está
+      // importando. La columna NO admite nulos y con razón: una reunión sin
+      // nadie a cargo es la firma que la hoja de papel sí exigía.
+      const suyo = r.docente && docentes().find((d) => sami.mismoNombre(d.name, r.docente));
+
+      const { lastInsertRowid } = nueva.run(
+        proyecto.id,
+        req.periodo.id,
+        r.fecha,
+        sami.semanaDe(r.fecha, req.periodo.codigo),
+        r.adelantos,
+        r.compromisos,
+        suyo ? suyo.id : yo(req).id
+      );
+
+      escribirMarcas(lastInsertRowid, proyecto.id, r.marcas);
+      ya.add(r.fecha);
+      creadas++;
+    }
+  });
+
+  res.redirect(volverA(proyecto, `?importadas=${creadas}&omitidas=${omitidas}#reuniones`));
+});
+
+// ---------------------------------------------------------------------
 //  Los objetivos del semestre — solo el director
 //
 //  Un solo guardado para las tres cosas que se hacen aquí —corregir el texto,
@@ -1233,7 +1369,10 @@ router.get("/panel/reuniones.csv", (req, res) => {
           r.adelantos || "",
           r.compromisos || "",
           m.asistencia ? m.asistencia.label : "",
-          m.calificacion === null ? "" : m.calificacion,
+          // La que cuenta, con el cero de la falta ya puesto: el CSV se pega en
+          // la hoja del programa y ahí tiene que verse la misma nota que en el
+          // panel, no una casilla vacía al lado de un "No asistió".
+          m.nota === null ? "" : m.nota,
           r.docente || "",
           rend.sesiones,
           rend.asistio,

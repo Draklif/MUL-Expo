@@ -57,6 +57,17 @@
   <% if (aviso.borrado) { %>
     <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se borró la reunión.</p></div>
   <% } %>
+  <% if (aviso.importadas !== undefined) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Se registraron <strong><%= aviso.importadas %></strong>
+        reuni<%= Number(aviso.importadas) === 1 ? "ón" : "ones" %> del lote.
+        <% if (Number(aviso.omitidas)) { %>
+          Se omitieron <%= aviso.omitidas %> porque ese día ya tenía una registrada.
+        <% } %>
+      </p>
+    </div>
+  <% } %>
   <% if (aviso.sin_semestre) { %>
     <div class="aviso ojo" style="margin-top:24px">
       <p style="margin:0">
@@ -215,7 +226,16 @@
         </p>
         <h2>Reuniones</h2>
       </div>
-      <a href="/semillero/panel/reuniones.csv" class="btn ghost chico">Este semestre en CSV</a>
+      <div class="acciones">
+        <% if (puedeCalificar && !antesDelIngreso) { %>
+          <%/* Pequeño y al lado del CSV: entran por la misma puerta —lo que sale
+               a la hoja y lo que viene de ella— y es algo que se hace una vez
+               por semestre, no cada semana. */%>
+          <a href="/semillero/panel/proyecto/<%= proyecto.id %>/reuniones/importar"
+             class="btn ghost chico">Importar en lote</a>
+        <% } %>
+        <a href="/semillero/panel/reuniones.csv" class="btn ghost chico">Este semestre en CSV</a>
+      </div>
     </div>
 
     <%/* El calendario del semestre, calculado de SU fecha de inicio: dieciséis
@@ -294,8 +314,10 @@
               </div>
               <div class="reg-marcas">
                 <% r.marcas.forEach(function (m) { %>
+                  <%/* La nota que cuenta, no la escrita: quien faltó lleva un
+                       cero aunque nadie haya tocado su casilla. */%>
                   <span class="chip <%= m.asistencia ? m.asistencia.cls : "no" %>">
-                    <%= m.nombre.split(" ")[0] %><%= m.calificacion === null ? "" : " · " + m.calificacion %>
+                    <%= m.nombre.split(" ")[0] %><%= m.nota === null ? "" : " · " + m.nota %>
                   </span>
                 <% }); %>
               </div>
@@ -332,7 +354,10 @@
                       <div class="k"><%= m.nombre %></div>
                       <div class="v">
                         <%= m.asistencia ? m.asistencia.label : "Sin marcar" %>
-                        <%= m.calificacion === null ? "" : " · " + m.calificacion %>
+                        <%= m.nota === null ? "" : " · " + m.nota %>
+                        <% if (m.asistio === 0 && m.calificacion === null) { %>
+                          <span class="mini">(automático por la falta)</span>
+                        <% } %>
                       </div>
                     </div>
                   <% }); %>
@@ -370,9 +395,9 @@
 
     <p class="sec-lead">
       Las actividades que el estudiante se comprometió a hacer este semestre, tal como las
-      presentó en la propuesta. Lo que se califica es su cumplimiento, y el promedio de esas
-      notas baja hasta la nota del semestre como sugerencia —junto con el de las reuniones—.
+      presentó en la propuesta. 
     </p>
+    <br>
 
     <% if (!puedeCalificar || antesDelIngreso) { %>
       <%/* Sin permiso se ven igual: son el plan de trabajo del proyecto y
@@ -388,7 +413,7 @@
               <% objetivos.forEach(function (o, i) { %>
                 <tr>
                   <td class="cod"><%= i + 1 %></td>
-                  <td><%= o.texto %></td>
+                  <td title="<%= o.texto %>"><%= o.texto %></td>
                   <td><strong><%= o.nota === null ? "—" : o.nota %></strong></td>
                 </tr>
               <% }); %>
@@ -482,7 +507,7 @@
       la sugerencia que sale de cruzar los objetivos con las reuniones, para que lo tengas
       en cuenta junto con todo lo demás; el sistema no la calcula ni la precarga.
     </p>
-
+    <br>
     <% estudiantes.forEach(function (e) { %>
       <div class="nota-sem" id="n<%= e.id %>">
         <h4><%= e.nombre %><%= e.activo ? "" : " · retirado" %></h4>
@@ -662,8 +687,7 @@
             <input type="text" name="codirector" id="codirector" maxlength="160"
                    value="<%= proyecto.codirector || "" %>" placeholder="Nombre completo · opcional" />
             <p class="ayuda">
-              Texto libre a propósito: el codirector no entra al sistema y casi siempre es
-              de otro programa o de otra universidad.
+              Dejar el campo vacío elimina al codirector.
             </p>
           </div>
           <button type="submit" class="btn block">Guardar</button>
@@ -674,8 +698,7 @@
     <div class="tarjeta" style="margin-top:18px">
       <h3>Fechas y comités</h3>
       <p class="mini" style="margin:6px 0 0">
-        Se llenan juntas porque se llenan juntas: quien pone al día un proyecto tiene el
-        acta delante. Lo que no haya pasado se deja en blanco.
+        Para llevar trazabilidad de los proyectos. Las fechas son opcionales, pero recomendables.
       </p>
       <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/fechas" style="margin-top:16px">
         <%/* Las seis fechas del trámite en dos filas de tres, en el orden en que
@@ -752,8 +775,7 @@
     <div class="tarjeta" style="margin-top:18px" id="jurados">
       <h3>Jurados del anteproyecto</h3>
       <p class="mini" style="margin:6px 0 0">
-        Se guardan los tres de una vez. Un jurado que no esté en la lista del programa se
-        escribe igual: cuenta lo mismo.
+        Se guardan los dos o tres de una vez.
       </p>
       <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/jurados" style="margin-top:16px">
         <% [0, 1, 2].forEach(function (i) {
@@ -807,8 +829,7 @@
               <% }); %>
             </select>
             <p class="ayuda">
-              Con cuál se siente cómodo el estudiante. La línea y la sublínea son las del
-              programa, iguales para todos, y viven en <code>config.SAMI</code>.
+              Con cuál se siente cómodo el estudiante.
             </p>
           </div>
           <div class="fila">
@@ -821,7 +842,6 @@
               <label for="publicacion">Semestre de publicación</label>
               <input type="text" name="publicacion" id="publicacion" maxlength="20"
                      value="<%= proyecto.publicacion || "" %>" placeholder="2026-20" />
-              <p class="ayuda">Solo cuando quede finalizado.</p>
             </div>
           </div>
           <button type="submit" class="btn block">Guardar datos</button>
@@ -856,16 +876,20 @@
     <div class="tabla-envoltura">
       <table class="tabla">
         <thead>
-          <tr><th>Nombre</th><th>Código</th><th>Documento</th><th>Teléfono</th><th>Correo</th><th></th></tr>
+          <tr>
+            <th style="width:24%">Nombre</th><th style="width:11%">Código</th>
+            <th style="width:12%">Documento</th><th style="width:13%">Teléfono</th>
+            <th style="width:26%">Correo</th><th style="width:14%"></th>
+          </tr>
         </thead>
         <tbody>
           <% estudiantes.forEach(function (e) { %>
             <tr style="<%= e.activo ? "" : "opacity:.55" %>">
-              <td><%= e.nombre %><%= e.activo ? "" : " · retirado" %></td>
+              <td title="<%= e.nombre %>"><%= e.nombre %><%= e.activo ? "" : " · retirado" %></td>
               <td class="cod"><%= e.codigo_estudiante %></td>
               <td class="cod"><%= e.documento || "—" %></td>
               <td><%= e.telefono || "—" %></td>
-              <td><a href="mailto:<%= e.email %>"><%= e.email %></a></td>
+              <td><a href="mailto:<%= e.email %>" title="<%= e.email %>"><%= e.email %></a></td>
               <td>
                 <%/* Nunca se borra la fila: sus reuniones y sus notas siguen
                      siendo ciertas. El mismo botón deshace, que es lo que hace
@@ -991,8 +1015,6 @@
           const conTrabajo = Boolean(rastro.reuniones || rastro.notas || rastro.objetivos_calificados);
         %>
         <p class="mini" style="margin:6px 0 14px">
-          Para lo que nunca debió existir: la prueba que se hizo para ver cómo se veía el
-          formulario, el registro repetido, el que se llenó con el nombre de otro.
           <% if (cuelga.length) { %>
             Se lleva <%- cuelga.slice(0, -1).join(", ") %><%- cuelga.length > 1 ? " y " : "" %><%- cuelga[cuelga.length - 1] %>,
             y no queda nada.

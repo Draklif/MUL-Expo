@@ -838,6 +838,14 @@ Por eso *Cancelado* **no está en el selector de estados**: a él se llega por s
 botón, que pide el motivo y guarda de dónde venía. Puesto a mano desde la lista no
 habría ni lo uno ni lo otro, y una cancelación sin motivo es media cancelación.
 
+**Las tablas no envuelven.** Las columnas son de ancho fijo y escrito, cada celda
+va en una línea y lo que no cabe se corta con puntos suspensivos —con el texto
+entero en el `title`, que sale al pasar el puntero—. Una fila que crece a tres
+renglones porque un título es largo desalinea todo lo que tiene al lado, y estas
+tablas son para barrer con la vista, no para leerlas despacio. Cuando en una celda
+hay dos integrantes van uno debajo del otro, cada uno en su renglón de alto fijo,
+para que una fila de dos mida exactamente el doble que una de uno.
+
 **El selector de semestre** no ofrece los semestres en los que el semillero no
 existía. La tabla `periodos` es de la app entera y arrastra semestres viejos de la
 Expo y del torneo; ofrecer aquí uno de esos solo sirve para abrir una página vacía
@@ -937,6 +945,43 @@ No hay subida de archivos, y es la misma decisión del resto del sitio: pegar no
 pide una dependencia nueva, funciona desde cualquier equipo y no deja un `.xlsx`
 del semestre pasado tirado en el servidor.
 
+### Cargar un lote de reuniones
+
+Botón pequeño en la sección de reuniones de la ficha, al lado del CSV: entran por
+la misma puerta por la que salen. Es para recoger lo que ya se llenó en
+*Seguimiento y Evaluación*, que lleva **una hoja por semana** (`S1`…`S16`). Se
+abre la hoja, se seleccionan las filas del proyecto de la `B` a la `H` y se pegan.
+Dos pasos como el otro lote: primero se ve qué va a entrar, y solo entonces se
+guarda.
+
+Va **por proyecto** y no en una página global, al revés que el de proyectos, y esa
+es la diferencia que lo hace simple: en la hoja la fila es del *estudiante* y aquí
+la reunión es del *proyecto*, así que hay nombres que resolver. Desde la ficha se
+resuelven contra los dos integrantes de ese proyecto y no contra los veintitantos
+del semillero, donde dos *Daniel* se confunden solos. El emparejamiento es el
+mismo que el de los directores: sin tildes, primer nombre y último apellido.
+
+Lo que el parser traduce de la hoja:
+
+- **las filas del mismo día se juntan en una sola reunión**, con cada estudiante
+  como una marca suya adentro. Basta con que la primera del grupo traiga la fecha,
+  que es como está la hoja cuando la celda va combinada;
+- **la columna de asistencia es una firma**: lo que sea que esté escrito cuenta
+  como que asistió —para eso se firma—, solo un `NO` se lee como falta y la
+  casilla vacía queda *sin marcar*. La regla de tres valores de siempre;
+- los **adelantos y compromisos** son del proyecto pero en la hoja están en la
+  fila de cada estudiante: se juntan sin repetir, así que si cada uno escribió lo
+  suyo quedan los dos y no se pierde ninguno;
+- la **columna A** del título de la semana y la cabecera, si vienen pegadas, se
+  reconocen y se descartan.
+
+**Un día que ya tiene reunión no se importa dos veces.** Volver a pegar una hoja
+para completar una semana que faltaba es lo más normal del mundo, y duplicar sería
+lo peor: dos filas del mismo día con las notas repartidas entre las dos.
+
+Los errores son de fila y no cortan el lote, igual que en el otro: un nombre que no
+se reconoce o una nota fuera de escala se dicen y lo demás entra.
+
 **Una reunión se registra entera y en un solo guardado**: la fecha, los adelantos,
 los compromisos y —por cada estudiante— si vino y qué nota sacó. Los adelantos y
 los compromisos son **del proyecto**; la asistencia y la calificación son **de cada
@@ -945,8 +990,20 @@ es de una persona. La semana (S1…S16) sale sola del calendario y se guarda ya
 resuelta, para que corregir el calendario no cambie las reuniones que ya pasaron.
 
 La asistencia tiene **tres valores y no dos**, igual que en las salidas: sin marcar
-no es lo mismo que no vino. Y una reunión sin calificación **no vale cero**: vale
-que no está, y no entra en el promedio.
+no es lo mismo que no vino.
+
+**No haber ido a una reunión es un cero, y cuenta en el promedio.** La reunión
+semanal *es* el trabajo del semestre, así que faltar no deja la nota pendiente: la
+decide. Pero una reunión a la que sí fue y todavía nadie calificó sigue valiendo
+«no está» y no entra en el promedio —el cero sale de un hecho registrado, no de una
+casilla que nadie ha tocado—.
+
+Ese cero **se cuenta al leer, no se guarda**, por dos razones: corregir la
+asistencia de *no vino* a *asistió* tiene que quitarlo solo, y una nota escrita a
+mano manda sobre el automático —si el director le puso 3.0 a quien no fue porque
+entregó igual, esa es la nota—. Por lo mismo la casilla del formulario sigue
+mostrando lo escrito y no el cero: si lo mostrara, guardar sin tocar nada lo dejaría
+escrito a mano y ya no se podría deshacer corrigiendo la asistencia.
 
 **La nota del semestre se escribe a mano, siempre.** Al lado de las casillas va lo
 que llevan de reuniones, el porcentaje de asistencia y el promedio —lo que en la

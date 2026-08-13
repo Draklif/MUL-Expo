@@ -188,14 +188,17 @@
       <div class="tabla-envoltura">
         <table class="tabla">
           <thead>
-            <tr><th>Proyecto</th><th>Director</th><th>Codirector</th><th>Publicado</th></tr>
+            <tr>
+              <th style="width:44%">Proyecto</th><th style="width:22%">Director</th>
+              <th style="width:22%">Codirector</th><th style="width:12%">Publicado</th>
+            </tr>
           </thead>
           <tbody>
             <% finalizados.forEach(function (p) { %>
               <tr>
-                <td><%= p.titulo %></td>
-                <td><%= p.director || "—" %></td>
-                <td><%= p.codirector || "—" %></td>
+                <td title="<%= p.titulo %>"><%= p.titulo %></td>
+                <td title="<%= p.director || "" %>"><%= p.director || "—" %></td>
+                <td title="<%= p.codirector || "" %>"><%= p.codirector || "—" %></td>
                 <td class="cod"><%= p.publicacion || "—" %></td>
               </tr>
             <% }); %>
