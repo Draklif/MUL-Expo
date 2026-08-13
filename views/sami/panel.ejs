@@ -50,7 +50,7 @@
     </div>
 
     <div class="tarjeta">
-      <div class="datos">
+      <div class="datos cifras">
         <div class="dato">
           <div class="k">En curso</div>
           <div class="v grande"><%= resumen.activos %></div>
@@ -80,7 +80,7 @@
            { n: resumen.sem_iv,          k: "Pasados de los tres semestres", url: null },
          ].filter(function (x) { return x.n; }); %>
       <% if (pendientes.length) { %>
-        <div class="datos" style="margin-top:20px;padding-top:18px;border-top:1px dotted var(--linea-fuerte)">
+        <div class="datos cifras" style="margin-top:20px;padding-top:18px;border-top:1px dotted var(--linea-fuerte)">
           <% pendientes.forEach(function (x) { %>
             <div class="dato">
               <div class="k"><%= x.k %></div>
@@ -115,7 +115,7 @@
       </p>
       <div class="grid dos">
         <% mios.forEach(function (p) { %>
-          <%- include('partials/tarjeta-proyecto', { p: p, mio: true, estados: estados }) %>
+          <%- include('partials/tarjeta-proyecto', { p: p, estados: estados }) %>
         <% }); %>
       </div>
     <% } %>
@@ -132,7 +132,7 @@
       </div>
       <div class="grid dos">
         <% otros.forEach(function (p) { %>
-          <%- include('partials/tarjeta-proyecto', { p: p, mio: false, estados: estados }) %>
+          <%- include('partials/tarjeta-proyecto', { p: p, estados: estados }) %>
         <% }); %>
       </div>
     </section>

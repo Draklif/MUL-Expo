@@ -132,9 +132,18 @@
     <% } %>
   </section>
 
-  <%/* Los proyectos. Título, director y semestre, y nada más: esta página la
-       ve cualquiera, y el correo o el documento de un estudiante no tienen por
-       qué estar en una página pública. */%>
+  <%/* Los proyectos. TÍTULO Y DIRECTOR, y nada más.
+
+       Ni el semestre ni en qué va el trámite, aunque los tengamos. Esta
+       página la ve cualquiera —compañeros, profesores, la familia— y un
+       "semestre III · anteproyecto" a la vista de todos es una fecha de
+       entrega pública: mete una presión que el semillero no quiere meter, y
+       encima la mete mal, porque un proyecto que va lento no siempre va
+       peor. En qué va cada uno lo saben su director y él, que son quienes
+       tienen algo que hacer al respecto, y para eso está el panel.
+
+       Lo que sí falta seguir dejando afuera: el correo y el documento de un
+       estudiante no tienen por qué estar en una página pública. */%>
   <% if (encurso.length) { %>
     <section class="sam-sec">
       <div class="sec-top">
@@ -146,17 +155,15 @@
       </div>
 
       <div class="tabla-envoltura">
-        <table class="tabla">
+        <table class="tabla llana">
           <thead>
-            <tr><th>Proyecto</th><th>Director</th><th>Semestre</th><th>Va en</th></tr>
+            <tr><th>Proyecto</th><th>Director</th></tr>
           </thead>
           <tbody>
             <% encurso.forEach(function (p) { %>
               <tr>
                 <td><%= p.titulo %></td>
                 <td><%= p.director || "Por asignar" %></td>
-                <td><%= p.semestre || "—" %></td>
-                <td><span class="chip <%= p.estado_info.cls %>"><%= p.estado_info.label %></span></td>
               </tr>
               <%/* El perfil no sale en esta tabla: lo que le sirve a quien mira
                    desde afuera es de qué son los proyectos, y eso lo dice el

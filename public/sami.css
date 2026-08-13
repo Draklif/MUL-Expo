@@ -402,10 +402,135 @@ a.tarjeta:hover { border-color: var(--tinte); }
 .dato .v { font-size: 15.5px; line-height: 1.45; }
 .dato .v strong { font-weight: 700; }
 .dato .v.grande { font-family: var(--display); font-size: 22px; font-weight: 700; }
+
 .dato .v.ok     { color: var(--monte); }
 .dato .v.alerta { color: var(--ambar); }
 .dato .v.malo   { color: var(--ladrillo); }
 .dato .v.apagado { color: var(--tinta-mute); }
+
+/* Las cifras de una tarjeta de resumen: los rótulos miden dos renglones
+   siempre, quepan en uno o en dos. Si no, "Pasados de los tres semestres"
+   empuja su número medio renglón abajo y la fila de cifras queda en
+   escalera. Dos renglones de 10.5 px son 27 px. */
+.datos.cifras .k {
+  min-height: 27px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.datos.cifras .v.grande { height: 32px; overflow: hidden; }
+
+/* ---------------------------------------------------------------------
+   La tarjeta de un proyecto: TODAS DEL MISMO ALTO
+
+   No es capricho de simetría. La portada del panel es una rejilla que se
+   barre con el ojo, y para barrerla las cifras tienen que caer siempre en
+   el mismo renglón: el semestre de la tarjeta de la izquierda a la misma
+   altura que el de la derecha. Un título de una línea al lado de uno de
+   tres, o un codirector que en unas tarjetas está y en otras no, rompe eso
+   y obliga a leer cada tarjeta entera para encontrar el dato.
+
+   Así que aquí NADA mide según lo que le tocó de contenido. Cada casilla
+   tiene su alto en píxeles y lo que no cabe se recorta con puntos
+   suspensivos; el texto completo queda en el title, a un segundo de
+   distancia. Los nombres de las personas se llevan un renglón entero cada
+   uno —son lo más largo que hay— y por eso van abajo y no en la rejilla de
+   cifras, donde a tres columnas no cabría ni un apellido compuesto.
+   --------------------------------------------------------------------- */
+.tp-cab {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+/* Tres renglones de 20 px, ni uno más. Tres y no dos porque los títulos de
+   este semillero son de cien caracteres —"Aplicativo móvil con realidad
+   aumentada para la comprensión de las métricas…"— y en dos renglones se
+   cortan todos por la mitad; en tres, casi ninguno. */
+.tp-titulo {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  height: 60px;
+  line-height: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* El chip no se encoge —una etiqueta de estado a medias no dice nada— pero
+   tampoco pasa de la mitad del ancho: de "Sustentación de anteproyecto"
+   para arriba, el que cede es el título, que tiene el suyo en el title. */
+.tp-cab .chip {
+  flex: 0 0 auto;
+  display: block;
+  max-width: 52%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tp-gente {
+  margin: 0 0 12px;
+  height: 18px;
+  line-height: 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Dos columnas y fijas: con auto-fit, una tarjeta angosta bajaría la
+   segunda cifra a un renglón nuevo y ya serían dos altos distintos. */
+.tp-cifras {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 26px;
+  margin-top: 14px;
+}
+
+.tp-cifras .k { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tp-cifras .v.grande { height: 32px; overflow: hidden; }
+
+/* Director y codirector: un renglón entero para cada uno, siempre los dos,
+   esté o no el codirector. El rótulo con ancho fijo para que los dos
+   nombres arranquen en la misma columna. */
+.tp-persona {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  height: 20px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dotted var(--linea);
+  box-sizing: content-box;
+}
+
+.tp-persona .k {
+  flex: 0 0 90px;   /* lo que mide "CODIRECTOR" en mono a 10.5 px */
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.tp-persona .v {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tp-persona .v.apagado { color: var(--tinta-mute); }
 
 /* Una lista de rótulo y valor en columna, para las fichas angostas. */
 .ficha { margin: 0; }
@@ -933,6 +1058,12 @@ table.tabla td {
   vertical-align: top;
 }
 
+/* Una tabla de dos o tres columnas no necesita los 720 px de ancho mínimo
+   que pide la del panel: cabe en cualquier pantalla y así se lee sin
+   arrastrarla de lado. */
+table.tabla.llana { min-width: 0; }
+table.tabla.llana td:last-child, table.tabla.llana th:last-child { width: 34%; }
+
 table.tabla tr:last-child td { border-bottom: 0; }
 table.tabla tbody tr:hover { background: var(--papel-hondo); }
 table.tabla a { text-decoration: none; font-weight: 600; }
@@ -942,7 +1073,13 @@ table.tabla a:hover { text-decoration: underline; }
    Pie
    --------------------------------------------------------------------- */
 body:has(> .sam-foot) { display: flex; flex-direction: column; min-height: 100vh; }
-body:has(> .sam-foot) > main { flex: 1 0 auto; min-width: 0; }
+/* El width:100% no sobra. Sin él, el main —como hijo de un flex en columna—
+   se estira hasta el max-content de lo que lleve dentro, y una tabla con
+   min-width de 720 px se lleva la página entera de lado en el celular: la
+   envoltura con overflow-x deja de contener nada porque el ancho que tiene
+   que respetar es el que ella misma acaba de inflar. Con un ancho definido
+   la tabla vuelve a desplazarse dentro de su caja y la página no. */
+body:has(> .sam-foot) > main { flex: 1 0 auto; min-width: 0; width: 100%; }
 
 .sam-foot {
   border-top: 1px solid var(--linea-fuerte);
@@ -1010,6 +1147,13 @@ body:has(> .sam-foot) > main { flex: 1 0 auto; min-width: 0; }
   .marca { align-items: flex-start; }
   .ficha .f { flex-direction: column; gap: 3px; }
   .ficha .f .k { flex: none; max-width: none; }
+
+  /* En una tarjeta de 290 px el chip y el título no caben en el mismo
+     renglón sin dejar al título en cuatro palabras. Se bajan a renglones
+     propios —de alto fijo los dos, que es de lo que se trata— en vez de
+     seguir apretando. */
+  .tp-cab { flex-direction: column; gap: 8px; }
+  .tp-cab .chip { max-width: 100%; }
 }
 
 @media print {

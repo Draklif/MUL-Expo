@@ -5,26 +5,34 @@
      propósito: lo que cambia no es qué se ve del proyecto sino qué se puede
      hacer con él, y eso se dice al entrar, no en la tarjeta.
 
-     Lo único que se acomoda es la tercera cifra: en un proyecto propio el
-     director soy yo y decirlo no informa nada, así que ahí va el codirector.
+     TODAS LAS TARJETAS MIDEN LO MISMO. Cada cosa tiene su casilla de alto
+     fijo —tres renglones de título, uno de integrantes, uno por persona— y lo
+     que no cabe se recorta con puntos suspensivos. Un título largo o un
+     nombre de director de cuarenta letras no puede estirar una tarjeta y
+     dejar la de al lado a media altura: la rejilla se lee de un vistazo o no
+     se lee.
+
+     Por eso también van SIEMPRE las dos personas, cada una en su renglón
+     entero: dos tarjetas con distinto número de renglones son dos tarjetas
+     de distinto alto, y la casilla del codirector vacía cuesta 20 px y no
+     obliga a mirar dos veces para saber qué se está leyendo.
 
      Locals:
        p       — el proyecto, con .estudiantes y .reuniones.
-       mio     — si soy su director.
        estados — sami.ESTADOS, para la escalera. */%>
-<a href="/semillero/panel/proyecto/<%= p.id %>" class="tarjeta">
-  <div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">
-    <h3 style="margin:0;flex:1 1 200px"><%= p.titulo %></h3>
-    <span class="chip <%= p.estado_info.cls %>" style="flex:0 0 auto"><%= p.estado_info.label %></span>
+<a href="/semillero/panel/proyecto/<%= p.id %>" class="tarjeta tarj-proy">
+  <div class="tp-cab">
+    <h3 class="tp-titulo" title="<%= p.titulo %>"><%= p.titulo %></h3>
+    <span class="chip <%= p.estado_info.cls %>" title="<%= p.estado_info.label %>"><%= p.estado_info.label %></span>
   </div>
 
-  <p class="mini" style="margin:8px 0 12px">
+  <p class="mini tp-gente">
     <%= p.estudiantes.filter(function (e) { return e.activo; }).map(function (e) { return e.nombre; }).join(" · ") || "Sin integrantes" %>
   </p>
 
   <%- include('escalera', { estados: estados, actual: p.estado_info }) %>
 
-  <div class="datos" style="margin-top:14px">
+  <div class="datos tp-cifras">
     <div class="dato">
       <div class="k">Semestre</div>
       <div class="v grande <%= p.excedido ? "alerta" : "" %>"><%= p.semestre || "—" %></div>
@@ -33,11 +41,14 @@
       <div class="k">Reuniones</div>
       <div class="v grande <%= p.reuniones ? "" : "apagado" %>"><%= p.reuniones %></div>
     </div>
-    <div class="dato">
-      <div class="k"><%= mio ? "Codirector" : "Director" %></div>
-      <div class="v" style="font-size:14px">
-        <%= mio ? p.codirector || "—" : p.director || "Sin asignar" %>
-      </div>
-    </div>
+  </div>
+
+  <div class="tp-persona">
+    <span class="k">Director</span>
+    <span class="v <%= p.director ? "" : "apagado" %>" title="<%= p.director || "" %>"><%= p.director || "Sin asignar" %></span>
+  </div>
+  <div class="tp-persona">
+    <span class="k">Codirector</span>
+    <span class="v <%= p.codirector ? "" : "apagado" %>" title="<%= p.codirector || "" %>"><%= p.codirector || "—" %></span>
   </div>
 </a>
