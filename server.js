@@ -12,6 +12,7 @@ const db = require("./db/database");
 const { CRITERIOS, CRITERIOS_IND, ESCALA_MAX, PASSWORD, PATROCINIOS, PERIODO } = require("./config");
 const { contenidoEvento } = require("./lib/contenido");
 const eventos = require("./lib/eventos");
+const { aprobado } = require("./lib/aprobado");
 const { DOMINIO, PATRON_HTML } = require("./lib/correos");
 
 const authRouter = require("./routes/auth");
@@ -334,8 +335,15 @@ app.listen(PORT, "0.0.0.0", () => {
     console.log(`    Para activar uno: activo: true en su evento, en config.js.`);
   }
   console.log("");
+  // Solo las direcciones que de verdad abren. Lo que no está aprobado rebota a
+  // la raíz, y anunciarlo aquí manda al que lee a comprobar un enlace muerto.
   eventos.EVENTOS.filter((e) => !vigente || e.slug !== vigente.slug).forEach((e) => {
-    console.log(`  · ${e.nombre.padEnd(24)} http://localhost:${PORT}/${e.slug}`);
+    const rotulo = e.nombre.padEnd(24);
+    console.log(
+      aprobado(e.slug)
+        ? `  · ${rotulo} http://localhost:${PORT}/${e.slug}`
+        : `  · ${rotulo} sin aprobar (APROBADO en config.js)`
+    );
   });
   console.log(`  · Índice del programa:     http://localhost:${PORT}/info`);
   console.log(`  ✓ Acceso docentes:         http://localhost:${PORT}/acceso`);
@@ -369,8 +377,16 @@ app.listen(PORT, "0.0.0.0", () => {
       ? `  ✓ Panel semillero SAMI:    http://localhost:${PORT}/semillero/acceso`
       : "  · Panel semillero SAMI:    cerrado (falta PASSWORD_SAMI en .env)"
   );
-  console.log(`  · Salidas pedagógicas:     http://localhost:${PORT}/salidas`);
-  console.log(`  · Semillero SAMI:          http://localhost:${PORT}/semillero`);
+  console.log(
+    aprobado("salidas")
+      ? `  · Salidas pedagógicas:     http://localhost:${PORT}/salidas`
+      : "  · Salidas pedagógicas:     sin aprobar (APROBADO en config.js)"
+  );
+  console.log(
+    aprobado("semillero")
+      ? `  · Semillero SAMI:          http://localhost:${PORT}/semillero`
+      : "  · Semillero SAMI:          sin aprobar (APROBADO en config.js)"
+  );
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(
     envios.activo()

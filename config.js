@@ -134,6 +134,45 @@ const EVENTOS = [
 const SOLO_EVENTO_ACTIVO = false;
 
 // ---------------------------------------------------------------------
+//  QUÉ ESTÁ APROBADO
+// ---------------------------------------------------------------------
+// El listado de todo lo que el sitio puede enseñar al público, con un sí o un
+// no al lado. En false, esa parte del sitio DEJA DE EXISTIR hacia afuera:
+//
+//   · no sale su banda en el índice del programa (/info) ni su atajo;
+//   · sus páginas públicas no responden —quien llegue por un enlace viejo o
+//     sabiéndose la dirección sale rebotado a la raíz—;
+//   · si es un evento, tampoco puede quedarse con la raíz aunque tenga
+//     activo: true, porque anunciarlo es justamente lo que no se puede.
+//
+// Esto NO es lo mismo que SOLO_EVENTO_ACTIVO, y por eso son dos banderas. Esa
+// es de calendario —"ahora manda este y los demás se apartan"— y lo que
+// aparta se sigue contando en /info como parte de lo que hizo el programa.
+// Esta es de PERMISO: un evento que la facultad todavía no aprueba no es que
+// esté fuera de temporada, es que no se puede anunciar todavía. Por eso aquí
+// no queda ni el rastro de que existe.
+//
+// Lo que NO apaga nunca, igual que la otra bandera: los paneles (el docente
+// tiene que poder preparar lo que aún no se aprueba) y los certificados ya
+// emitidos, cuyo QR está impreso.
+//
+// Las cuatro primeras claves son slugs de EVENTOS; las dos últimas son las
+// partes del sitio que no son eventos. Lo que no esté en esta lista se
+// considera aprobado: así un evento nuevo aparece desde el minuto uno y no
+// desaparece por un olvido.
+const APROBADO = {
+  expo: true,
+  "virtual-champions": false,
+  "jam-de-altura": true,
+  inkreible: true,
+  "music-fest": false,
+
+  // No son eventos: van por su cuenta y se apagan por su cuenta.
+  salidas: false,
+  semillero: true,
+};
+
+// ---------------------------------------------------------------------
 //  VIRTUAL CHAMPIONS
 // ---------------------------------------------------------------------
 // El torneo de esports. Cada juego que se vaya a jugar entra en la lista de
@@ -815,6 +854,7 @@ module.exports = {
   DOMINIO,
   EVENTOS,
   SOLO_EVENTO_ACTIVO,
+  APROBADO,
   VC,
   JAM,
   MUSIC,

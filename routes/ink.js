@@ -23,6 +23,13 @@ const router = express.Router();
 
 const EVENTO = eventos.porSlug("inkreible");
 
+// El guardia de las páginas públicas, igual que en el torneo, la jam y el
+// festival: cierra la puerta cuando el reto no está aprobado en
+// config.APROBADO y cuando SOLO_EVENTO_ACTIVO le da la exclusiva a otro. Va en
+// CADA ruta y no en un router.use(): este router se monta en "/" y por él pasan
+// también las peticiones del panel, que no se cierra nunca.
+const publica = eventos.soloActivo("inkreible");
+
 // Mismo freno que el resto de formularios públicos: solo cuentan las
 // inscripciones que SÍ entraron, para que un salón entero apuntándose desde el
 // mismo wifi no se tope con esto y un bot mandando cientos sí.
@@ -62,7 +69,7 @@ function marco(req, extra = {}) {
 // ---------------------------------------------------------------------
 //  Portada: la palabra de hoy
 // ---------------------------------------------------------------------
-router.get("/inkreible", (req, res) => {
+router.get("/inkreible", publica, (req, res) => {
   const base = marco(req);
   const id = base.edicion ? base.edicion.id : null;
 
@@ -86,7 +93,7 @@ router.get("/inkreible", (req, res) => {
 // ---------------------------------------------------------------------
 //  El calendario de las 28 palabras
 // ---------------------------------------------------------------------
-router.get("/ink/palabras", (req, res) => {
+router.get("/ink/palabras", publica, (req, res) => {
   const base = marco(req);
   const id = base.edicion ? base.edicion.id : null;
 
@@ -105,7 +112,7 @@ router.get("/ink/palabras", (req, res) => {
 // ---------------------------------------------------------------------
 //  La galería
 // ---------------------------------------------------------------------
-router.get("/ink/galeria", (req, res) => {
+router.get("/ink/galeria", publica, (req, res) => {
   const base = marco(req);
   const id = base.edicion ? base.edicion.id : null;
 
@@ -134,7 +141,7 @@ router.get("/ink/galeria", (req, res) => {
 });
 
 // La libreta de una persona: sus 28 casillas, con lo que entregó y lo que no.
-router.get("/ink/participante/:id", (req, res) => {
+router.get("/ink/participante/:id", publica, (req, res) => {
   const base = marco(req);
   const persona = ink.participante(req.params.id);
 
@@ -161,7 +168,7 @@ router.get("/ink/participante/:id", (req, res) => {
 // ---------------------------------------------------------------------
 //  El podio
 // ---------------------------------------------------------------------
-router.get("/ink/resultados", (req, res) => {
+router.get("/ink/resultados", publica, (req, res) => {
   const base = marco(req);
   const id = base.edicion ? base.edicion.id : null;
 
@@ -183,7 +190,7 @@ router.get("/ink/resultados", (req, res) => {
 // abierta. Aquí eso pasa una vez al día —a medianoche cambia la palabra—, pero
 // justamente por eso: quien dejó la pestaña abierta desde ayer tiene que ver
 // la de hoy sin recargar a mano.
-router.get("/ink/api/estado", (req, res) => {
+router.get("/ink/api/estado", publica, (req, res) => {
   const id = Number(req.query.edicion) || null;
   // Sin cache: el navegador no puede quedarse con la palabra de ayer.
   res.set("Cache-Control", "no-store");
@@ -206,11 +213,11 @@ function vistaInscripcion(req, extra = {}) {
   };
 }
 
-router.get("/ink/inscripcion", (req, res) => {
+router.get("/ink/inscripcion", publica, (req, res) => {
   res.render("ink/inscripcion", vistaInscripcion(req));
 });
 
-router.post("/ink/inscripcion", (req, res) => {
+router.post("/ink/inscripcion", publica, (req, res) => {
   const edicion = ink.edicionVigente();
 
   const valores = {
@@ -331,7 +338,7 @@ function vistaEstado(req, { codigo, recienEnviada, error }) {
   };
 }
 
-router.get("/ink/inscripcion/listo/:codigo", (req, res) => {
+router.get("/ink/inscripcion/listo/:codigo", publica, (req, res) => {
   const codigo = String(req.params.codigo || "").toUpperCase();
   if (!ink.participantePorCodigo(codigo)) return res.redirect("/ink/inscripcion/estado");
   res.render(
@@ -340,7 +347,7 @@ router.get("/ink/inscripcion/listo/:codigo", (req, res) => {
   );
 });
 
-router.get("/ink/inscripcion/estado", (req, res) => {
+router.get("/ink/inscripcion/estado", publica, (req, res) => {
   const codigo = String(req.query.codigo || "").trim().toUpperCase();
 
   res.render(

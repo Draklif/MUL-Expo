@@ -30,8 +30,15 @@ const periodos = require("../lib/periodos");
 const { SAMI } = require("../config");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
+const { guardia } = require("../lib/aprobado");
 
 const router = express.Router();
+
+// El interruptor de config.APROBADO. Va en CADA ruta y no en un router.use():
+// este router se monta en "/" y por él pasan también las peticiones del panel,
+// que no se apaga nunca —el docente entra justamente a preparar lo que aún no
+// se aprueba—.
+const publica = guardia("semillero");
 
 // Mismo freno que el resto de formularios públicos: solo cuentan los registros
 // que SÍ entraron, para que un salón entero apuntándose desde el mismo wifi no
@@ -64,7 +71,7 @@ const abierto = () => Boolean(SAMI.inscripciones);
 // ---------------------------------------------------------------------
 //  Portada
 // ---------------------------------------------------------------------
-router.get("/semillero", (req, res) => {
+router.get("/semillero", publica, (req, res) => {
   const todos = sami.todos();
 
   res.render(
@@ -88,7 +95,7 @@ router.get("/semillero", (req, res) => {
 // Va ANTES de /semillero/:algo por la misma razón de siempre; aquí además el
 // router del panel se monta después en /semillero, así que el orden de estas
 // tres rutas es lo que decide quién atiende qué.
-router.get("/semillero/estado", (req, res) => {
+router.get("/semillero/estado", publica, (req, res) => {
   const codigo = String(req.query.codigo || "").trim().toUpperCase();
   const proyecto = codigo ? sami.porCodigo(codigo) : null;
 
@@ -133,11 +140,11 @@ function vistaRegistro(extra = {}) {
   });
 }
 
-router.get("/semillero/registro", (req, res) => {
+router.get("/semillero/registro", publica, (req, res) => {
   res.render("sami/registro", vistaRegistro());
 });
 
-router.post("/semillero/registro", (req, res) => {
+router.post("/semillero/registro", publica, (req, res) => {
   const estudiantes = sami.estudiantesDesdeFormulario(req.body);
 
   const valores = {
@@ -267,7 +274,7 @@ router.post("/semillero/registro", (req, res) => {
   res.redirect(`/semillero/registro/listo/${codigo}`);
 });
 
-router.get("/semillero/registro/listo/:codigo", (req, res) => {
+router.get("/semillero/registro/listo/:codigo", publica, (req, res) => {
   const proyecto = sami.porCodigo(req.params.codigo);
   if (!proyecto) return res.redirect("/semillero/estado");
 

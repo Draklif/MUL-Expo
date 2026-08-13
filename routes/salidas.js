@@ -19,8 +19,32 @@ const { limpiarNombre } = require("../lib/listas");
 const { DOMINIO } = require("../lib/correos");
 const { crearLimite } = require("../lib/limite");
 const { porCorreo: certificadosDe } = require("../lib/certificados");
+const { guardia } = require("../lib/aprobado");
 
 const router = express.Router();
+
+// El interruptor de config.APROBADO. Va en CADA ruta y no en un router.use():
+// este router se monta en "/" y por él pasan también las peticiones del panel
+// de salidas, que no se apaga nunca.
+const publica = guardia("salidas");
+
+/**
+ * El mismo interruptor, para las direcciones con :id.
+ *
+ * Ahí no puede ir de primero, y esta es la trampa: /salidas/acceso y
+ * /salidas/panel también encajan en /salidas/:id, así que un guardia que
+ * rebote antes de mirar el id se lleva por delante la puerta del panel —que no
+ * se apaga nunca— y deja al docente sin poder entrar justo cuando la salida no
+ * está aprobada, que es cuando más falta le hace.
+ *
+ * Así que primero se comprueba si el id es una salida de verdad. Si no lo es,
+ * esto no es asunto de aquí y la petición sigue de largo, igual que hace el
+ * next() de cada uno de estos manejadores.
+ */
+const publicaSalida = (req, res, next) => {
+  if (!salidas.porId(req.params.id)) return next("route");
+  return publica(req, res, next);
+};
 
 // Mismo freno que el resto de formularios públicos: solo cuentan los registros
 // que SÍ entraron, para que un salón entero apuntándose desde el mismo wifi no
@@ -62,7 +86,7 @@ function marcoSalida(salida, extra = {}) {
 // Con una sola salida abierta no hay nada que elegir, así que /salidas es
 // directamente su página. El listado solo aparece cuando de verdad hay más de
 // una cosa que mirar.
-router.get("/salidas", (req, res) => {
+router.get("/salidas", publica, (req, res) => {
   const todas = salidas.todas();
   const abiertas = todas.filter(salidas.inscripcionAbierta);
 
@@ -86,7 +110,7 @@ router.get("/salidas", (req, res) => {
 // ---------------------------------------------------------------------
 // Va ANTES de /salidas/:id: si no, "estado" se leería como el id de una salida
 // y la consulta no existiría.
-router.get("/salidas/estado", (req, res) => {
+router.get("/salidas/estado", publica, (req, res) => {
   const codigo = String(req.query.codigo || "").trim().toUpperCase();
   const registro = codigo ? salidas.porCodigo(codigo) : null;
 
@@ -117,7 +141,7 @@ router.get("/salidas/estado", (req, res) => {
 // El next() del final es lo que deja convivir esta dirección con /salidas/panel
 // y /salidas/acceso: un id que no está en config no es una salida, así que la
 // petición sigue de largo hasta el router del panel.
-router.get("/salidas/:id", (req, res, next) => {
+router.get("/salidas/:id", publicaSalida, (req, res, next) => {
   const salida = salidas.porId(req.params.id);
   if (!salida) return next();
 
@@ -140,14 +164,14 @@ function vistaRegistro(salida, extra = {}) {
   });
 }
 
-router.get("/salidas/:id/registro", (req, res, next) => {
+router.get("/salidas/:id/registro", publicaSalida, (req, res, next) => {
   const salida = salidas.porId(req.params.id);
   if (!salida) return next();
 
   res.render("salidas/registro", vistaRegistro(salida));
 });
 
-router.post("/salidas/:id/registro", (req, res, next) => {
+router.post("/salidas/:id/registro", publicaSalida, (req, res, next) => {
   const salida = salidas.porId(req.params.id);
   if (!salida) return next();
 
@@ -250,7 +274,7 @@ router.post("/salidas/:id/registro", (req, res, next) => {
   res.redirect(`/salidas/${salida.id}/registro/listo/${codigo}`);
 });
 
-router.get("/salidas/:id/registro/listo/:codigo", (req, res, next) => {
+router.get("/salidas/:id/registro/listo/:codigo", publicaSalida, (req, res, next) => {
   const salida = salidas.porId(req.params.id);
   if (!salida) return next();
 

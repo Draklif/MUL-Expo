@@ -23,10 +23,19 @@
      El orden lo pone config.EVENTOS. Un evento nuevo que todavía no tenga
      banda propia cae en la genérica y aparece igual desde el minuto uno; el
      día que se le haga la suya, se agrega aquí abajo.
+
+     Y lo que no esté aprobado no llega hasta aquí: config.APROBADO lo saca de
+     `orden` y deja en null `salidas` y `semillero`, así que esta vista solo
+     pregunta si le llegó cada cosa. No hay un "próximamente" en ninguna
+     parte: lo que no se puede anunciar no se nombra.
      ───────────────────────────────────────────────────────────────── */%>
+<%/* La descripción no enumera nada, y es a propósito: con eventos que se
+     apagan desde config, cualquier lista escrita a mano queda mintiendo el día
+     que uno de ellos deja de estar aprobado —y esta frase es la que sale en
+     WhatsApp cuando alguien pega el enlace—. */%>
 <%- include('partials/head', {
       title: title,
-      descripcion: 'Los eventos y las salidas pedagógicas de Ingeniería en Multimedia, Universidad de Boyacá.',
+      descripcion: 'Todo lo que Ingeniería en Multimedia organiza fuera del salón, en la Universidad de Boyacá.',
       css: css,
       themeColor: themeColor,
     }) %>
@@ -51,11 +60,16 @@
   <section class="in-portada">
     <p class="in-eyebrow">Universidad de Boyacá</p>
     <h1>Lo que pasa <em>fuera del salón</em></h1>
+    <%/* La entradilla tampoco enumera. La lista de siempre —"una muestra, un
+         torneo, una jam, un festival y los buses"— se cayó el día que los
+         eventos se pudieron apagar desde config: nombraba tres cosas que ya no
+         estaban más abajo, y una página que promete lo que no tiene se lee como
+         desactualizada aunque esté al día. Lo que hay se anuncia solo, en las
+         bandas y en los atajos. */%>
     <p class="in-lead">
-      Una muestra, un torneo, una jam, un festival y los buses que salen a las
-      cinco de la mañana. Todo lo organiza el programa de Ingeniería en
-      Multimedia y en todo participan estudiantes: aquí está cada cosa, lo que
-      se hizo la última vez y lo que viene.
+      Todo lo organiza el programa de Ingeniería en Multimedia y en todo
+      participan estudiantes: aquí está cada cosa, lo que se hizo la última vez
+      y lo que viene.
     </p>
 
     <%/* EL ESTADO DEL SEMESTRE. Es la primera pregunta de quien llega —¿hay
@@ -81,8 +95,11 @@
         <p class="q">
           Entre un semestre y otro el programa no anuncia nada, y esta página
           es lo que hay: el próximo evento aparece aquí y en la raíz del sitio
-          en cuanto se abra. Las salidas pedagógicas van por su cuenta y
-          pueden estar recibiendo gente ahora mismo — están más abajo.
+          en cuanto se abra.
+          <% if (salidas) { %>
+            Las salidas pedagógicas van por su cuenta y pueden estar recibiendo
+            gente ahora mismo — están más abajo.
+          <% } %>
         </p>
       </div>
     <% } %>
@@ -94,7 +111,8 @@
       <% orden.forEach(function (slug) { if (eventos[slug]) { %>
         <a href="#<%= slug %>"><%= eventos[slug].nombre %></a>
       <% } }); %>
-      <a href="#salidas">Salidas pedagógicas</a>
+      <% if (salidas) { %><a href="#salidas">Salidas pedagógicas</a><% } %>
+      <% if (semillero) { %><a href="#semillero">Semillero SAMI</a><% } %>
     </nav>
   </section>
 
@@ -118,7 +136,17 @@
     <% } %>
   <% }); %>
 
-  <%- include('info/banda-salidas', { salidas: salidas }) %>
+  <%/* Las dos que no son eventos van al final y en este orden: primero las
+       salidas, que son de este mes, y después el semillero, que es de tres
+       semestres. Quien baja hasta aquí buscando algo inmediato lo encuentra
+       antes de llegar a lo que se decide con calma. */%>
+  <% if (salidas) { %>
+    <%- include('info/banda-salidas', { salidas: salidas }) %>
+  <% } %>
+
+  <% if (semillero) { %>
+    <%- include('info/banda-sami', { sam: semillero }) %>
+  <% } %>
 
 </main>
 

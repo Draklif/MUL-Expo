@@ -1,0 +1,129 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     BANDA DEL SEMILLERO — cuaderno de laboratorio
+
+     La séptima cara y la única de las claras que no es papel de trámite: es
+     CUADRÍCULA, la del cuaderno de apuntes, con tinta azul de bolígrafo. Se
+     distingue de las salidas —que son crema y pauta de renglones— en lo
+     mismo en que se distinguen las dos cosas: una salida es un permiso que
+     se firma una vez, el semillero es un registro de avances que se lleva
+     durante tres semestres.
+
+     LO QUE NO SALE AQUÍ, y es lo importante de esta banda: ni el semestre en
+     que va cada proyecto ni en qué punto del trámite está. Solo el título y
+     el director. Esta página la ve cualquiera —compañeros, familia, otros
+     profesores— y publicar el avance al lado del nombre de quien investiga
+     es ponerle una fecha de entrega en público a algo que dura tres
+     semestres y que no siempre va lento por ir mal.
+
+     Tampoco hay historial por semestres como en los eventos. El semillero no
+     tiene ediciones: no empieza ni termina, los proyectos se solapan. Así que
+     se cuenta lo que hay —lo que está andando y lo que ya se sustentó— y no
+     lo que pasó en cada semestre.
+
+     Locals:
+       sam — programa.indice().semillero. */%>
+<section class="banda b-sami" id="semillero">
+  <div class="banda-in">
+
+    <header class="b-cab">
+      <p class="b-tipo">Semillero de investigación · alternativa de grado</p>
+      <h2><%= sam.nombre %> · investigar <em>como grado</em></h2>
+      <p class="b-lema"><%= sam.completo %>.</p>
+    </header>
+
+    <div class="b-cols">
+      <div class="b-texto">
+        <p>
+          La otra manera de graduarse: en vez de la práctica empresarial, un
+          proyecto de investigación propio dirigido por un docente del programa.
+          Dura <%= sam.semestres %> semestres, se entra desde
+          <%= sam.semestre_minimo %>.º y termina en una sustentación.
+        </p>
+        <p>
+          El trámite empieza en persona, en la dirección del programa, y no en
+          esta página: aquí solo se dejan escritos los datos una vez para no
+          tener que volver a copiarlos en cada puerta.
+        </p>
+      </div>
+
+      <%/* Las tres cifras del semillero. Van en la misma rejilla que las del
+           torneo y la jam —.b-marcas— porque son lo mismo: el tamaño de lo
+           que hay, no el avance de nadie. */%>
+      <ul class="b-marcas">
+        <% sam.cifras.forEach(function (c) { %>
+          <li><span class="n"><%= c.n %></span><span class="q"><%= c.que %></span></li>
+        <% }); %>
+      </ul>
+    </div>
+
+    <%/* Los perfiles: es lo que responde "¿y yo qué investigaría?", que es la
+         pregunta que trae quien llega. Cuatro renglones y no cuatro tarjetas:
+         no son opciones que se elijan, son por dónde se mueve el semillero. */%>
+    <% if (sam.perfiles.length) { %>
+      <ul class="sam-perfiles">
+        <% sam.perfiles.forEach(function (p) { %>
+          <li><strong><%= p.nombre %></strong><span><%= p.texto %></span></li>
+        <% }); %>
+      </ul>
+    <% } %>
+
+    <%/* Lo que se está investigando. Título y director, y con tope: el
+         listado entero vive en /semillero, y esta página es el índice del
+         programa, no el catálogo del semillero. */%>
+    <% const TOPE = 6; %>
+    <% if (sam.encurso.length) { %>
+      <div class="b-historial">
+        <p class="b-rotulo">Lo que se está investigando</p>
+        <ul class="sam-lista">
+          <% sam.encurso.slice(0, TOPE).forEach(function (p) { %>
+            <li>
+              <span class="que"><%= p.titulo %></span>
+              <span class="quien"><%= p.director || 'Por asignar' %></span>
+            </li>
+          <% }); %>
+        </ul>
+        <% if (sam.encurso.length > TOPE) { %>
+          <p class="b-mas">
+            Y <%= sam.encurso.length - TOPE %> proyecto<%= sam.encurso.length - TOPE === 1 ? '' : 's' %>
+            más, en <a href="/semillero">la página del semillero</a>.
+          </p>
+        <% } %>
+      </div>
+    <% } %>
+
+    <%/* Los sustentados. Estos sí son historia del programa y por eso van
+         aunque no haya nada en curso: un semillero se mide por lo que
+         terminó. */%>
+    <% if (sam.finalizados.length) { %>
+      <div class="b-historial">
+        <p class="b-rotulo">Ya sustentados</p>
+        <ul class="sam-lista cerrados">
+          <% sam.finalizados.slice(0, TOPE).forEach(function (p) { %>
+            <li>
+              <span class="que"><%= p.titulo %></span>
+              <span class="quien"><%= p.director || '—' %></span>
+            </li>
+          <% }); %>
+        </ul>
+        <% if (sam.finalizados.length > TOPE) { %>
+          <p class="b-mas">Y <%= sam.finalizados.length - TOPE %> proyectos más.</p>
+        <% } %>
+      </div>
+    <% } %>
+
+    <div class="b-pie">
+      <a class="b-ir" href="/semillero">
+        <%= sam.inscripciones ? 'Cómo se entra' : 'Ver el semillero' %>
+      </a>
+      <p class="sam-estado">
+        <% if (sam.inscripciones) { %>
+          El registro de intención está abierto.
+        <% } else { %>
+          El registro de intención está cerrado por ahora; los proyectos en
+          curso siguen andando.
+        <% } %>
+      </p>
+    </div>
+
+  </div>
+</section>

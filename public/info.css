@@ -3,7 +3,7 @@
    Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
 
    Esta página tiene un problema que no tiene ninguna otra del sitio: habla
-   de SEIS cosas que ya tienen cara propia, y las seis caras son
+   de SIETE cosas que ya tienen cara propia, y las siete caras son
    incompatibles entre sí a propósito.
 
      Expo Multimedia   — editorial, serif, papel.
@@ -12,9 +12,10 @@
      INKreible         — papel claro, rotulador y rojo de sello.
      Music Fest        — cartel, Anton y degradado.
      Salidas           — papel claro, formulario institucional.
+     Semillero SAMI    — papel cuadriculado y tinta azul de cuaderno.
 
-   La salida fácil era inventar una séptima cara y meterlo todo en tarjetas
-   iguales. Se descartó: seis tarjetas grises con el nombre de cada evento
+   La salida fácil era inventar una octava cara y meterlo todo en tarjetas
+   iguales. Se descartó: siete tarjetas grises con el nombre de cada evento
    no dicen qué es ninguno, y quien conoce el festival no lo reconocería.
 
    Lo que se hace en cambio: la página es una PILA DE BANDAS a ancho
@@ -1324,6 +1325,120 @@ img { max-width: 100%; }
 .sal-codigo a { color: var(--acento); border-bottom: 1px solid currentColor; }
 
 /* =====================================================================
+   BANDA 7 · SEMILLERO SAMI — cuaderno de laboratorio
+
+   La segunda banda clara, y tenía que distinguirse de la de las salidas sin
+   volverse otra cosa: las dos son papel. La diferencia es la TRAMA. Salidas
+   lleva pauta de renglones —el formato que se llena a mano y se firma una
+   vez—; esta lleva cuadrícula y tinta azul de bolígrafo, que es el cuaderno
+   en el que se apuntan avances semana a semana durante tres semestres. Es la
+   misma trama de /semillero, así que quien llegue allá desde aquí reconoce
+   el papel antes de leer el título.
+   ===================================================================== */
+.b-sami {
+  --fondo: #f2f5fa;
+  --tinta: #151b28;
+  --dim: #46536a;
+  --mute: #7c879a;
+  --linea: #ccd5e4;
+  --acento: #2b47b4;
+  --tipo: var(--f-cond);
+
+  /* La cuadrícula: 26 px, dos gradientes cruzados y ninguna imagen. Tan tenue
+     que solo se nota como textura, igual que en la hoja del semillero. */
+  background-image:
+    linear-gradient(rgba(150, 166, 194, .20) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(150, 166, 194, .20) 1px, transparent 1px);
+  background-size: 100% 26px, 26px 100%;
+  border-top-color: #b3bfd2;
+}
+
+.b-sami .b-cab h2 {
+  font-variation-settings: "wdth" 100, "wght" 700;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+.b-sami .b-cab h2 em { font-style: normal; color: var(--acento); }
+.b-sami .b-tipo, .b-sami .b-rotulo { font-family: var(--f-mono); }
+.b-sami .b-rotulo { border-bottom: 1px solid var(--linea); }
+.b-sami .b-ir { border-radius: 4px; }
+.b-sami .b-ir:hover { color: #f2f5fa; }
+
+/* Las cifras, sobre papel: la caja tiene fondo propio porque una casilla sin
+   relleno sobre cuadrícula se pierde en la trama. */
+.b-sami .b-marcas li { background: #fff; border-color: var(--linea); }
+.b-sami .b-marcas .n { font-variation-settings: "wdth" 100, "wght" 700; }
+.b-sami .b-marcas .q { font-family: var(--f-mono); letter-spacing: .1em; }
+
+/* LOS PERFILES — cuatro renglones, no cuatro tarjetas.
+   No son opciones que se eligen (eso está escrito en la página del
+   semillero): son por dónde se mueve. Cuatro tarjetas los harían parecer un
+   menú del que hay que escoger uno. */
+.sam-perfiles {
+  margin: clamp(28px, 4vw, 42px) 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  /* 200 y no 230: con 230 los cuatro perfiles no alcanzan a caber en una fila
+     y quedan tres arriba y uno solo abajo, que se lee como si el cuarto fuera
+     de otra categoría. */
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: 0 26px;
+}
+.sam-perfiles li {
+  min-width: 0;
+  padding: 13px 0;
+  border-top: 1px solid var(--linea);
+}
+.sam-perfiles strong {
+  display: block;
+  font-family: var(--f-cond);
+  font-variation-settings: "wdth" 100, "wght" 700;
+  font-weight: 700;
+  font-size: 15.5px;
+}
+.sam-perfiles span {
+  display: block;
+  margin-top: 3px;
+  font-size: 13.5px;
+  color: var(--dim);
+  overflow-wrap: anywhere;
+}
+
+/* LOS PROYECTOS — título y director, en dos columnas alineadas.
+   Ni el semestre ni el estado: eso es del panel. Y el título manda el ancho
+   porque es lo único que dice de qué es el proyecto. */
+.sam-lista { margin: 0; padding: 0; list-style: none; }
+.sam-lista li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 210px);
+  gap: 4px 20px;
+  align-items: baseline;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--linea);
+}
+.sam-lista .que {
+  min-width: 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.sam-lista .quien {
+  min-width: 0;
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--mute);
+  overflow-wrap: anywhere;
+}
+/* Los sustentados son archivo: se leen en gris, para que en un vistazo se
+   vea cuáles están andando y cuáles ya terminaron. El director se queda del
+   mismo color que arriba —pintarlo de acento aquí resaltaría los guiones de
+   los proyectos viejos, que es lo último que hay que mirar—. */
+.sam-lista.cerrados .que { color: var(--dim); }
+
+.sam-estado { margin: 0; font-size: 13.5px; color: var(--mute); max-width: 52ch; }
+
+/* =====================================================================
    BANDA GENÉRICA — la de un evento sin cara propia todavía
    ===================================================================== */
 .b-gen {
@@ -1387,6 +1502,7 @@ img { max-width: 100%; }
 
   .sal-pasadas a { grid-template-columns: minmax(0, 1fr); gap: 2px; padding: 14px 0; }
   .b-viejas li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .sam-lista li { grid-template-columns: minmax(0, 1fr); gap: 2px; }
 }
 
 @media (max-width: 560px) {
