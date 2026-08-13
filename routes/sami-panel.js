@@ -21,11 +21,15 @@
 //
 //  Dos reglas que el panel no deja saltarse:
 //
-//    · un proyecto con reuniones registradas NO se borra. Son la constancia
-//      del trabajo de un semestre. Si el estudiante se fue, se pasa a
-//      'retirado' y queda el registro;
-//    · una nota se puede corregir, pero nunca queda anónima: se guarda quién
-//      la cerró y cuándo.
+//    · nada de lo que se deshace queda anónimo. Una nota se puede corregir,
+//      pero se guarda quién la cerró y cuándo; un proyecto se puede cancelar,
+//      pero con motivo, con dueño y con fecha;
+//    · un estudiante que se va se marca 'retirado', no se quita de la lista.
+//      Sus reuniones y sus notas siguen siendo ciertas.
+//
+//  Lo que el panel SÍ deja hacer, y a propósito, es eliminar un proyecto
+//  entero por muchas reuniones y notas que tenga. Lo de abajo explica por qué:
+//  el candado que lo impedía solo atrapaba los proyectos de prueba.
 // =====================================================================
 const express = require("express");
 const db = require("../db/database");
@@ -43,7 +47,11 @@ function marco(extra = {}) {
     themeColor: "#f2f5fa",
     title: "Panel · Semillero SAMI",
     sami: SAMI,
+    // Dos listas y no una: `estados` es la escalera entera, que se dibuja
+    // completa siempre; `estadosManuales` es lo que el selector ofrece, sin
+    // 'cancelado' —ese tiene su propio botón—.
     estados: sami.ESTADOS,
+    estadosManuales: sami.ESTADOS_MANUALES,
     semestres: sami.SEMESTRES,
     perfiles: sami.PERFILES,
     conceptos: sami.CONCEPTOS,
@@ -134,8 +142,43 @@ function soloDirector(req, res, proyecto) {
   return false;
 }
 
+/**
+ * El otro guardia de las escrituras, y va junto al de arriba en las mismas
+ * rutas: en un semestre anterior al de ingreso el proyecto no existía, así que
+ * no se le registra nada.
+ *
+ * Se comprueba en el servidor y no solo escondiendo los formularios, por lo
+ * mismo de siempre: esconder un control no es una regla. `periodo` deja mirar el
+ * semestre de la FILA que se está tocando —el de una reunión que se edita— y no
+ * solo el que se esté viendo en el selector.
+ */
+function desdeElIngreso(req, res, proyecto, periodo = req.periodo) {
+  if (!sami.antesDelIngreso(periodo && periodo.codigo, proyecto)) return true;
+  res.redirect(volverA(proyecto, "?error=antes_de_ingreso"));
+  return false;
+}
+
 const volverA = (proyecto, extra = "") =>
   `/semillero/panel/proyecto/${proyecto.id}${extra || "?ok=1"}`;
+
+/**
+ * Un integrante de este proyecto que ya esté en OTRO proyecto vivo.
+ *
+ * Se pregunta al revivir un proyecto cerrado —reabrir uno cancelado, sacar uno
+ * de 'retirado'—. Mientras estuvo cerrado sus integrantes quedaron libres y
+ * pudieron radicar otra propuesta; devolverlo a la vida sin mirar los dejaría
+ * con dos alternativas de grado a la vez, que es justo lo que la cancelación
+ * había resuelto.
+ */
+function integranteOcupado(proyecto) {
+  return (
+    sami
+      .estudiantesDe(proyecto.id)
+      .filter((e) => e.activo)
+      .map((e) => sami.proyectoDe(e.email))
+      .find(Boolean) || null
+  );
+}
 
 // ---------------------------------------------------------------------
 //  Portada: mis proyectos arriba, el semillero entero abajo
@@ -179,7 +222,10 @@ router.get("/panel/solicitudes", (req, res) => {
     marco({
       title: "Intenciones · Semillero SAMI",
       rutaPeriodo: "/semillero/panel/solicitudes",
-      pendientes: sami.todos({ fase: "vinculacion" }),
+      // Con el rastro de cada uno: la bandeja es donde caen los registros de
+      // prueba y los repetidos, así que es donde más falta hace poder borrar
+      // sin entrar a la ficha. Y donde hay que saber cuáles no se pueden.
+      pendientes: sami.todos({ fase: "vinculacion" }).map((p) => ({ ...p, rastro: sami.rastro(p.id) })),
       docentes: docentes(),
       aviso: req.query,
     })
@@ -193,10 +239,26 @@ router.get("/panel/proyecto/:id", (req, res) => {
   const proyecto = sami.porId(req.params.id);
   if (!proyecto) return res.redirect("/semillero/panel");
 
-  const estudiantes = sami.estudiantesDe(proyecto.id).map((e) => ({
-    ...e,
-    ...sami.notaDe(e.id, req.periodo.id),
-  }));
+  // Los objetivos son del proyecto, así que su promedio se saca una vez y es el
+  // mismo para los dos integrantes. Lo que los diferencia —su promedio de
+  // reuniones— entra abajo, estudiante por estudiante.
+  const objetivos = sami.objetivosDe(proyecto.id, req.periodo.id);
+  const avance = sami.promedioObjetivos(objetivos);
+
+  const estudiantes = sami.estudiantesDe(proyecto.id).map((e) => {
+    const suyo = sami.notaDe(e.id, req.periodo.id);
+    return {
+      ...e,
+      ...suyo,
+      // La sugerencia del semestre. Va calculada desde aquí y no en la vista
+      // porque es una regla del dominio —cuánto pesa cada cosa— y no una
+      // manera de enseñarla.
+      sugerido: sami.sugerido(avance.promedio, suyo.rendimiento.promedio),
+      // Lo único que cruza semestres: cómo va en total. Va arriba, en el
+      // resumen, y no en la sección de notas, que es de este semestre.
+      acumulado: sami.acumulado(e.id),
+    };
+  });
 
   res.render(
     "sami/proyecto",
@@ -205,15 +267,25 @@ router.get("/panel/proyecto/:id", (req, res) => {
       rutaPeriodo: `/semillero/panel/proyecto/${proyecto.id}`,
       proyecto,
       estudiantes,
+      objetivos,
+      avance,
       jurados: sami.juradosDe(proyecto.id),
       reuniones: sami.reunionesDe(proyecto.id, req.periodo.id),
-      // Las dieciséis semanas del semestre, calculadas de la fecha de inicio.
-      // Sirven para ver de un vistazo cuáles ya tienen reunión registrada, que
-      // es la pregunta que se hace un director en noviembre.
-      semanas: sami.semanas(),
+      // Las dieciséis semanas DEL SEMESTRE QUE SE ESTÁ MIRANDO, calculadas de su
+      // fecha de inicio. Sirven para ver de un vistazo cuáles ya tienen reunión
+      // registrada, que es la pregunta que se hace un director en noviembre; y
+      // al cambiar de semestre en el selector cambian con él, porque el semestre
+      // pasado empezó en otra fecha.
+      semanas: sami.semanas(req.periodo.codigo),
       docentes: docentes(),
-      // El permiso, para esconder lo que de todos modos el servidor rechaza.
+      // Lo que cuelga del proyecto: decide si se puede eliminar y, sobre todo,
+      // le deja decir a la página POR QUÉ no se puede.
+      rastro: sami.rastro(proyecto.id),
+      // Los dos permisos, para esconder lo que de todos modos el servidor
+      // rechaza: ser el director, y que el semestre que se mira no sea anterior
+      // al de ingreso —en ese el proyecto no existía—.
       puedeCalificar: sami.esDirector(proyecto, yo(req)),
+      antesDelIngreso: sami.antesDelIngreso(req.periodo.codigo, proyecto),
       aviso: req.query,
     })
   );
@@ -237,9 +309,30 @@ router.post("/panel/proyecto/:id/estado", (req, res) => {
   const estado = sami.estadoValido(req.body.estado);
   if (!estado) return res.redirect(volverA(proyecto, "?error=estado"));
 
+  // Cancelar no se pone desde aquí aunque alguien mande el formulario a mano:
+  // tiene su propio botón porque pide el motivo y guarda de dónde venía.
+  if (estado === "cancelado") return res.redirect(volverA(proyecto, "?error=cancelar#riesgo"));
+
+  // Sacarlo de un estado que soltaba a sus integrantes es volver a ocuparles la
+  // alternativa de grado, y eso solo se puede si siguen libres.
+  if (sami.libera(proyecto.estado) && !sami.libera(estado)) {
+    const ocupado = integranteOcupado(proyecto);
+    if (ocupado) {
+      return res.redirect(volverA(proyecto, `?error=ya_vinculado&otro=${ocupado.codigo}`));
+    }
+  }
+
   const semestre = sami.semestreValido(req.body.semestre);
 
-  db.prepare("UPDATE sami_proyectos SET estado = ?, semestre = ? WHERE id = ?").run(
+  // Mover el estado a mano deshace la cancelación, así que se limpia lo suyo:
+  // un proyecto en desarrollo que siga diciendo quién lo canceló y por qué es
+  // una fila que se contradice sola.
+  db.prepare(
+    `UPDATE sami_proyectos
+        SET estado = ?, semestre = ?, cancelado_at = NULL, cancelado_por = NULL,
+            cancelado_motivo = NULL, cancelado_desde = NULL
+      WHERE id = ?`
+  ).run(
     estado,
     // Antes de que se apruebe la propuesta no hay semestre de semillero que
     // contar: guardar uno ahí diría que ya empezó a correr el plazo.
@@ -321,12 +414,33 @@ router.post("/panel/proyecto/:id/fechas", (req, res) => {
   const proyecto = sami.porId(req.params.id);
   if (!proyecto) return res.redirect("/semillero/panel");
 
+  const ingreso = sami.fechaValida(req.body.ingreso_at);
+
+  // El "Entró en" del proyecto sale de la fecha de ingreso y no al revés.
+  //
+  // Antes se guardaba al crearlo —el semestre que estuviera activo ese día— y se
+  // quedaba pegado ahí para siempre, así que corregir la fecha no lo movía: la
+  // ficha decía "entró en 2026-20" con una fecha de febrero delante. El dato que
+  // un docente escribe mirando el acta es el DÍA; el semestre se deduce.
+  //
+  // Si ese semestre todavía no existe en la app —la tabla `periodos` los crea
+  // config.PERIODO al arrancar— no se inventa: se deja el que tenía y se dice,
+  // porque quedarse callado aquí es exactamente lo que hace pensar que guardar
+  // la fecha no sirvió de nada.
+  const codigo = ingreso ? sami.periodoDeFecha(ingreso) : null;
+  const suyo = codigo ? periodos.porCodigo(codigo) : null;
+  if (suyo && suyo.id !== proyecto.periodo_id) {
+    db.prepare("UPDATE sami_proyectos SET periodo_id = ? WHERE id = ?").run(suyo.id, proyecto.id);
+  }
+
   db.prepare(
     `UPDATE sami_proyectos
-        SET carta_at = ?, propuesta_at = ?, aprobacion_at = ?, anteproyecto_at = ?,
-            ceb = ?, ceb_at = ?, cpi = ?, cpi_at = ?, sustentacion_at = ?
+        SET ingreso_at = ?, carta_at = ?, propuesta_at = ?, aprobacion_at = ?,
+            anteproyecto_at = ?, ceb = ?, ceb_at = ?, cpi = ?, cpi_at = ?,
+            sustentacion_at = ?
       WHERE id = ?`
   ).run(
+    ingreso,
     sami.fechaValida(req.body.carta_at),
     sami.fechaValida(req.body.propuesta_at),
     sami.fechaValida(req.body.aprobacion_at),
@@ -339,7 +453,9 @@ router.post("/panel/proyecto/:id/fechas", (req, res) => {
     proyecto.id
   );
 
-  res.redirect(volverA(proyecto, "?ok=1#tramite"));
+  res.redirect(
+    volverA(proyecto, codigo && !suyo ? `?sin_semestre=${codigo}#tramite` : "?ok=1#tramite")
+  );
 });
 
 /**
@@ -457,6 +573,122 @@ router.post("/panel/estudiantes/:id/activo", (req, res) => {
 });
 
 // ---------------------------------------------------------------------
+//  Cancelar y eliminar
+//
+//  Dos salidas y no una, porque son dos cosas distintas y confundirlas es lo
+//  que hace que la gente termine borrando lo que no debía:
+//
+//    · CANCELAR es un hecho del semillero. El proyecto existió, se registró, y
+//      ahora no va: cambiaron de idea, la propuesta se cae, se rehace con otro
+//      título. La fila SE QUEDA —con el motivo, con quién lo decidió y con el
+//      estado en el que iba— y lo que hace es soltar a sus estudiantes, para
+//      que puedan volver a radicar sin que el registro anterior les diga que
+//      ya están en un proyecto. Eso era lo que antes obligaba a inventarse
+//      correos o a marcar como 'retirado' a alguien que no se ha retirado de
+//      nada.
+//
+//    · ELIMINAR es admitir que la fila nunca debió existir: la prueba que se
+//      hizo para ver cómo se veía el formulario, el registro repetido, el que
+//      se llenó con el nombre de otro. Se borra entera y no queda nada.
+//
+//  Eliminar NO tiene tope. Se intentó ponerle uno —prohibirlo en cuanto el
+//  proyecto tuviera una reunión o una nota, por aquello de que son la
+//  constancia del trabajo de un semestre— y era un error: probar el módulo
+//  pasa por escribir una nota de prueba, y esa nota dejaba el proyecto de
+//  prueba imborrable para siempre. Un candado que solo atrapa lo que hay que
+//  limpiar no protege nada, y la constancia que de verdad importa está
+//  protegida por otra cosa: nadie borra un proyecto vivo sin querer.
+//
+//  Lo que hay en su lugar es proporcional. Si el borrado se lleva trabajo
+//  registrado, hay que escribir el código del proyecto: seis caracteres que no
+//  se teclean sin querer y que obligan a mirar CUÁL se está borrando, que es el
+//  error de verdad. Si no se lleva nada, basta el aviso del navegador.
+//
+//  Las dos las puede hacer cualquier docente del panel, como el resto del
+//  trámite. Quien entra aquí es la dirección del programa; poner a pedir
+//  permiso para limpiar un registro de prueba solo consigue que el registro de
+//  prueba se quede ahí para siempre.
+// ---------------------------------------------------------------------
+
+router.post("/panel/proyecto/:id/cancelar", (req, res) => {
+  const proyecto = sami.porId(req.params.id);
+  if (!proyecto) return res.redirect("/semillero/panel");
+  if (proyecto.estado === "cancelado") return res.redirect(volverA(proyecto));
+
+  // El motivo es obligatorio y es el punto entero de tener un botón propio:
+  // dentro de un semestre, "¿por qué se cayó este?" es la única pregunta que
+  // alguien va a hacerle a esta fila.
+  const motivo = sami.limpiarTexto(req.body.motivo, 300);
+  if (!motivo) return res.redirect(volverA(proyecto, "?error=motivo#riesgo"));
+
+  db.prepare(
+    `UPDATE sami_proyectos
+        SET estado = 'cancelado', cancelado_desde = ?, cancelado_motivo = ?,
+            cancelado_por = ?, cancelado_at = CURRENT_TIMESTAMP
+      WHERE id = ?`
+  ).run(proyecto.estado, motivo, yo(req).id, proyecto.id);
+
+  res.redirect(volverA(proyecto, "?cancelado=1"));
+});
+
+/**
+ * Deshacer una cancelación: vuelve al estado en el que iba.
+ *
+ * Con una salvedad que no es un detalle. Cancelar le devolvió el cupo a sus
+ * estudiantes, y puede que alguno YA lo haya usado para registrar otro
+ * proyecto. Reabrir entonces lo dejaría en dos alternativas de grado vivas a la
+ * vez, que es justo lo que la cancelación deshizo. Se dice y no se hace.
+ */
+router.post("/panel/proyecto/:id/reabrir", (req, res) => {
+  const proyecto = sami.porId(req.params.id);
+  if (!proyecto) return res.redirect("/semillero/panel");
+  if (proyecto.estado !== "cancelado") return res.redirect(volverA(proyecto));
+
+  const ocupado = integranteOcupado(proyecto);
+  if (ocupado) {
+    return res.redirect(volverA(proyecto, `?error=ya_vinculado&otro=${ocupado.codigo}#riesgo`));
+  }
+
+  db.prepare(
+    `UPDATE sami_proyectos
+        SET estado = ?, cancelado_at = NULL, cancelado_por = NULL,
+            cancelado_motivo = NULL, cancelado_desde = NULL
+      WHERE id = ?`
+  ).run(sami.estadoValido(proyecto.cancelado_desde) || "registro", proyecto.id);
+
+  res.redirect(volverA(proyecto));
+});
+
+router.post("/panel/proyecto/:id/borrar", (req, res) => {
+  const proyecto = sami.porId(req.params.id);
+  if (!proyecto) return res.redirect("/semillero/panel");
+
+  // La bandeja de intenciones borra desde su propia lista y quiere volver a
+  // ella: mandar a la portada a quien está limpiando cinco registros de prueba
+  // es hacerle navegar de vuelta cinco veces.
+  const desdeBandeja = req.body.volver === "solicitudes";
+  const bandeja = desdeBandeja ? "/semillero/panel/solicitudes" : "/semillero/panel";
+
+  // Si se lleva trabajo registrado por delante hay que escribir el código del
+  // proyecto. No es un permiso —cualquier docente del panel puede borrar lo que
+  // sea— sino la diferencia entre pulsar un botón y decidir: seis caracteres
+  // que no se teclean sin querer y que además obligan a mirar cuál se está
+  // borrando, que es el error de verdad y no el de borrar a propósito.
+  if (sami.dejaRastro(sami.rastro(proyecto.id))) {
+    const escrito = String(req.body.confirmar || "").trim().toUpperCase();
+    if (escrito !== proyecto.codigo) return res.redirect(volverA(proyecto, "?error=confirmar#riesgo"));
+  }
+
+  // Se lleva por delante estudiantes, jurados, reuniones y notas por las llaves
+  // foráneas de db/database.js, que están en ON DELETE CASCADE con
+  // `PRAGMA foreign_keys = ON`. Borrarlos a mano aquí sería repetir en JavaScript
+  // lo que el esquema ya declara, y repetirlo es donde se olvida una tabla.
+  db.prepare("DELETE FROM sami_proyectos WHERE id = ?").run(proyecto.id);
+
+  res.redirect(`${bandeja}?eliminado=${encodeURIComponent(proyecto.codigo)}`);
+});
+
+// ---------------------------------------------------------------------
 //  Reuniones — solo el director
 // ---------------------------------------------------------------------
 
@@ -472,6 +704,7 @@ router.post("/panel/proyecto/:id/reuniones", (req, res) => {
   const proyecto = sami.porId(req.params.id);
   if (!proyecto) return res.redirect("/semillero/panel");
   if (!soloDirector(req, res, proyecto)) return;
+  if (!desdeElIngreso(req, res, proyecto)) return;
 
   const fecha = sami.fechaValida(req.body.fecha);
   if (!fecha) return res.redirect(volverA(proyecto, "?error=fecha#reuniones"));
@@ -490,7 +723,7 @@ router.post("/panel/proyecto/:id/reuniones", (req, res) => {
         proyecto.id,
         req.periodo.id,
         fecha,
-        sami.semanaDe(fecha),
+        sami.semanaDe(fecha, req.periodo.codigo),
         sami.limpiarTexto(req.body.adelantos) || null,
         sami.limpiarTexto(req.body.compromisos) || null,
         yo(req).id
@@ -510,6 +743,12 @@ router.post("/panel/reuniones/:id", (req, res) => {
   const proyecto = sami.porId(reunion.proyecto_id);
   if (!soloDirector(req, res, proyecto)) return;
 
+  // La semana se recalcula contra el calendario del semestre de LA REUNIÓN y no
+  // contra el que se esté mirando. Son el mismo casi siempre —la ficha solo
+  // lista las de este semestre—, pero el que manda es el de la fila.
+  const suyo = periodos.porId(reunion.periodo_id);
+  if (!desdeElIngreso(req, res, proyecto, suyo)) return;
+
   const fecha = sami.fechaValida(req.body.fecha);
   if (!fecha) return res.redirect(volverA(proyecto, `?error=fecha#r${reunion.id}`));
 
@@ -524,13 +763,13 @@ router.post("/panel/reuniones/:id", (req, res) => {
         WHERE id = ?`
     ).run(
       fecha,
-      sami.semanaDe(fecha),
+      sami.semanaDe(fecha, suyo ? suyo.codigo : null),
       sami.limpiarTexto(req.body.adelantos) || null,
       sami.limpiarTexto(req.body.compromisos) || null,
       reunion.id
     );
     escribirMarcas(reunion.id, proyecto.id, marcas);
-  })();
+  });
 
   res.redirect(volverA(proyecto, `?ok=1#r${reunion.id}`));
 });
@@ -597,6 +836,96 @@ function escribirMarcas(reunionId, proyectoId, marcas) {
 }
 
 // ---------------------------------------------------------------------
+//  Los objetivos del semestre — solo el director
+//
+//  Un solo guardado para las tres cosas que se hacen aquí —corregir el texto,
+//  poner las notas y pegar los que falten—, porque las tres pasan en la misma
+//  sentada: se abre la propuesta, se pegan los objetivos, y meses después se
+//  vuelve con el acta a poner las notas de una vez. Tres formularios serían
+//  tres guardados para lo que el docente vive como uno.
+//
+//  Los objetivos son parte de calificar y por eso van con el mismo permiso que
+//  las reuniones y las notas: los pone el director. Un objetivo que aparece o
+//  desaparece mueve la nota sugerida de un semestre entero, y eso no es un acto
+//  administrativo que registre quien esté a la mano.
+// ---------------------------------------------------------------------
+router.post("/panel/proyecto/:id/objetivos", (req, res) => {
+  const proyecto = sami.porId(req.params.id);
+  if (!proyecto) return res.redirect("/semillero/panel");
+  if (!soloDirector(req, res, proyecto)) return;
+  if (!desdeElIngreso(req, res, proyecto)) return;
+
+  // Lo que hay hoy, indexado. Sirve para dos cosas: para no tocar filas de otro
+  // proyecto —los ids vienen de un formulario, y un formulario lo manda
+  // cualquiera— y para escribir solo lo que de verdad cambió.
+  const actuales = new Map(sami.objetivosDe(proyecto.id, req.periodo.id).map((o) => [o.id, o]));
+
+  const ids = [].concat(req.body.objetivo_id || []).map(Number);
+  const textos = [].concat(req.body.objetivo_texto || []);
+
+  // Las notas se leen y se validan ANTES de escribir nada: una sola fuera de
+  // escala tumba el guardado entero. Es lo mismo que hacen las reuniones, y por
+  // lo mismo: guardar seis bien y una en blanco sin avisar es peor que no
+  // guardar.
+  const notas = new Map();
+  for (const id of ids) {
+    if (!actuales.has(id)) continue;
+    const n = sami.calificacion(req.body[`objetivo_nota_${id}`]);
+    if (n === false) return res.redirect(volverA(proyecto, "?error=calificacion#objetivos"));
+    notas.set(id, n);
+  }
+
+  const nuevos = sami.lineas(req.body.nuevos);
+
+  sami.enTransaccion(() => {
+    const texto = db.prepare("UPDATE sami_objetivos SET texto = ?, orden = ? WHERE id = ?");
+    const calificar = db.prepare(
+      `UPDATE sami_objetivos
+          SET nota = ?, calificado_por = ?, calificado_at = CURRENT_TIMESTAMP
+        WHERE id = ?`
+    );
+    // Borrar la nota borra también de quién era: una casilla vacía que siga
+    // diciendo que alguien la calificó el martes es una fila que miente.
+    const descalificar = db.prepare(
+      "UPDATE sami_objetivos SET nota = NULL, calificado_por = NULL, calificado_at = NULL WHERE id = ?"
+    );
+    const quitar = db.prepare("DELETE FROM sami_objetivos WHERE id = ?");
+    const insertar = db.prepare(
+      "INSERT INTO sami_objetivos (proyecto_id, periodo_id, texto, orden) VALUES (?, ?, ?, ?)"
+    );
+
+    let orden = 0;
+
+    ids.forEach((id, i) => {
+      const actual = actuales.get(id);
+      if (!actual) return;
+
+      // Un objetivo sin texto se quita, como un jurado sin nombre. Se dice en la
+      // página, y es la forma de borrar uno que no necesita un botón más en una
+      // fila que ya tiene dos campos.
+      const nuevo = sami.limpiarTexto(textos[i], 300);
+      if (!nuevo) return quitar.run(id);
+
+      if (nuevo !== actual.texto || orden !== actual.orden) texto.run(nuevo, orden, id);
+
+      // La nota solo se toca si cambió. Reescribirla en cada guardado movería la
+      // fecha de "cuándo se calificó" cada vez que alguien corrige una coma.
+      const nota = notas.get(id);
+      if (nota !== actual.nota) {
+        if (nota === null) descalificar.run(id);
+        else calificar.run(nota, yo(req).id, id);
+      }
+
+      orden++;
+    });
+
+    nuevos.forEach((t) => insertar.run(proyecto.id, req.periodo.id, t, orden++));
+  });
+
+  res.redirect(volverA(proyecto, "?ok=1#objetivos"));
+});
+
+// ---------------------------------------------------------------------
 //  La nota del semestre — solo el director
 // ---------------------------------------------------------------------
 /**
@@ -605,9 +934,14 @@ function escribirMarcas(reunionId, proyectoId, marcas) {
  * el docente pesa cosas que no están en esta base, y una nota puesta sola por
  * un promedio sería una nota que nadie decidió.
  *
- * El semestre (I, II, III) se copia del proyecto y se congela: dentro de un
- * año hay que poder decir que esta nota fue la del semestre II, aunque el
- * proyecto ya vaya en el III.
+ * El semestre (I, II, III) se CUENTA desde el ingreso del proyecto y se congela
+ * en la fila: dentro de un año hay que poder decir que esta nota fue la del
+ * semestre II, aunque el proyecto ya vaya en el III.
+ *
+ * Se contaba mal: se copiaba `proyecto.semestre`, que es dónde está HOY. Al
+ * calificar el 2025-20 de un proyecto que ya iba por el III, la nota del primer
+ * semestre quedaba sellada como "III", y dos notas del mismo estudiante decían
+ * las dos que eran del III. La etiqueta existe justamente para distinguirlas.
  */
 router.post("/panel/estudiantes/:id/nota", (req, res) => {
   const estudiante = sami.estudiante(req.params.id);
@@ -615,6 +949,7 @@ router.post("/panel/estudiantes/:id/nota", (req, res) => {
 
   const proyecto = sami.porId(estudiante.proyecto_id);
   if (!soloDirector(req, res, proyecto)) return;
+  if (!desdeElIngreso(req, res, proyecto)) return;
 
   const director = sami.calificacion(req.body.nota_director);
   const codirector = sami.calificacion(req.body.nota_codirector);
@@ -637,7 +972,10 @@ router.post("/panel/estudiantes/:id/nota", (req, res) => {
   ).run(
     estudiante.id,
     req.periodo.id,
-    proyecto.semestre,
+    // Contado desde el ingreso. El campo del proyecto solo entra si no se puede
+    // contar —un proyecto sin semestre de entrada—, y ahí vale más lo que haya
+    // escrito el director que nada.
+    sami.semestreEn(proyecto, req.periodo.codigo) || proyecto.semestre,
     director,
     codirector,
     sami.limpiarTexto(req.body.observacion, 600) || null,

@@ -8,8 +8,14 @@
 
        1. la cabeza, con el estado y la escalera — se mira siempre;
        2. las reuniones — se registra una por semana;
-       3. las notas del semestre — una vez al final, con el promedio al lado;
-       4. el trámite: dirección, datos, fechas, comités, jurados — se toca de
+       3. los objetivos del semestre — se pegan una vez al empezar y se
+          califican al final. Van pegados a las notas y justo antes porque son
+          contra lo que se califica: la pregunta "¿qué nota le pongo?" se
+          responde mirando esa lista, y tenerla en otra pantalla es lo que hace
+          que se responda de memoria;
+       4. las notas del semestre — una vez al final, con el promedio al lado y
+          la nota sugerida debajo;
+       5. el trámite: dirección, datos, fechas, comités, jurados — se toca de
           tanto en tanto, así que va abajo.
 
      El permiso está dicho de frente arriba y no solo escondiendo botones. Un
@@ -28,10 +34,20 @@
     titulo: "El proyecto necesita un título.",
     estado: "Ese estado no existe.",
     estudiante: "Para agregar un integrante hacen falta al menos el nombre y el correo institucional.",
-    ya_vinculado: "Ese correo ya está en otro proyecto del semillero.",
+    ya_vinculado: aviso.otro
+      ? `No se puede reabrir: alguno de sus integrantes ya está en el proyecto ${aviso.otro}, que sí está vivo. Nadie puede tener dos alternativas de grado a la vez.`
+      : "Ese correo ya está en otro proyecto del semillero.",
+    motivo: "Escribe por qué se cancela. Es lo único que dentro de un semestre va a explicar esta fila.",
+    cancelar: "Cancelar tiene su propio botón, abajo: pide el motivo y guarda de dónde venía para poder deshacerlo.",
+    confirmar: "Para eliminar un proyecto con reuniones o notas hay que escribir su código, tal como está escrito al lado de la casilla.",
+    antes_de_ingreso: "Ese semestre es anterior al ingreso de este proyecto: en esa fecha todavía no existía, así que no se le puede registrar nada.",
   };
   const malo = MALOS[aviso.error];
   const activos = estudiantes.filter(function (e) { return e.activo; });
+  const cancelado = proyecto.estado === "cancelado";
+  // De dónde venía cuando se canceló. Es lo que el botón de reabrir le va a
+  // devolver, así que conviene que esté escrito antes de pulsarlo.
+  const previo = estados.filter(function (e) { return e.clave === proyecto.cancelado_desde; })[0];
 %>
 
 <main class="sam">
@@ -40,6 +56,24 @@
   <% } %>
   <% if (aviso.borrado) { %>
     <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se borró la reunión.</p></div>
+  <% } %>
+  <% if (aviso.sin_semestre) { %>
+    <div class="aviso ojo" style="margin-top:24px">
+      <p style="margin:0">
+        Se guardaron las fechas, pero el <strong>Entró en</strong> se quedó como estaba: esa
+        fecha de ingreso cae en el semestre <span class="cod"><%= aviso.sin_semestre %></span>,
+        que todavía no existe en la app. Los semestres se crean al arrancar con
+        <code>config.PERIODO</code>.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.cancelado) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Proyecto cancelado. Sus integrantes ya pueden registrar uno nuevo con el
+        <a href="/semillero/registro">formulario de siempre</a>.
+      </p>
+    </div>
   <% } %>
   <% if (malo) { %>
     <div class="aviso malo" style="margin-top:24px"><p style="margin:0"><%= malo %></p></div>
@@ -75,6 +109,38 @@
       </div>
     <% } %>
 
+    <%/* Un proyecto cancelado se dice arriba y de frente, porque cambia cómo se
+         lee todo lo de abajo: las fechas y los jurados que salen ahí son de un
+         trámite que ya no va a ninguna parte. */%>
+    <% if (cancelado) { %>
+      <div class="aviso malo">
+        <p style="margin:0">
+          <strong>Este proyecto está cancelado.</strong>
+          <% if (proyecto.cancelado_motivo) { %><%= proyecto.cancelado_motivo %><% } %>
+        </p>
+        <p class="mini" style="margin:8px 0 0">
+          Lo canceló <%= proyecto.cancelado_por_nombre || "—" %><%= proyecto.cancelado_at ? " · " + proyecto.cancelado_at : "" %><%= previo ? ", cuando iba en " + previo.label.toLowerCase() : "" %>.
+          Sus integrantes quedaron libres para radicar otra propuesta.
+          <a href="#riesgo">Se puede deshacer</a>.
+        </p>
+      </div>
+    <% } %>
+
+    <%/* Mirando un semestre anterior al de ingreso. No se esconde la ficha —ver
+         un proyecto nunca ha hecho daño— pero se dice de frente que ahí no hay
+         nada que registrar, porque lo que vendría después son tres secciones
+         vacías que parecen datos perdidos y no lo son. */%>
+    <% if (antesDelIngreso) { %>
+      <div class="aviso ojo">
+        <p style="margin:0">
+          <strong>En <%= periodo ? periodo.codigo : "este semestre" %> este proyecto todavía no existía.</strong>
+          Ingresó al semillero en <%= proyecto.periodo_codigo %><%= proyecto.fechas.ingreso ? ", el " + proyecto.fechas.ingreso.dia : "" %>,
+          así que aquí no se le pueden registrar reuniones, objetivos ni notas.
+          Cambia de semestre arriba para trabajarlo.
+        </p>
+      </div>
+    <% } %>
+
     <% if (!puedeCalificar) { %>
       <div class="aviso">
         <p style="margin:0">
@@ -104,6 +170,38 @@
           <div class="v cod"><%= proyecto.periodo_codigo || "—" %></div>
         </div>
       </div>
+
+      <%/* La nota acumulada, lo único de esta página que cruza semestres.
+
+           Va arriba y no en la sección de notas a propósito: allá todo es del
+           semestre que se está mirando, y esto responde otra pregunta —"¿cómo
+           viene en total?"—, que es la que se hace quien abre la ficha de un
+           proyecto que va por el III.
+
+           Solo el promedio. Las notas semestre por semestre están cada una en
+           su semestre, a un clic del selector, y repetirlas aquí era llenar el
+           resumen de números para no decir nada más. Al lado sí va sobre
+           cuántos semestres se sacó, que es lo que evita leer un 4.3 de un
+           semestre como si fuera el de la carrera entera. */%>
+      <div class="acumulados">
+        <% estudiantes.forEach(function (e) { %>
+          <div class="acum <%= e.activo ? "" : "ido" %>">
+            <div class="quien">
+              <b><%= e.nombre %></b><%= e.activo ? "" : " · retirado" %>
+            </div>
+            <div class="total">
+              <% if (e.acumulado.promedio === null) { %>
+                <span class="mini">Sin notas de semestre todavía</span>
+              <% } else { %>
+                <b><%= e.acumulado.promedio %></b>
+                <span class="mini">
+                  acumulado · <%= e.acumulado.cerrados %> de <%= e.acumulado.total %> semestre<%= e.acumulado.cerrados === 1 ? "" : "s" %>
+                </span>
+              <% } %>
+            </div>
+          </div>
+        <% }); %>
+      </div>
     </div>
   </section>
 
@@ -120,13 +218,15 @@
       <a href="/semillero/panel/reuniones.csv" class="btn ghost chico">Este semestre en CSV</a>
     </div>
 
-    <%/* El calendario del semestre, calculado de la fecha de inicio: dieciséis
+    <%/* El calendario del semestre, calculado de SU fecha de inicio: dieciséis
          casillas y cuáles ya tienen reunión. Responde de un vistazo la
          pregunta del director en noviembre —"¿de qué semanas me falta?"— sin
          tener que cruzar fechas a mano contra una lista.
 
          Las semanas no están escritas en ninguna parte: salen de
-         config.SAMI.calendario.inicio, una cada siete días. */%>
+         config.SAMI.calendario.inicios, una cada siete días. Y cambian al
+         cambiar de semestre en el selector, porque cada semestre empieza en
+         una fecha distinta. */%>
     <% if (semanas.length) { %>
       <%
         const conReunion = new Set(reuniones.map(function (r) { return r.semana; }));
@@ -145,9 +245,23 @@
           <% }); %>
         </div>
       </div>
+    <% } else { %>
+      <%/* Sin fecha de inicio para este semestre no se dibuja la tira, y se dice
+           por qué: una sección que desaparece sin explicación parece rota, y lo
+           que hay es un renglón sin llenar en el config. Las reuniones se
+           registran igual; lo único que pasa es que se guardan sin número de
+           semana. */%>
+      <div class="aviso" style="margin-bottom:18px">
+        <p style="margin:0">
+          El semestre <strong><%= periodo ? periodo.codigo : "—" %></strong> no tiene fecha de
+          inicio configurada, así que no se le puede dibujar el calendario de semanas. Las
+          reuniones se registran igual, pero se guardan sin S1…S<%= sami.calendario.semanas %>.
+          Se arregla agregándole su lunes de arranque a <code>SAMI.calendario.inicios</code>.
+        </p>
+      </div>
     <% } %>
 
-    <% if (puedeCalificar && activos.length) { %>
+    <% if (puedeCalificar && activos.length && !antesDelIngreso) { %>
       <%- include('partials/reunion-form', {
             accion: `/semillero/panel/proyecto/${proyecto.id}/reuniones`,
             reunion: null,
@@ -231,7 +345,130 @@
     <% } %>
   </section>
 
-  <%/* ── 3. Las notas del semestre ────────────────────────────────── */%>
+  <%/* ── 3. Los objetivos del semestre ────────────────────────────────
+
+       Va aquí, pegado a las notas y justo antes, porque es contra lo que se
+       califica: la pregunta "¿qué nota le pongo?" se responde mirando esta
+       lista, y tenerla en otra pantalla es lo que hace que se responda de
+       memoria.
+
+       Un solo formulario para las tres cosas —corregir el texto, poner las
+       notas y pegar los que falten—, porque las tres pasan en la misma
+       sentada. */%>
+  <section class="sam-sec" id="objetivos">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %> · lo que dijo la propuesta</p>
+        <h2>Objetivos del semestre</h2>
+      </div>
+      <% if (avance.total) { %>
+        <span class="chip <%= avance.pendientes ? "alerta" : "ok" %>">
+          <%= avance.calificados %> de <%= avance.total %> con nota
+        </span>
+      <% } %>
+    </div>
+
+    <p class="sec-lead">
+      Las actividades que el estudiante se comprometió a hacer este semestre, tal como las
+      presentó en la propuesta. Lo que se califica es su cumplimiento, y el promedio de esas
+      notas baja hasta la nota del semestre como sugerencia —junto con el de las reuniones—.
+    </p>
+
+    <% if (!puedeCalificar || antesDelIngreso) { %>
+      <%/* Sin permiso se ven igual: son el plan de trabajo del proyecto y
+           esconderlo no protege a nadie. Lo que no sale es la casilla. Lo mismo
+           en un semestre anterior al ingreso, donde además no hay ninguno. */%>
+      <% if (!objetivos.length) { %>
+        <div class="vacio">Este proyecto todavía no tiene objetivos cargados para el semestre.</div>
+      <% } else { %>
+        <div class="tabla-envoltura">
+          <table class="tabla">
+            <thead><tr><th style="width:2.5rem">#</th><th>Objetivo</th><th style="width:6rem">Nota</th></tr></thead>
+            <tbody>
+              <% objetivos.forEach(function (o, i) { %>
+                <tr>
+                  <td class="cod"><%= i + 1 %></td>
+                  <td><%= o.texto %></td>
+                  <td><strong><%= o.nota === null ? "—" : o.nota %></strong></td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      <% } %>
+    <% } else { %>
+      <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/objetivos">
+        <% if (objetivos.length) { %>
+          <div class="tabla-envoltura">
+            <table class="tabla">
+              <thead>
+                <tr>
+                  <th style="width:2.5rem">#</th>
+                  <th>Objetivo</th>
+                  <th style="width:8rem">Nota de 0 a <%= escala %></th>
+                </tr>
+              </thead>
+              <tbody>
+                <% objetivos.forEach(function (o, i) { %>
+                  <tr>
+                    <td class="cod"><%= i + 1 %></td>
+                    <td>
+                      <%/* El id viaja con la fila: así corregir una palabra no
+                           borra la nota que ya tenía. */%>
+                      <input type="hidden" name="objetivo_id" value="<%= o.id %>" />
+                      <input type="text" name="objetivo_texto" maxlength="300" value="<%= o.texto %>"
+                             aria-label="Objetivo <%= i + 1 %>" />
+                    </td>
+                    <td>
+                      <input type="number" name="objetivo_nota_<%= o.id %>" min="0" max="<%= escala %>"
+                             step="0.01" value="<%= o.nota === null ? "" : o.nota %>"
+                             aria-label="Nota del objetivo <%= i + 1 %>" />
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+
+          <%
+            // Cuándo se calificó por última vez y quién: se muestra el más
+            // reciente de todos, que es la respuesta a "¿esto ya está puesto?".
+            const ultimo = objetivos
+              .filter(function (o) { return o.calificado_at; })
+              .sort(function (a, b) { return a.calificado_at < b.calificado_at ? 1 : -1; })[0];
+          %>
+          <div class="rendimiento">
+            <span>promedio de los objetivos <b><%= avance.promedio === null ? "—" : avance.promedio %></b></span>
+            <% if (avance.pendientes) { %>
+              <span><b><%= avance.pendientes %></b> sin calificar</span>
+            <% } %>
+            <% if (ultimo) { %>
+              <span>últimas notas: <%= ultimo.calificado_por_nombre || "—" %> · <%= ultimo.calificado_at %></span>
+            <% } %>
+          </div>
+
+          <p class="ayuda" style="margin:-6px 0 16px">
+            Un objetivo al que le borres el texto se quita al guardar. Deja la nota en blanco
+            mientras no lo hayas mirado: sin nota no cuenta para el promedio, con un cero sí.
+          </p>
+        <% } %>
+
+        <div class="campo">
+          <label for="nuevos"><%= objetivos.length ? "Agregar más objetivos" : "Cargar los objetivos" %></label>
+          <textarea name="nuevos" id="nuevos" style="min-height:120px"
+                    placeholder="Uno por renglón. Se pueden pegar de la propuesta tal como estén: si vienen numerados o con viñetas, se les quita la marca."></textarea>
+          <p class="ayuda">
+            Se pegan de la propuesta y se quedan en el semestre <%= periodo ? periodo.codigo : "" %>.
+            Cada semestre del semillero trae los suyos.
+          </p>
+        </div>
+
+        <button type="submit" class="btn">Guardar objetivos</button>
+      </form>
+    <% } %>
+  </section>
+
+  <%/* ── 4. Las notas del semestre ────────────────────────────────── */%>
   <section class="sam-sec" id="notas">
     <div class="sec-top">
       <div>
@@ -241,8 +478,9 @@
     </div>
 
     <p class="sec-lead">
-      La nota la escribes tú. Al lado va lo que llevan de reuniones y asistencia para que lo
-      tengas en cuenta junto con todo lo demás; el sistema no la calcula ni la precarga.
+      La nota la escribes tú. Al lado va lo que llevan de reuniones y asistencia, y debajo
+      la sugerencia que sale de cruzar los objetivos con las reuniones, para que lo tengas
+      en cuenta junto con todo lo demás; el sistema no la calcula ni la precarga.
     </p>
 
     <% estudiantes.forEach(function (e) { %>
@@ -261,7 +499,40 @@
           <span>promedio <b><%= e.rendimiento.promedio === null ? "—" : e.rendimiento.promedio %></b></span>
         </div>
 
-        <% if (puedeCalificar) { %>
+        <%/* La sugerencia, en su propia fila y no mezclada con la de arriba:
+             aquella cuenta lo que pasó —cuántas reuniones, a cuántas fue— y
+             esta propone un número. Son dos cosas distintas y juntarlas haría
+             pasar la propuesta por un hecho.
+
+             Sale con las dos mitades a la vista y no solo el resultado, porque
+             un 3.4 no dice nada y "objetivos 4.2, reuniones 2.6" dice qué pasó
+             en el semestre. Y sigue sin precargar la casilla: el botón la
+             copia si el director quiere, que es una decisión suya y no del
+             promedio. */%>
+        <div class="rendimiento sugerencia">
+          <span>sugerido</span>
+          <span>objetivos <b><%= avance.promedio === null ? "—" : avance.promedio %></b></span>
+          <span>reuniones <b><%= e.rendimiento.promedio === null ? "—" : e.rendimiento.promedio %></b></span>
+          <span class="mandan">
+            <%= e.sugerido === null ? "sin datos todavía" : "nota sugerida" %>
+            <% if (e.sugerido !== null) { %><b><%= e.sugerido %></b><% } %>
+          </span>
+          <% if (e.sugerido !== null && puedeCalificar && !antesDelIngreso) { %>
+            <button type="button" class="btn ghost chico" data-copiar="<%= e.sugerido %>" data-destino="nd<%= e.id %>">
+              Usar en la nota del director
+            </button>
+          <% } %>
+        </div>
+
+        <% if (avance.pendientes && avance.total) { %>
+          <p class="ayuda" style="margin:-10px 0 14px">
+            Ojo: <%= avance.pendientes %> de <%= avance.total %> objetivos siguen sin nota, así que
+            ese promedio es solo de los <%= avance.calificados %> calificados.
+            <a href="#objetivos">Completarlos</a>.
+          </p>
+        <% } %>
+
+        <% if (puedeCalificar && !antesDelIngreso) { %>
           <form method="POST" action="/semillero/panel/estudiantes/<%= e.id %>/nota">
             <div class="fila tres">
               <div class="campo">
@@ -326,7 +597,7 @@
     <% }); %>
   </section>
 
-  <%/* ── 4. El trámite ────────────────────────────────────────────── */%>
+  <%/* ── 5. El trámite ────────────────────────────────────────────── */%>
   <section class="sam-sec" id="tramite">
     <div class="sec-top">
       <div>
@@ -341,11 +612,21 @@
         <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/estado" style="margin-top:14px">
           <div class="campo">
             <label for="estado">En qué va</label>
+            <%/* Sin "Cancelado": ese no es un peldaño al que se llega andando,
+                 es una decisión con motivo y con dueño, y tiene su botón abajo.
+                 Guardar aquí cualquier otro estado deshace la cancelación. */%>
+            <%/* Uno cancelado no tiene peldaño que marcar aquí, así que se deja
+                 seleccionado el que tenía: si alguien guarda sin mirar, vuelve
+                 a donde estaba y no al primero de la lista. */%>
+            <% const marcado = cancelado ? proyecto.cancelado_desde : proyecto.estado; %>
             <select name="estado" id="estado">
-              <% estados.forEach(function (s) { %>
-                <option value="<%= s.clave %>" <%= proyecto.estado === s.clave ? "selected" : "" %>><%= s.label %></option>
+              <% estadosManuales.forEach(function (s) { %>
+                <option value="<%= s.clave %>" <%= marcado === s.clave ? "selected" : "" %>><%= s.label %></option>
               <% }); %>
             </select>
+            <% if (cancelado) { %>
+              <p class="ayuda">Está cancelado. Guardar aquí lo reabre en el estado que elijas.</p>
+            <% } %>
           </div>
           <div class="campo">
             <label for="semestre">Semestre en el semillero</label>
@@ -397,7 +678,18 @@
         acta delante. Lo que no haya pasado se deja en blanco.
       </p>
       <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/fechas" style="margin-top:16px">
+        <%/* Las seis fechas del trámite en dos filas de tres, en el orden en que
+             pasan: el ingreso abre la lista porque es lo primero de todo —el día
+             que entró al semillero, del que cuelga el plazo de los tres
+             semestres— y hasta ahora se llevaba de memoria.
+
+             Los comités van abajo y aparte, con su estado al lado, porque ahí la
+             fecha sola no dice nada: lo que importa de un CEB es si aprobó. */%>
         <div class="fila tres">
+          <div class="campo">
+            <label for="ingreso_at">Ingreso al semillero</label>
+            <input type="date" name="ingreso_at" id="ingreso_at" value="<%= proyecto.ingreso_at || "" %>" />
+          </div>
           <div class="campo">
             <label for="carta_at">Carta al Consejo</label>
             <input type="date" name="carta_at" id="carta_at" value="<%= proyecto.carta_at || "" %>" />
@@ -406,13 +698,13 @@
             <label for="propuesta_at">Propuesta presentada</label>
             <input type="date" name="propuesta_at" id="propuesta_at" value="<%= proyecto.propuesta_at || "" %>" />
           </div>
+        </div>
+
+        <div class="fila tres">
           <div class="campo">
             <label for="aprobacion_at">Propuesta aprobada</label>
             <input type="date" name="aprobacion_at" id="aprobacion_at" value="<%= proyecto.aprobacion_at || "" %>" />
           </div>
-        </div>
-
-        <div class="fila tres">
           <div class="campo">
             <label for="anteproyecto_at">Sustentación anteproyecto</label>
             <input type="date" name="anteproyecto_at" id="anteproyecto_at" value="<%= proyecto.anteproyecto_at || "" %>" />
@@ -421,7 +713,6 @@
             <label for="sustentacion_at">Sustentación del proyecto</label>
             <input type="date" name="sustentacion_at" id="sustentacion_at" value="<%= proyecto.sustentacion_at || "" %>" />
           </div>
-          <div class="campo"></div>
         </div>
 
         <div class="fila">
@@ -553,7 +844,7 @@
     </div>
   </section>
 
-  <%/* ── 5. Los integrantes ───────────────────────────────────────── */%>
+  <%/* ── 6. Los integrantes ───────────────────────────────────────── */%>
   <section class="sam-sec" id="integrantes">
     <div class="sec-top">
       <div>
@@ -629,6 +920,128 @@
       </form>
     </details>
   </section>
+
+  <%/* ── 7. Cancelar y eliminar ───────────────────────────────────────
+
+       Va al final, plegada y con el porqué escrito, porque son las dos únicas
+       cosas de esta página que no se arreglan volviendo a guardar.
+
+       Y son dos y no una. Cancelar es un hecho: el proyecto existió y ahora no
+       va, la fila se queda con el motivo y sus estudiantes quedan libres para
+       radicar otra propuesta —que es lo que hacía falta cuando alguien cambia
+       de idea—. Eliminar es admitir que la fila nunca debió existir, y se lleva
+       todo por delante, reuniones y notas incluidas: lo único que cambia
+       cuando las hay es que toca escribir el código para confirmarlo. */%>
+  <section class="sam-sec" id="riesgo">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">No se deshace guardando otra vez</p>
+        <h2>Cancelar o eliminar</h2>
+      </div>
+    </div>
+
+    <div class="grid dos">
+      <div class="tarjeta">
+        <% if (cancelado) { %>
+          <h3>Reabrir el proyecto</h3>
+          <p class="mini" style="margin:6px 0 14px">
+            Vuelve a <strong><%= previo ? previo.label : "En el registro" %></strong>, que es donde
+            iba cuando se canceló, y se borra el motivo. Si alguno de sus integrantes ya
+            registró otra propuesta, no se puede: la página lo dirá con el código del otro
+            proyecto.
+          </p>
+          <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/reabrir"
+                onsubmit="return confirm('¿Reabrir este proyecto? Vuelve a contar como activo y sus integrantes vuelven a quedar ocupados.')">
+            <button type="submit" class="btn block">Reabrir</button>
+          </form>
+        <% } else { %>
+          <h3>Cancelar el proyecto</h3>
+          <p class="mini" style="margin:6px 0 14px">
+            Para cuando ya no va: cambiaron de idea, la propuesta se cae, se rehace con otro
+            título. La ficha se queda entera —con sus reuniones y sus notas— y sus
+            <strong><%= activos.length %></strong> integrante<%= activos.length === 1 ? "" : "s" %>
+            quedan libres para volver a radicar. Se puede deshacer.
+          </p>
+          <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/cancelar"
+                onsubmit="return confirm('¿Cancelar este proyecto? Deja de contar como activo y sus integrantes quedan libres para registrar otro.')">
+            <div class="campo">
+              <label for="motivo">Por qué se cancela</label>
+              <input type="text" name="motivo" id="motivo" required maxlength="300"
+                     placeholder="Se retiran para presentar otra propuesta" />
+              <p class="ayuda">Queda con tu nombre y la fecha. Es lo único que va a explicar esta ficha dentro de un semestre.</p>
+            </div>
+            <button type="submit" class="btn peligro block">Cancelar el proyecto</button>
+          </form>
+        <% } %>
+      </div>
+
+      <%/* Eliminar no se le niega a nadie ni por tener reuniones y notas: probar
+           el módulo pasa por escribir una nota de prueba, y un candado ahí solo
+           conseguiría que el proyecto de prueba se quedara para siempre. Lo que
+           cambia es cuánto cuesta pulsarlo. */%>
+      <div class="tarjeta">
+        <h3>Eliminar el proyecto</h3>
+        <%
+          const cuelga = [];
+          if (rastro.estudiantes) cuelga.push(`<strong>${rastro.estudiantes}</strong> integrante` + (rastro.estudiantes === 1 ? "" : "s"));
+          if (rastro.jurados)     cuelga.push(`<strong>${rastro.jurados}</strong> jurado` + (rastro.jurados === 1 ? "" : "s"));
+          if (rastro.objetivos)   cuelga.push(`<strong>${rastro.objetivos}</strong> objetivo` + (rastro.objetivos === 1 ? "" : "s"));
+          if (rastro.reuniones)   cuelga.push(`<strong>${rastro.reuniones}</strong> reuni` + (rastro.reuniones === 1 ? "ón" : "ones"));
+          if (rastro.notas)       cuelga.push(`<strong>${rastro.notas}</strong> nota` + (rastro.notas === 1 ? "" : "s") + " de semestre");
+          const conTrabajo = Boolean(rastro.reuniones || rastro.notas || rastro.objetivos_calificados);
+        %>
+        <p class="mini" style="margin:6px 0 14px">
+          Para lo que nunca debió existir: la prueba que se hizo para ver cómo se veía el
+          formulario, el registro repetido, el que se llenó con el nombre de otro.
+          <% if (cuelga.length) { %>
+            Se lleva <%- cuelga.slice(0, -1).join(", ") %><%- cuelga.length > 1 ? " y " : "" %><%- cuelga[cuelga.length - 1] %>,
+            y no queda nada.
+          <% } else { %>
+            No cuelga nada de él.
+          <% } %>
+          Esto sí es para siempre.
+        </p>
+
+        <% if (conTrabajo) { %>
+          <div class="aviso ojo" style="margin-bottom:14px">
+            <p style="margin:0">
+              Este proyecto tiene <strong>trabajo registrado</strong>: reuniones, objetivos
+              calificados y notas con la firma de quien las escribió. Si lo que quieres es que
+              deje de contar y que sus integrantes queden libres, <strong>cancélalo</strong> y
+              todo eso se queda.
+            </p>
+          </div>
+        <% } else if (proyecto.vinculado) { %>
+          <div class="aviso ojo" style="margin-bottom:14px">
+            <p style="margin:0">
+              Ojo: este proyecto ya pasó de <strong>propuesta aprobada</strong>. Cuenta en las
+              cifras del semillero y tiene un trámite andando. Si lo que quieres es que deje de
+              contar, cancélalo en vez de borrarlo.
+            </p>
+          </div>
+        <% } %>
+
+        <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/borrar"
+              <%/* En el aviso va el código y no el título: seis caracteres que no
+                   traen comillas ni acentos que romper dentro del confirm, y el
+                   título está en la cabecera de esta misma página. */%>
+              onsubmit="return confirm('Se elimina el proyecto <%= proyecto.codigo %> con todo lo suyo. No se puede deshacer. ¿Seguro?')">
+          <% if (conTrabajo) { %>
+            <%/* Escribir el código no es un permiso —el de al lado borra sin
+                 esto— sino lo que obliga a mirar CUÁL se está borrando, que es
+                 el error de verdad: nadie se equivoca al borrar a propósito. */%>
+            <div class="campo">
+              <label for="confirmar">Escribe <span class="cod"><%= proyecto.codigo %></span> para confirmar</label>
+              <input type="text" name="confirmar" id="confirmar" required maxlength="6" autocomplete="off"
+                     placeholder="<%= proyecto.codigo %>"
+                     style="font-family:var(--mono);letter-spacing:.18em;text-transform:uppercase" />
+            </div>
+          <% } %>
+          <button type="submit" class="btn peligro block">Eliminar para siempre</button>
+        </form>
+      </div>
+    </div>
+  </section>
 </main>
 
 <%/* Abrir una reunión con un clic en cualquier parte de su cabecera. Dentro
@@ -660,6 +1073,23 @@
     const destino = document.querySelector(location.hash);
     if (destino) destino.classList.add("abierta");
   }
+
+  // El botón que copia la nota sugerida a la casilla del director.
+  //
+  // COPIA Y NADA MÁS: no guarda. Es la línea que separa esto de precargar la
+  // casilla, que es lo que el módulo no hace a propósito —una nota puesta sola
+  // por un promedio sería una nota que nadie decidió—. Aquí la pone el docente
+  // con un clic, la puede cambiar, y decidirla sigue siendo pulsar "Guardar la
+  // nota". Sin este script la página funciona igual: la sugerencia está escrita
+  // al lado y se teclea.
+  document.querySelectorAll("[data-copiar]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      const destino = document.getElementById(boton.dataset.destino);
+      if (!destino) return;
+      destino.value = boton.dataset.copiar;
+      destino.focus();
+    });
+  });
 </script>
 
 <%- include('../partials/footer') %>

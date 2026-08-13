@@ -640,11 +640,25 @@ const INK = {
 //                     cuando alguien va por el IV.
 //   horas_semestre  — las que pide el plan de trabajo del G-01-SEM por
 //                     semestre. Solo se muestra; no se lleva la cuenta.
-//   calendario      — LA FECHA DE INICIO del semestre de reuniones, y cuántas
-//                     semanas dura. Las dieciséis semanas NO se escriben en
-//                     ninguna parte: salen solas de esa fecha, una cada siete
-//                     días, y con ellas los rótulos "S1 · 3 a 7 de agosto" que
-//                     hoy titulan cada hoja del archivo de seguimiento.
+//   calendario      — LAS FECHAS DE INICIO de cada semestre de reuniones, y
+//                     cuántas semanas dura uno. Las dieciséis semanas NO se
+//                     escriben en ninguna parte: salen solas de esa fecha, una
+//                     cada siete días, y con ellas los rótulos "S1 · 3 a 7 de
+//                     agosto" que hoy titulan cada hoja del archivo de
+//                     seguimiento.
+//
+//                     `inicios` es un MAPA y no una fecha suelta, y esa es toda
+//                     la diferencia: al empezar semestre se AGREGA un renglón,
+//                     no se reemplaza el de antes. Con una sola fecha, abrir el
+//                     semestre pasado en el panel mostraba las semanas del
+//                     actual —o ninguna—, porque el calendario contra el que se
+//                     dibujaban se había sobrescrito. Un archivo de seguimiento
+//                     que no puede enseñar el semestre pasado no es un archivo.
+//
+//                     Al semestre que no tenga renglón aquí no le pasa nada
+//                     grave: el panel funciona igual y solo deja de dibujarle la
+//                     tira de semanas, diciendo por qué.
+//
 //                     Es lo ÚNICO que hay que cambiar al empezar semestre,
 //                     junto con PERIODO.
 //   desde           — el semestre más antiguo del que hay datos del semillero.
@@ -652,6 +666,17 @@ const INK = {
 //                     periodos viejos de otros módulos, y un selector con
 //                     semestres en los que el semillero no existía solo sirve
 //                     para abrir páginas vacías.
+//
+//                     NO hace falta moverlo al agregar calendarios: un semestre
+//                     con renglón en `inicios` ya se ofrece, porque escribirle
+//                     su lunes de arranque es decir que el semillero existía
+//                     entonces. Manda la más antigua de las dos cosas. Antes
+//                     había que tocar las dos y era una trampa: se agregaban
+//                     cuatro calendarios viejos y el selector seguía igual.
+//
+//                     Sirve para lo que `inicios` no cubre: un semestre del que
+//                     hay proyectos pero no reuniones —los que vinieron de la
+//                     hoja vieja— y al que por eso nadie le escribió calendario.
 //   direccion       — a dónde hay que ir a notificar la intención. Es el dato
 //                     más importante de la página: sin eso el estudiante se
 //                     queda con un código y sin saber qué hacer con él.
@@ -673,8 +698,22 @@ const SAMI = {
   semestres: 3,
   horas_semestre: 64,
 
-  // El lunes de la S1 y cuántas semanas dura. Todo lo demás se calcula.
-  calendario: { inicio: "2026-08-03", semanas: 16 },
+  // El lunes de la S1 de CADA semestre, y cuántas semanas dura uno. Todo lo
+  // demás se calcula. Al estrenar semestre se agrega un renglón arriba; los de
+  // abajo se quedan para siempre, que es lo que permite abrir el semestre
+  // pasado y ver sus semanas como eran.
+  calendario: {
+    semanas: 16,
+    inicios: {
+      "2026-20": "2026-08-03",
+      "2026-10": "2026-02-02",
+      "2025-20": "2025-08-04",
+      "2025-10": "2025-02-03",
+      "2024-20": "2024-08-05",
+      "2024-10": "2024-02-05",
+      "2023-20": "2023-08-07",
+    },
+  },
 
   // Del semillero solo hay datos desde este semestre.
   desde: "2025-20",

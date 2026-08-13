@@ -1018,6 +1018,74 @@ input[type="checkbox"], input[type="radio"] { width: auto; }
 
 .rendimiento b { color: var(--tinta); font-size: 14px; }
 
+/* La segunda fila de un estudiante: la nota que el panel sugiere.
+
+   Va debajo del rendimiento y se distingue de él a propósito. Arriba se
+   cuentan HECHOS —cuántas reuniones hubo, a cuántas fue—; aquí se propone un
+   número que nadie ha decidido todavía. Mismo formato para que se lean
+   seguidas, pero sin fondo y con el borde de trazos, que es como se dibuja lo
+   que está a medio hacer. Un fondo sólido las igualaría, y una sugerencia con
+   el mismo peso visual que un hecho termina copiándose sin pensarla. */
+.rendimiento.sugerencia {
+  background: transparent;
+  border: 1px dashed var(--linea-fuerte);
+  margin-top: -8px;
+  gap: 14px;
+}
+
+.rendimiento.sugerencia > span:first-child {
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  font-size: 10.5px;
+}
+
+/* El número que se propone, al final de la fila y separado del resto: es la
+   conclusión, no un dato más de la lista. */
+.rendimiento .mandan { margin-left: auto; color: var(--tinta); }
+.rendimiento .mandan b { font-size: 17px; color: var(--tinte); margin-left: 6px; }
+.rendimiento .btn { padding: 5px 11px; font-size: 11.5px; }
+
+@media (max-width: 620px) {
+  .rendimiento .mandan { margin-left: 0; }
+}
+
+/* ---------------------------------------------------------------------
+   La nota acumulada, arriba en el resumen del proyecto
+
+   Una fila por estudiante: el nombre y el promedio que lleva. Va separada de la
+   ficha de arriba con un filete, porque es de otra naturaleza: la ficha son
+   datos del proyecto y esto es cómo va cada persona.
+   --------------------------------------------------------------------- */
+.acumulados {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px dotted var(--linea-fuerte);
+  display: grid;
+  gap: 8px;
+}
+
+.acum {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.acum.ido { opacity: 0.55; }
+.acum .quien { flex: 1 1 200px; min-width: 0; }
+.acum .total { display: flex; gap: 8px; align-items: baseline; }
+
+.acum .total b {
+  font-family: var(--display);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--tinte);
+}
+
+@media (max-width: 620px) {
+  .acum .quien { flex-basis: 100%; }
+}
+
 .nota-final {
   font-family: var(--display);
   font-size: 26px;

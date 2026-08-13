@@ -589,7 +589,7 @@ G-01-SEM; si están vacías en el config, esa parte no aparece.
 
 ### La escalera de estados
 
-Trece peldaños, en `lib/sami.js`. Los ocho del final son los del documento del
+Catorce peldaños, en `lib/sami.js`. Los ocho del final son los del documento del
 programa; los cinco primeros son el trámite de vinculación, que hasta ahora no
 estaba en ninguna hoja. **No está en `config.js` a propósito**: es una máquina de
 estados y no una preferencia, y cambiar una clave rompería los proyectos ya
@@ -609,12 +609,19 @@ cuando conste que sí fue.
 | Desarrollo del proyecto | `5. Desarrollo proyecto` |
 | Radicación del proyecto | `6. Radicación proyecto` |
 | Sustentación del proyecto | `7. Sustentación proyecto` |
-| Finalizado · Retirado del semillero | — |
+| Finalizado · Retirado · Cancelado | — |
 
 La columna de la derecha existe solo para el CSV: lo exportado se pega en el
 documento viejo sin traducir nada. Un proyecto no cuenta como activo hasta que le
 aprueban la propuesta, que es por lo que cinco estados de aquí son un solo
 `1. Propuesta` allá.
+
+Los tres últimos están cerrados, pero **no cierran igual**. Mientras un proyecto
+está vivo sus integrantes no pueden radicar otro —una persona, una alternativa de
+grado a la vez—, y *Retirado* y *Cancelado* les devuelven ese cupo. *Finalizado*
+no: el que ya terminó no vuelve a empezar. Es lo que en `lib/sami.js` marca la
+bandera `libera`, y es lo único que hace falta tocar el día que aparezca un cuarto
+desenlace.
 
 El estado **se guarda**, no se calcula —al revés que en las salidas—. Allá el
 estado sale de dos casillas de pago, que son hechos verificables; aquí "en qué va"
@@ -636,6 +643,12 @@ hacerle leer dos veces para llegar a lo que sí le sirve.
 **No ve calificaciones ni notas de semestre.** Seis caracteres que se dictan por
 teléfono y se comparten por WhatsApp no son una contraseña, y una nota no es un
 dato de trámite. Las notas viven en el panel.
+
+Si su proyecto quedó **cancelado**, lo que lee no es solo que está cancelado sino
+lo siguiente que puede hacer: que su cupo quedó libre y que puede volver a
+registrar una propuesta. El **motivo no sale ahí** —es una anotación interna del
+comité, escrita para docentes—; lo que hay que explicarle se le explica en la
+dirección del programa y no en una línea de una página web.
 
 ### El panel
 
@@ -670,25 +683,215 @@ Las herramientas, en orden de uso:
   reuniones), en medio las notas del semestre y abajo el trámite, que se toca de
   tanto en tanto.
 
-**El selector de semestre** solo ofrece los semestres desde `SAMI.desde`. La
-tabla `periodos` es de la app entera y arrastra semestres viejos de la Expo y del
-torneo; ofrecer aquí uno en el que el semillero no existía solo sirve para abrir
-una página vacía y hacer dudar a quien la abre.
+**Las fechas y los comités van en un solo formulario** porque se llenan en una
+sola sentada: quien pone al día un proyecto tiene el acta delante y copia las seis
+de una vez. Van en dos filas de tres y en el orden en que pasan —*ingreso al
+semillero, carta al Consejo, propuesta presentada · propuesta aprobada,
+sustentación de anteproyecto, sustentación del proyecto*—. La primera es el día
+que entró al semillero, y no se deduce de `created_at`: en los proyectos que
+vinieron de la hoja vieja esa columna dice el día de la importación.
+
+Los dos comités quedan **abajo y aparte**, cada uno con su estado al lado, porque
+ahí la fecha sola no informa: de un CEB lo que importa es si aprobó.
+
+**El «Entró en» sale de la fecha de ingreso**, no al revés. Antes se guardaba al
+crear el proyecto —el semestre que estuviera activo ese día— y se quedaba pegado
+ahí, así que corregir la fecha no lo movía y la ficha decía *entró en 2026-20* con
+una fecha de febrero delante. El semestre se deduce del **formato del código**
+(`AAAA-NN`, con el corte en julio) y no de las fechas de
+`SAMI.calendario.inicios`: esas son para dibujar las semanas de reuniones, se
+escriben a mano cada semestre, y un año mal tecleado ahí movería en silencio el
+ingreso de un proyecto. Un dato de apoyo no puede reescribir uno del trámite.
+
+Si la fecha cae en un semestre que la app todavía no tiene, el *Entró en* se queda
+como estaba y la página lo dice: quedarse callado ahí es justo lo que hace pensar
+que guardar no sirvió.
+
+### Hacia atrás no se escribe
+
+En un semestre **anterior al de ingreso** el proyecto no existía, así que el panel
+no le deja registrar nada: ni reuniones, ni objetivos, ni notas. Se ve entero
+—mirar nunca ha hecho daño— pero los formularios no salen, y el servidor lo
+rechaza aunque se manden a mano.
+
+No es manía de orden. El selector de semestre está a un clic de la ficha, y una
+nota del semestre I fechada un año antes de que el estudiante entrara al semillero
+es un dato que nadie va a poder explicar después. **Hacia adelante no hay tope**, y
+también a propósito: un proyecto dura tres semestres y puede alargarse a un
+cuarto, así que el futuro es donde legítimamente sigue trabajando.
+
+### Los objetivos del semestre
+
+Las actividades que el estudiante se compromete a hacer, tal como las presentó en
+su propuesta. Se pegan una vez al empezar el semestre —de la propuesta, con sus
+números o sus viñetas, que el panel les quita— y se califican una por una al
+final. **Son del proyecto y del periodo:** la propuesta es una sola, y un
+semillero de tres semestres trae objetivos nuevos en cada uno.
+
+En un proyecto de dos, la nota del objetivo es una sola: el objetivo se cumplió o
+no, y eso es un hecho del trabajo. Lo que distingue a un integrante del otro ya
+está en su asistencia y su calificación reunión por reunión.
+
+Un objetivo sin nota **no vale cero, vale que todavía no se miró**: el promedio
+sale solo de los calificados, y la ficha dice cuántos faltan para que un promedio
+de dos sobre siete no se lea como el del semestre. Es la misma regla del `asistio`
+en NULL de las salidas.
+
+Los pone el director, con el mismo permiso que las reuniones y las notas. Un
+objetivo que aparece o desaparece mueve la nota sugerida de un semestre entero, y
+eso no es un acto administrativo que registre quien esté a la mano.
+
+### La nota acumulada
+
+Arriba del todo, en el resumen del proyecto, sale **cómo viene cada estudiante en
+total**: el promedio de sus semestres con nota. Es lo único de la ficha que cruza
+semestres —todo lo demás es del que se esté mirando— y por eso va ahí y no en la
+sección de notas: responde la pregunta que se hace quien abre un proyecto que va
+por el III.
+
+Solo el promedio, con **sobre cuántos semestres se sacó** al lado. Las notas una
+por una están cada una en su semestre, a un clic del selector; repetirlas aquí era
+llenar el resumen de números para no decir nada más.
+
+Dos reglas:
+
+- **solo cuentan I, II y III.** El IV existe porque pasa —alguien se alarga— pero
+  el semillero son tres semestres, y quien cursa un cuarto no sale con una nota
+  compuesta de cuatro pedazos mientras su compañero la saca de tres;
+- **se promedia sobre los semestres cerrados, no sobre tres.** A mitad del II, un
+  acumulado dividido entre tres dejaría en 2.9 a quien lleva dos notas de 4.4, y
+  eso no es un promedio: es una división por semestres que todavía no han pasado.
+
+Si un semestre quedó con dos notas —se repitió y se registró dos veces— manda la
+del periodo más reciente.
+
+**De qué semestre es cada nota se CUENTA desde el ingreso**, no se copia del
+proyecto. La fila de `sami_notas` guarda su `semestre` congelado —dentro de un año
+hay que poder decir que esa nota fue la del II aunque el proyecto ya vaya por el
+III— y ese número sale de cuántos semestres académicos hay entre el de ingreso y
+el que se está calificando: quien entró en `2025-20` está en el I en `2025-20`, en
+el II en `2026-10` y en el III en `2026-20`.
+
+Se copiaba del campo `semestre` del proyecto, que es dónde está **hoy**, y eso
+sellaba mal cualquier nota puesta hacia atrás: calificar el `2025-20` de un
+proyecto que ya iba por el III guardaba «III» en una nota del I, y dos notas del
+mismo estudiante decían las dos que eran del III —justo lo que la etiqueta existe
+para distinguir, y lo que hacía que una de las dos desapareciera del acumulado—.
+
+### La nota sugerida
+
+Debajo de cada estudiante, en la sección de notas, sale una segunda fila con **el
+promedio de los objetivos, el de sus reuniones y el promedio de los dos**. Los dos
+pesan igual: los objetivos dicen qué se entregó y las reuniones cómo se trabajó, y
+en un semillero ninguna manda sobre la otra —quien entrega todo el último día sin
+haber aparecido en cuatro meses no hizo el semestre que la propuesta decía—. Con
+uno solo de los dos, ese solo es la sugerencia, y no la mitad de sí mismo.
+
+Va en su propia fila y con otro fondo, no mezclada con la de arriba: aquella
+cuenta hechos —cuántas reuniones hubo, a cuántas fue— y esta propone un número que
+nadie ha decidido. Y sale con las dos mitades a la vista, porque un 3.4 no dice
+nada y «objetivos 4.2, reuniones 2.6» dice qué pasó en el semestre.
+
+**Sigue sin precargar la casilla.** Hay un botón que copia el número a la nota del
+director, y ahí se acaba: copiar no es guardar, y guardar es otro clic. La regla de
+la casa no cambia —una nota puesta sola por un promedio sería una nota que nadie
+decidió—, lo que cambia es que ahora el docente tiene delante contra qué la está
+poniendo.
+
+### Cancelar y eliminar
+
+Al final de la ficha, plegadas y separadas, porque son las dos únicas cosas del
+panel que no se arreglan volviendo a guardar. **Y son dos y no una a propósito:**
+
+- **cancelar** es un hecho del semillero. El proyecto existió y ahora no va:
+  cambiaron de idea, la propuesta se cae, se rehace con otro título. La ficha se
+  queda entera —con sus reuniones y sus notas— y lo que hace es soltar a sus
+  integrantes, para que puedan volver a radicar sin que el registro anterior les
+  diga que ya están en un proyecto. Pide el **motivo**, que es obligatorio, y
+  guarda quién lo canceló, cuándo y en qué peldaño iba;
+- **eliminar** es admitir que la fila nunca debió existir: la prueba que se hizo
+  para ver cómo se veía el formulario, el registro repetido, el que se llenó con
+  el nombre de otro. Se borra entera —integrantes, jurados, reuniones y notas— y
+  no queda nada. La bandeja de intenciones lo tiene también en cada fila, que es
+  donde caen esos registros y donde nadie quiere entrar y volver cinco veces.
+
+**Eliminar no tiene tope, y eso es a propósito.** Se probó ponerle uno —prohibirlo
+en cuanto el proyecto tuviera una reunión o una nota, por aquello de que son la
+constancia del trabajo de un semestre— y duró lo que tardó alguien en probar el
+módulo: escribir una nota de prueba dejaba el proyecto de prueba imborrable para
+siempre. Un candado que solo atrapa lo que hay que limpiar no protege nada.
+
+Lo que hay en su lugar es proporcional. Si el borrado se lleva trabajo registrado,
+la ficha **pide escribir el código del proyecto**; si no se lleva nada, basta el
+aviso del navegador. No es un permiso —cualquier docente del panel borra lo que
+sea—, es lo que obliga a mirar *cuál* se está borrando, que es el error de verdad:
+nadie se equivoca al borrar a propósito. La página lista antes lo que se va a
+llevar, con números, y recuerda que cancelar deja todo eso en su sitio.
+
+Cancelar **se deshace**: *Reabrir* devuelve el proyecto al peldaño en el que iba.
+Con una condición que el panel comprueba, porque es la que da sentido a todo lo
+anterior: si alguno de sus integrantes ya usó el cupo que la cancelación le
+devolvió, no se reabre —quedaría con dos alternativas de grado vivas a la vez—, y
+la página lo dice con el código del otro proyecto.
+
+Por eso *Cancelado* **no está en el selector de estados**: a él se llega por su
+botón, que pide el motivo y guarda de dónde venía. Puesto a mano desde la lista no
+habría ni lo uno ni lo otro, y una cancelación sin motivo es media cancelación.
+
+**El selector de semestre** no ofrece los semestres en los que el semillero no
+existía. La tabla `periodos` es de la app entera y arrastra semestres viejos de la
+Expo y del torneo; ofrecer aquí uno de esos solo sirve para abrir una página vacía
+y hacer dudar a quien la abre.
+
+Desde cuándo lo dicen dos cosas, y manda **la más antigua de las dos**:
+`SAMI.desde`, que lo declara de frente, y el calendario más viejo de
+`SAMI.calendario.inicios`, porque escribirle a un semestre su lunes de arranque ya
+es decir que el semillero existía entonces. Se miran las dos porque tenerlas
+separadas era una trampa: quien agrega los calendarios de cuatro semestres viejos
+espera verlos en el selector —los acaba de declarar— y no pasaba nada, porque
+faltaba mover una segunda línea que no tenía por qué recordar.
+
+`SAMI.desde` sigue sirviendo para lo que los calendarios no cubren: un semestre
+del que hay proyectos pero no reuniones —los que vinieron de la hoja vieja— y al
+que por eso nadie le escribió calendario.
 
 ### El calendario, que no se escribe
 
-Lo único que se configura es **la fecha de inicio** (`SAMI.calendario.inicio`, el
-lunes de la S1) y cuántas semanas dura. Las dieciséis salen de ahí, una cada
-siete días, y con ellas los rótulos `S1 · 3 a 7 de agosto` que hoy titulan a mano
-cada hoja del archivo de seguimiento —dieciséis títulos escritos a mano por
-semestre son dieciséis oportunidades de equivocarse—.
+Lo único que se configura es **la fecha de inicio de cada semestre** (el lunes de
+su S1) y cuántas semanas dura uno. Las dieciséis salen de ahí, una cada siete
+días, y con ellas los rótulos `S1 · 3 a 7 de agosto` que hoy titulan a mano cada
+hoja del archivo de seguimiento —dieciséis títulos escritos a mano por semestre
+son dieciséis oportunidades de equivocarse—.
+
+**Las fechas son un mapa, una por semestre**, y eso no es un detalle:
+
+```js
+calendario: {
+  semanas: 16,
+  inicios: {
+    "2026-20": "2026-08-03",
+    "2026-10": "2026-02-02",
+  },
+},
+```
+
+Al estrenar semestre se **agrega** un renglón, no se reemplaza el de antes. Con
+una sola fecha —como estaba— cambiar de semestre en el panel seguía dibujando las
+semanas del actual: agosto sobre las reuniones de marzo. Un archivo de seguimiento
+que no puede enseñar el semestre pasado no es un archivo, así que los renglones
+viejos se quedan para siempre.
+
+Al semestre sin renglón no le pasa nada grave: el panel funciona igual, la ficha
+dice por qué no le dibuja la tira de semanas, y las reuniones se registran —solo
+que sin número de semana, antes que inventarle uno—.
 
 La ficha de cada proyecto enseña las dieciséis casillas y cuáles ya tienen
 reunión registrada, que es la pregunta que se hace un director en noviembre.
 
 El número de semana **se guarda resuelto** en cada reunión, no se recalcula al
 leer: corregir el calendario del semestre no puede cambiar la semana de reuniones
-que ya pasaron.
+que ya pasaron. Y se calcula contra el calendario del semestre **de la reunión**,
+no del que se esté mirando en el selector.
 
 ### Cargar un lote desde la hoja
 

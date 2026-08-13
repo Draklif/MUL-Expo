@@ -122,10 +122,33 @@
       </div>
     </section>
 
+    <%/* Un proyecto cancelado tiene que decir lo siguiente que hay que hacer, y
+         no solo que está cancelado. Quien consulta su código después de que el
+         comité lo canceló está preguntando "¿y ahora qué?", y la respuesta es
+         que puede volver a radicar: su cupo quedó libre.
+
+         El motivo NO sale aquí. Es una anotación interna del comité, escrita
+         para docentes; lo que se le explica al estudiante se le explica en la
+         dirección del programa y no en una línea de una página web. */%>
+    <% if (proyecto.estado === "cancelado") { %>
+      <section class="sam-sec">
+        <div class="aviso ojo">
+          <p style="margin:0">
+            <strong>Este proyecto quedó cancelado.</strong>
+            Ya no está en curso, así que no te bloquea: si vas a presentar otra propuesta,
+            <a href="/semillero/registro">regístrala de nuevo</a> y te sale un código nuevo.
+            Si crees que es un error, escribe a
+            <a href="mailto:<%= sami.direccion.email %>"><%= sami.direccion.email %></a>.
+          </p>
+        </div>
+      </section>
+    <% } %>
+
     <%/* Las fechas del trámite. Solo salen las que ya pasaron: una lista de
          siete renglones diciendo "—" no informa, abruma. */%>
     <%
       const hitos = [
+        { k: "Ingreso al semillero",        v: proyecto.fechas.ingreso },
         { k: "Carta radicada al Consejo",   v: proyecto.fechas.carta },
         { k: "Propuesta presentada",        v: proyecto.fechas.propuesta },
         { k: "Propuesta aprobada",          v: proyecto.fechas.aprobacion },

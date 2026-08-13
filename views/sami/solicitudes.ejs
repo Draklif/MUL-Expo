@@ -19,6 +19,11 @@
   <% if (aviso.ok) { %>
     <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Guardado.</p></div>
   <% } %>
+  <% if (aviso.eliminado) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">Se eliminó el registro <span class="cod"><%= aviso.eliminado %></span>. No queda nada suyo.</p>
+    </div>
+  <% } %>
 
   <section class="sam-sec">
     <div class="sec-top">
@@ -115,7 +120,7 @@
                   <div class="campo">
                     <label for="est<%= p.id %>">Paso del trámite</label>
                     <select name="estado" id="est<%= p.id %>">
-                      <% estados.forEach(function (e) { %>
+                      <% estadosManuales.forEach(function (e) { %>
                         <option value="<%= e.clave %>" <%= p.estado === e.clave ? "selected" : "" %>><%= e.label %></option>
                       <% }); %>
                     </select>
@@ -135,8 +140,27 @@
                 </div>
               </form>
 
+              <%/* Eliminar se hace desde aquí y no solo desde la ficha porque
+                   aquí es donde caen los registros de prueba y los repetidos, y
+                   quien está limpiando cinco no quiere entrar y volver cinco
+                   veces.
+
+                   El que ya tiene reuniones o notas sí se manda a su ficha, y no
+                   para prohibírselo —allá se borra igual— sino porque el
+                   borrado pide escribir el código y esa casilla no cabe aquí,
+                   donde lo normal es que no haga falta. */%>
               <div class="reg-acciones">
                 <a href="/semillero/panel/proyecto/<%= p.id %>" class="btn ghost chico">Abrir la ficha completa</a>
+                <% if (p.rastro.reuniones || p.rastro.notas) { %>
+                  <a href="/semillero/panel/proyecto/<%= p.id %>#riesgo" class="btn peligro chico">Eliminar…</a>
+                  <span class="mini">Tiene reuniones o notas: se confirma en su ficha.</span>
+                <% } else { %>
+                  <form method="POST" action="/semillero/panel/proyecto/<%= p.id %>/borrar" style="margin:0"
+                        onsubmit="return confirm('Se elimina el registro <%= p.codigo %> con sus <%= p.estudiantes.length %> integrante(s). No se puede deshacer. ¿Seguro?')">
+                    <input type="hidden" name="volver" value="solicitudes" />
+                    <button type="submit" class="btn peligro chico">Eliminar</button>
+                  </form>
+                <% } %>
               </div>
             </div>
           </article>

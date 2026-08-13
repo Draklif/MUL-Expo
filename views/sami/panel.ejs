@@ -10,8 +10,8 @@
        2. TODO EL SEMILLERO — de lectura. No está escondido a propósito: es
           el documento del programa, y quien dirige el semillero necesita ver
           el mapa completo sin pedirle permiso a nadie.
-       3. LO CERRADO — finalizados y retirados, al final y plegado en una
-          tabla: ya no hay nada que hacerles.
+       3. LO CERRADO — finalizados, retirados y cancelados, al final y
+          plegado en una tabla: ya no hay nada que hacerles.
 
      Las cifras de arriba son lo que en las hojas había que contar a mano
      cada vez que alguien preguntaba.
@@ -25,6 +25,13 @@
   <% } %>
   <% if (aviso.borrado) { %>
     <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se borró la reunión.</p></div>
+  <% } %>
+  <% if (aviso.eliminado) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Se eliminó el proyecto <span class="cod"><%= aviso.eliminado %></span> con todo lo suyo.
+      </p>
+    </div>
   <% } %>
   <% if (aviso.creados !== undefined) { %>
     <div class="aviso bueno" style="margin-top:24px">
@@ -143,7 +150,7 @@
       <div class="sec-top">
         <div>
           <p class="eyebrow">Ya no están en curso</p>
-          <h2>Finalizados y retirados</h2>
+          <h2>Finalizados, retirados y cancelados</h2>
         </div>
         <a href="/semillero/panel/finalizados.csv" class="btn ghost chico">Finalizados en CSV</a>
       </div>

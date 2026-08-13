@@ -627,6 +627,13 @@ db.exec(`
     -- Las fechas del trámite, cada una una columna del documento del programa.
     -- Nulas mientras no pasen, y ese nulo es información: un proyecto en
     -- desarrollo sin anteproyecto_at es un proyecto al que le falta un papel.
+    --
+    -- 'ingreso_at' es la primera de todas: el día que entró al semillero. NO es
+    -- created_at —esa es cuándo se escribió la fila, que con los proyectos
+    -- importados de la hoja vieja es el día de la importación y no dice nada— ni
+    -- es periodo_id, que dice en qué SEMESTRE entró y no qué día. Se pregunta de
+    -- verdad cuando hay que contar el plazo de los tres semestres.
+    ingreso_at       DATE,  -- ingreso al semillero
     carta_at         DATE,  -- radicación al Consejo de Facultad
     propuesta_at     DATE,  -- presentación de la propuesta G-01-SEM
     aprobacion_at    DATE,  -- concepto del Comité de Investigación
@@ -647,6 +654,19 @@ db.exec(`
     -- Se marca al mandar el correo de "propuesta aprobada". Nulo es lo que
     -- permite reintentarlo sin repetírselo a quien ya lo recibió.
     avisado_at   DATETIME,
+    -- La cancelación, que es un hecho y no solo un estado: el proyecto existió,
+    -- alguien decidió que no va y esa decisión tiene dueño y fecha. Es la misma
+    -- lección de sami_notas.cerrada_por —lo que se deshace no queda anónimo—,
+    -- y aquí pesa más porque cancelar le devuelve a sus estudiantes el cupo
+    -- para radicar otro proyecto.
+    --
+    -- 'cancelado_desde' es el estado en el que iba. Se guarda para poder
+    -- deshacerlo: sin él, reabrir un proyecto cancelado por error obligaría a
+    -- adivinar si iba en anteproyecto o en desarrollo.
+    cancelado_at     DATETIME,
+    cancelado_por    INTEGER REFERENCES docentes(id),
+    cancelado_motivo TEXT,
+    cancelado_desde  TEXT,
     created_at   DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (director_id) REFERENCES docentes(id),
     FOREIGN KEY (periodo_id)  REFERENCES periodos(id)
@@ -746,6 +766,44 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_sami_asis ON sami_asistencias(estudiante_id);
+
+  -- Los objetivos del semestre: las actividades que el estudiante se
+  -- compromete a hacer en su propuesta, y contra las que el director saca la
+  -- nota al final.
+  --
+  -- Son del PROYECTO y no de cada estudiante, igual que los adelantos de una
+  -- reunión: la propuesta es una sola y el objetivo se cumplió o no se cumplió,
+  -- que es un hecho del trabajo. Lo que sí distingue a los dos integrantes de un
+  -- proyecto ya está en la tabla de al lado —su asistencia y su calificación
+  -- reunión por reunión— y al final en la nota que escribe el director.
+  --
+  -- Van por PERIODO y no por proyecto a secas: un proyecto dura tres semestres
+  -- y cada uno trae sus propios objetivos. Los del semestre pasado se quedan
+  -- donde están, que es lo que permite abrir el selector de semestre y ver
+  -- contra qué se calificó entonces.
+  --
+  -- 'nota' es NULL mientras no se haya calificado, y ese nulo cuenta: un
+  -- objetivo sin calificar NO vale cero, vale que todavía no se miró. Por eso
+  -- el promedio se saca solo sobre los calificados.
+  CREATE TABLE IF NOT EXISTS sami_objetivos (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    proyecto_id    INTEGER NOT NULL,
+    periodo_id     INTEGER NOT NULL,
+    texto          TEXT NOT NULL,
+    nota           REAL,
+    orden          INTEGER NOT NULL DEFAULT 0,
+    -- Quién puso la nota y cuándo. Se llenan al calificar y se vacían al
+    -- borrar la nota: la misma regla de sami_notas, que una calificación se
+    -- puede corregir pero no queda anónima.
+    calificado_por INTEGER,
+    calificado_at  DATETIME,
+    created_at     DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (proyecto_id)    REFERENCES sami_proyectos(id) ON DELETE CASCADE,
+    FOREIGN KEY (periodo_id)     REFERENCES periodos(id),
+    FOREIGN KEY (calificado_por) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_sami_obj ON sami_objetivos(proyecto_id, periodo_id, orden);
 
   -- La nota del semestre: una por estudiante y por periodo.
   --
@@ -979,6 +1037,20 @@ agregarColumna("salida_registros", "asistencia_at", "DATETIME");
 // no las lee nadie, y una reconstrucción con llaves foráneas apuntando a esta
 // tabla es mucho riesgo para ganar dos columnas de espacio.
 agregarColumna("sami_proyectos", "perfil", "TEXT");
+
+// Cancelar un proyecto llegó después: hasta ahora la única salida era pasarlo a
+// 'retirado', que dice otra cosa —que el estudiante se fue del semillero— y
+// dejaba sin registrar lo único que de verdad hace falta saber después, que es
+// por qué se canceló y quién lo decidió.
+agregarColumna("sami_proyectos", "cancelado_at", "DATETIME");
+agregarColumna("sami_proyectos", "cancelado_por", "INTEGER REFERENCES docentes(id)");
+agregarColumna("sami_proyectos", "cancelado_motivo", "TEXT");
+agregarColumna("sami_proyectos", "cancelado_desde", "TEXT");
+
+// El día que entró al semillero. Va con las demás fechas del trámite y llegó
+// después que ellas: se llevaba de memoria, y created_at no sirve de sustituto
+// —en los proyectos que vinieron de la hoja vieja es el día de la importación—.
+agregarColumna("sami_proyectos", "ingreso_at", "DATE");
 
 // ---------- Semestres ----------
 // La base tiene que tener al menos uno antes de poder repartir nada.

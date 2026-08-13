@@ -5,13 +5,14 @@
      qué va este proyecto?"— sin obligar a leer una tabla. Se lee de
      izquierda a derecha: lo azul ya pasó, el peldaño lleno es dónde está.
 
-     Un proyecto retirado se pinta entero de ladrillo y uno finalizado de
-     verde: en los dos casos la barra ya no es un avance, es un desenlace.
+     Uno finalizado se pinta entero de verde y uno que no llegó —retirado o
+     cancelado— de ladrillo: en los dos casos la barra ya no es un avance, es
+     un desenlace.
 
      Locals:
        estados — sami.ESTADOS.
        actual  — el estado_info del proyecto. */%>
-<ol class="escalera <%= actual.clave === "finalizado" ? "cerrada" : actual.clave === "retirado" ? "malo" : "" %>"
+<ol class="escalera <%= actual.clave === "finalizado" ? "cerrada" : actual.fase === "cerrado" ? "malo" : "" %>"
     aria-label="Avance del trámite">
   <% estados.forEach(function (e) { %>
     <li class="<%= e.orden < actual.orden ? "pasado" : e.orden === actual.orden ? "aqui" : "" %> <%= e.clave === "aprobada" ? "corte" : "" %>"
