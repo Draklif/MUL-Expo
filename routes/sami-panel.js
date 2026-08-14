@@ -527,7 +527,11 @@ router.post("/panel/proyecto/:id/estudiantes", (req, res) => {
     return res.redirect(volverA(proyecto, "?error=estudiante#integrantes"));
   }
 
-  const previo = sami.proyectoDe(e.email);
+  // La alternativa de grado ocupada y no cualquier registro suyo: desde que el
+  // formulario público deja dejar varias intenciones, alguien puede tener una
+  // propuesta propia esperando y aun así entrar como segundo integrante de
+  // otra. Lo que no puede es sumarse a un proyecto teniendo ya uno aprobado.
+  const previo = sami.alternativaDe(e.email);
   if (previo) return res.redirect(volverA(proyecto, "?error=ya_vinculado#integrantes"));
 
   const orden = db

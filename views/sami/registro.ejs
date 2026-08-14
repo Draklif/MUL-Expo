@@ -23,6 +23,19 @@
      Dos integrantes por defecto porque así son la mayoría, y el segundo
      bloque se puede dejar entero en blanco: las filas vacías se descartan al
      guardar.
+
+     El botón no envía: abre una última revisada. Es la única pantalla que ve
+     un estudiante antes de que su registro exista, así que ahí vuelve a leer
+     —con el título y los nombres que acaba de escribir delante— que esto no lo
+     vincula a nada. Un confirm() del navegador no deja decir eso: es un
+     renglón de texto de sistema, sin jerarquía y sin los datos a la vista.
+
+     Sin JavaScript el diálogo no aparece y el formulario se envía derecho. La
+     puerta es una confirmación, no un requisito.
+
+     Y una misma persona puede dejar VARIAS propuestas, cada una con su código:
+     ver alternativaDe() en lib/sami.js. Lo único que se rechaza es el mismo
+     título dos veces, que es un doble envío y no una segunda idea.
      ───────────────────────────────────────────────────────────────── */%>
 <%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
 <%- include('partials/top') %>
@@ -74,7 +87,7 @@
     </div>
   <% } else { %>
 
-    <form method="POST" action="/semillero/registro" style="margin-top:26px">
+    <form method="POST" action="/semillero/registro" id="registro" style="margin-top:26px">
       <%/* Dos bloques de estudiante. El segundo puede quedar en blanco: un
            proyecto de una persona es lo normal y no hay por qué obligar a
            borrar campos. */%>
@@ -144,6 +157,8 @@
         <p class="ayuda">
           Tentativo de verdad: casi ningún proyecto se sustenta con el título con el que
           se registró. Escribe lo que quieres hacer, aunque todavía no sepas cómo.
+          Si traes <strong>más de una propuesta</strong>, déjalas por separado: llena este
+          formulario una vez por cada una y a cada una le queda su propio código.
         </p>
       </div>
 
@@ -194,6 +209,93 @@
     <p class="mini" style="margin-top:22px;text-align:center">
       ¿Ya te registraste? <a href="/semillero/estado">Consulta tu código</a>.
     </p>
+
+    <%/* La última revisada. Va FUERA del formulario a propósito: dentro, sus
+         botones serían botones del formulario y el de "revisar de nuevo"
+         terminaría enviándolo. */%>
+    <dialog class="dlg" id="confirmar" aria-labelledby="confirmar-t">
+      <div class="dlg-cuerpo">
+        <p class="eyebrow" style="margin-bottom:4px">Antes de enviar</p>
+        <h2 id="confirmar-t">Revisa lo que vas a dejar</h2>
+        <div class="ficha" id="confirmar-datos"></div>
+        <p style="margin:16px 0 0">
+          Se guardan tus datos y te queda un código para consultar en qué va.
+          <strong>No te vincula al semillero</strong>: lo que sigue es ir a la dirección
+          del programa a notificar tu intención en persona.
+        </p>
+      </div>
+      <div class="dlg-pie">
+        <button type="button" class="btn ghost" data-cerrar>Revisar de nuevo</button>
+        <button type="button" class="btn" id="confirmar-si">Sí, dejar mis datos</button>
+      </div>
+    </dialog>
+
+    <script>
+      (function () {
+        const form = document.getElementById("registro");
+        const dlg = document.getElementById("confirmar");
+        // Sin <dialog> —o sin JavaScript— el formulario se envía como toda la
+        // vida: el botón es un submit de verdad y aquí no se le quita nada.
+        if (!form || !dlg || typeof dlg.showModal !== "function") return;
+
+        const datos = document.getElementById("confirmar-datos");
+        const si = document.getElementById("confirmar-si");
+        let confirmado = false;
+
+        function renglon(k, v) {
+          const f = document.createElement("div");
+          f.className = "f";
+          const rotulo = document.createElement("div");
+          rotulo.className = "k";
+          rotulo.textContent = k;
+          const valor = document.createElement("div");
+          valor.className = "v";
+          valor.textContent = v;
+          f.append(rotulo, valor);
+          return f;
+        }
+
+        form.addEventListener("submit", function (ev) {
+          if (confirmado) return;
+          ev.preventDefault();
+
+          // Se arma al abrir y no antes: lo que se confirma es lo que hay
+          // escrito en este momento, no lo que había al cargar la página.
+          const nombres = Array.from(form.querySelectorAll('input[name="est_nombre"]'))
+            .map(function (i) { return i.value.trim(); })
+            .filter(Boolean);
+
+          datos.replaceChildren(
+            renglon("Propuesta", form.titulo.value.trim()),
+            renglon(nombres.length > 1 ? "Quiénes" : "Quién", nombres.join(" · "))
+          );
+
+          dlg.showModal();
+        });
+
+        si.addEventListener("click", function () {
+          confirmado = true;
+          // El doble clic en el botón de confirmar crearía dos proyectos con
+          // dos códigos, y desempatarlos después es trabajo a mano.
+          si.disabled = true;
+          dlg.close();
+          form.submit();
+        });
+
+        dlg.querySelectorAll("[data-cerrar]").forEach(function (b) {
+          b.addEventListener("click", function () { dlg.close(); });
+        });
+
+        // Volver con la flecha del navegador devuelve la página tal como
+        // estaba, con el botón bloqueado y el permiso ya dado. Se deshacen los
+        // dos: quien vuelve al formulario vuelve a confirmar.
+        window.addEventListener("pageshow", function (ev) {
+          if (!ev.persisted) return;
+          confirmado = false;
+          si.disabled = false;
+        });
+      })();
+    </script>
   <% } %>
 </main>
 

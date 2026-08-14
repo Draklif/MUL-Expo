@@ -194,13 +194,30 @@ router.post("/semillero/registro", publica, (req, res) => {
       );
     }
 
-    // Ya vinculado: casi siempre es alguien que se registró dos veces y no se
-    // acuerda. Se dice con nombre propio en vez de dejar reventar el UNIQUE.
-    const previo = e.email && sami.proyectoDe(e.email);
+    // Lo que cierra la puerta es tener la alternativa de grado OCUPADA —una
+    // propuesta ya aprobada—, no haber dejado datos antes. Varias intenciones
+    // a la vez sí se permiten: quien está buscando tema llega con dos o tres
+    // propuestas y con un asesor posible para cada una, y obligarlo a escoger
+    // antes de haber hablado con ninguno es pedirle la decisión justo cuando
+    // menos elementos tiene para tomarla. Cada una lleva su propio código y
+    // sigue su propio camino; la que prospere será la que un asesor recoja.
+    const previo = e.email && sami.alternativaDe(e.email);
     if (previo) {
       errores.push(
-        `${quien}ese correo ya está en un proyecto del semillero (código ${previo.codigo}). ` +
+        `${quien}ese correo ya tiene un proyecto aprobado en el semillero (código ${previo.codigo}). ` +
           "Consulta su estado con el código, o habla con la dirección del programa."
+      );
+    }
+
+    // La MISMA propuesta otra vez no es una segunda idea: es un doble envío o
+    // alguien que no se acuerda. Se dice con qué código quedó, en vez de dejar
+    // dos registros gemelos que después hay que desempatar a mano.
+    const repetida =
+      e.email && sami.intencionesDe(e.email).find((p) => sami.mismoTitulo(p.titulo, valores.titulo));
+    if (repetida) {
+      errores.push(
+        `${quien}ya dejaste esta misma propuesta y quedó con el código ${repetida.codigo}. ` +
+          "Si es otra idea distinta, cámbiale el título; si querías ver en qué va, consulta ese código."
       );
     }
   });

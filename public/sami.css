@@ -781,6 +781,58 @@ input[type="checkbox"], input[type="radio"] { width: auto; }
 }
 
 /* ---------------------------------------------------------------------
+   La última revisada
+   Un <dialog> del navegador, sin librería: son treinta líneas de CSS y
+   showModal() ya trae el foco atrapado, el Escape y el fondo inerte, que
+   es justamente lo que se paga al traer una.
+
+   La usa el formulario público antes de enviar. No es una advertencia
+   —no hay nada peligroso que hacer aquí— sino la última pantalla donde
+   se puede repetir lo que este formulario NO hace, con el título y los
+   nombres recién escritos delante. La ficha de adentro es la misma
+   .ficha del resto del sitio: lo que se confirma se lee como se lee
+   cualquier otro dato del semillero.
+   --------------------------------------------------------------------- */
+.dlg {
+  width: min(470px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  background: var(--papel-alto);
+  color: var(--tinta);
+  box-shadow: 0 18px 46px rgba(21, 27, 40, .24);
+}
+
+.dlg::backdrop { background: rgba(21, 27, 40, .52); }
+
+.dlg-cuerpo { padding: 22px 22px 4px; }
+.dlg h2 { font-size: 21px; margin: 0 0 14px; }
+.dlg p { font-size: 14.5px; color: var(--tinta-dim); }
+.dlg .ficha .f:first-child { padding-top: 0; }
+
+/* Los dos botones a lo ancho y del mismo tamaño: ni el de seguir es más
+   grande ni el de volver es un enlace de letra chica. */
+.dlg-pie {
+  display: flex;
+  gap: 10px;
+  padding: 18px 22px 22px;
+}
+
+.dlg-pie .btn { flex: 1; }
+
+/* La página de atrás no se desplaza mientras el diálogo está abierto: el
+   <dialog> bloquea el foco, no la rueda del ratón. */
+body:has(dialog[open]) { overflow: hidden; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .dlg[open] { animation: dlg-entra .16s ease-out; }
+  .dlg[open]::backdrop { animation: dlg-fondo .16s ease-out; }
+}
+
+@keyframes dlg-entra { from { opacity: 0; transform: translateY(10px); } }
+@keyframes dlg-fondo { from { opacity: 0; } }
+
+/* ---------------------------------------------------------------------
    El código de seis caracteres
    --------------------------------------------------------------------- */
 .codigo-grande {
