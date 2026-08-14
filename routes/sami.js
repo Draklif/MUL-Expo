@@ -113,7 +113,7 @@ router.get("/semillero/estado", publica, (req, res) => {
       // que se comparten por WhatsApp no son una contraseña—.
       ultima: proyecto ? sami.ultimaReunion(proyecto.id) : null,
       recienHecho: false,
-      correoActivo: envios.activo(),
+      correoActivo: envios.aDestinatario(),
       error: codigo && !proyecto ? "No encontramos ningún proyecto con ese código." : null,
     })
   );
@@ -307,7 +307,7 @@ router.get("/semillero/registro/listo/:codigo", publica, (req, res) => {
       ultima: null,
       recienHecho: true,
       error: null,
-      correoActivo: envios.activo(),
+      correoActivo: envios.aDestinatario(),
     })
   );
 });

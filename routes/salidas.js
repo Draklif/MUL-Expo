@@ -129,7 +129,7 @@ router.get("/salidas/estado", publica, (req, res) => {
       // del registro que se consultó: sin código todavía no hay ninguna.
       salida: registro ? registro.salida_info : null,
       recienHecho: false,
-      correoActivo: envios.activo(),
+      correoActivo: envios.aDestinatario(),
       error: codigo && !registro ? "No encontramos ningún registro con ese código." : null,
     })
   );
@@ -292,7 +292,7 @@ router.get("/salidas/:id/registro/listo/:codigo", publicaSalida, (req, res, next
       salida,
       recienHecho: true,
       error: null,
-      correoActivo: envios.activo(),
+      correoActivo: envios.aDestinatario(),
     })
   );
 });

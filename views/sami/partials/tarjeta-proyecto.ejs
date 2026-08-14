@@ -30,7 +30,7 @@
     <%= p.estudiantes.filter(function (e) { return e.activo; }).map(function (e) { return e.nombre; }).join(" · ") || "Sin integrantes" %>
   </p>
 
-  <%- include('escalera', { estados: estados, actual: p.estado_info }) %>
+  <%- include('escalera', { estados: estados, actual: p.estado_info, venia: p.cancelado_desde }) %>
 
   <div class="datos tp-cifras">
     <div class="dato">

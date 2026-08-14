@@ -158,7 +158,10 @@
               <input type="hidden" name="revelar" value="0" />
               <button type="submit" class="btn chico">Esconderlo otra vez</button>
             </form>
-            <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/avisar-tema" style="margin:0">
+            <form method="POST" action="/jam/panel/ediciones/<%= edicion.id %>/avisar-tema" style="margin:0"
+                  onsubmit="return <%- confirmaCorreo(
+                    "Se le manda el tema por correo a TODOS los inscritos de la edición. Es el correo del segundo cero: si lo mandas antes de tiempo, la jam arrancó."
+                  ) %>">
               <button type="submit" class="btn chico" <%= correoActivo ? "" : "disabled" %>>
                 Mandarlo por correo a todos
               </button>
@@ -229,9 +232,20 @@
                 <input type="text" name="nota_docente" id="nota-<%= e.id %>" maxlength="400"
                        placeholder="Se ve sobre todo si se rechaza." />
               </div>
+              <%/* La pregunta va en cada botón y no en el formulario: los dos
+                   mandan correo pero no dicen lo mismo, y un onsubmit no sabe
+                   cuál de los dos se pulsó. */%>
               <div class="acciones">
-                <button type="submit" name="estado" value="aprobado" class="btn chico">Admitir</button>
-                <button type="submit" name="estado" value="rechazado" class="btn chico">Rechazar</button>
+                <button type="submit" name="estado" value="aprobado" class="btn chico"
+                        onclick="return <%- confirmaCorreo(
+                          "Se admite a " + e.nombre + " y se le avisa a " + e.contacto_nombre +
+                          " (" + e.contacto_email + ") con el código del equipo."
+                        ) %>">Admitir</button>
+                <button type="submit" name="estado" value="rechazado" class="btn chico"
+                        onclick="return <%- confirmaCorreo(
+                          "Se rechaza a " + e.nombre + " y se le avisa a " + e.contacto_nombre +
+                          " (" + e.contacto_email + "), con la nota que hayas escrito arriba."
+                        ) %>">Rechazar</button>
               </div>
             </form>
           </div>
@@ -289,7 +303,9 @@
               <span class="mini disc"><%= i.disciplina || "sin disciplina" %></span>
               <button type="submit" class="btn chico"
                       formaction="/jam/panel/integrantes/<%= i.id %>/solitario" formnovalidate
-                      onclick="return confirm('¿Dejar a <%= i.nombre %> en solitario? Queda como equipo de una persona y le llega un correo con su código.')">
+                      onclick="return <%- confirmaCorreo(
+                        "¿Dejar a " + i.nombre + " en solitario? Queda como equipo de una persona y se le manda un correo con su código."
+                      ) %>">
                 Solitario
               </button>
             </div>
@@ -304,7 +320,14 @@
             </div>
           </div>
 
-          <button type="submit" class="btn chico">Armar el equipo</button>
+          <%/* La pregunta va en el botón y no en el formulario: el de
+               "Solitario" es un submit de este mismo form —con formaction— y
+               un onsubmit aquí le saldría encima, preguntando dos veces por
+               una sola acción. */%>
+          <button type="submit" class="btn chico"
+                  onclick="return <%- confirmaCorreo(
+                    "El equipo queda admitido de una y a cada persona que marcaste se le manda un correo con quiénes le tocaron y el código."
+                  ) %>">Armar el equipo</button>
         </form>
       <% } %>
     </div>

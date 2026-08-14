@@ -55,13 +55,19 @@
         <p class="sol-contacto">Registró <%= s.contacto_nombre %> · <%= s.contacto_email %></p>
 
         <div class="sol-acciones">
-          <form method="POST" action="/materias/<%= materia.id %>/solicitudes/<%= s.id %>/aprobar">
+          <form method="POST" action="/materias/<%= materia.id %>/solicitudes/<%= s.id %>/aprobar"
+                onsubmit="return <%- confirmaCorreo(
+                  "Se aprueba el registro y se le avisa a " + s.contacto_nombre + " (" + s.contacto_email + ")."
+                ) %>">
             <button type="submit" class="btn">Aprobar y crear proyecto</button>
           </form>
 
           <details class="sub">
             <summary>Rechazar</summary>
-            <form method="POST" action="/materias/<%= materia.id %>/solicitudes/<%= s.id %>/rechazar" style="margin-top:10px">
+            <form method="POST" action="/materias/<%= materia.id %>/solicitudes/<%= s.id %>/rechazar" style="margin-top:10px"
+                  onsubmit="return <%- confirmaCorreo(
+                    "Se le avisa a " + s.contacto_nombre + " (" + s.contacto_email + ") que su registro no quedó aprobado, con el motivo que escribiste."
+                  ) %>">
               <div class="form-row" style="margin-bottom:10px">
                 <textarea name="nota" rows="2" maxlength="300"
                           placeholder="Motivo (lo verá el estudiante al consultar su código)"></textarea>

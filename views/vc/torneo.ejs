@@ -82,9 +82,19 @@
               <input type="text" name="nota_docente" id="nota-<%= e.id %>" maxlength="400"
                      placeholder="Les falta un jugador / hay alguien repetido…" />
             </div>
+            <%/* Cada botón con su pregunta: los dos escriben al contacto del
+                 equipo, pero no le dicen lo mismo. */%>
             <div class="acciones">
-              <button type="submit" name="estado" value="aprobado" class="btn chico">Aprobar</button>
-              <button type="submit" name="estado" value="rechazado" class="btn ghost chico">Rechazar</button>
+              <button type="submit" name="estado" value="aprobado" class="btn chico"
+                      onclick="return <%- confirmaCorreo(
+                        "Se aprueba a " + e.nombre + " y se le avisa a " + e.contacto_nombre +
+                        " (" + e.contacto_email + ")."
+                      ) %>">Aprobar</button>
+              <button type="submit" name="estado" value="rechazado" class="btn ghost chico"
+                      onclick="return <%- confirmaCorreo(
+                        "Se rechaza a " + e.nombre + " y se le avisa a " + e.contacto_nombre +
+                        " (" + e.contacto_email + "), con la nota que hayas escrito arriba."
+                      ) %>">Rechazar</button>
             </div>
           </form>
         </div>
@@ -109,7 +119,10 @@
     <% if (!libres.length) { %>
       <div class="vacio" style="margin-top:16px">Nadie esperando.</div>
     <% } else { %>
-      <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/armar" style="margin-top:16px">
+      <form method="POST" action="/vc/panel/torneos/<%= torneo.id %>/armar" style="margin-top:16px"
+            onsubmit="return <%- confirmaCorreo(
+              "El equipo queda creado y aprobado, y a cada jugador que marcaste se le manda un correo con quiénes le tocaron y el código."
+            ) %>">
         <table class="tabla">
           <thead>
             <tr>

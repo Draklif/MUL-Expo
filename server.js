@@ -14,6 +14,7 @@ const { contenidoEvento } = require("./lib/contenido");
 const eventos = require("./lib/eventos");
 const { aprobado } = require("./lib/aprobado");
 const { DOMINIO, PATRON_HTML } = require("./lib/correos");
+const { confirmaCorreo } = require("./lib/confirmar");
 
 const authRouter = require("./routes/auth");
 const materiasRouter = require("./routes/materias");
@@ -113,6 +114,20 @@ app.use((req, res, next) => {
   res.locals.docenteInk = req.session.docenteInk || null;
   res.locals.docenteSami = req.session.docenteSami || null;
   res.locals.query = req.query;
+  // El confirmar de todo lo que le escribe a un estudiante. Va aquí y no en
+  // cada router porque son dieciséis formularios en siete paneles y la pregunta
+  // es la misma en todos; y se resuelve en cada petición porque incluye si el
+  // correo va a salir de verdad, que se apaga y se enciende sin reiniciar.
+  res.locals.confirmaCorreo = confirmaCorreo;
+  // En qué estado está el correo, para la franja de los paneles. Se resuelve
+  // por petición y no al arrancar por lo mismo de siempre: el .env se cambia
+  // sin reiniciar y la franja tiene que decir lo de ahora, no lo de entonces.
+  res.locals.correo = {
+    activo: envios.activo(),
+    off: envios.apagados(),
+    desvio: envios.desvio(),
+    roto: envios.desvioRoto(),
+  };
   res.locals.DOMINIO = DOMINIO;
   res.locals.PATRON_CORREO = PATRON_HTML;
   res.locals.CRITERIOS = CRITERIOS;
@@ -389,11 +404,15 @@ app.listen(PORT, "0.0.0.0", () => {
   );
   console.log(`  ✓ Para exponer con ngrok:  ngrok http ${PORT}`);
   console.log(
-    envios.activo()
-      ? `  ✓ Correos:                 desde ${process.env.SMTP_USER}`
-      : envios.apagados()
-        ? "  · Correos:                 APAGADOS a propósito (CORREOS=off en .env)"
-        : "  · Correos:                 apagados (falta SMTP_USER/SMTP_PASS en .env)"
+    envios.desvioRoto()
+      ? `  ✕ Correos:                 BLOQUEADOS · CORREOS_DESVIO="${String(process.env.CORREOS_DESVIO).trim()}" no es una dirección`
+      : envios.activo()
+        ? envios.desvio()
+          ? `  ! Correos:                 DESVIADOS · todo va a ${envios.desvio()}, a nadie más`
+          : `  ✓ Correos:                 desde ${process.env.SMTP_USER}`
+        : envios.apagados()
+          ? "  · Correos:                 APAGADOS a propósito (CORREOS=off en .env)"
+          : "  · Correos:                 apagados (falta SMTP_USER/SMTP_PASS en .env)"
   );
   if (!process.env.SESSION_SECRET) {
     console.warn("  ! Sin SESSION_SECRET en .env: cada reinicio cierra las sesiones abiertas.");

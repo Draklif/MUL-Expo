@@ -392,7 +392,7 @@ function vistaEstado(req, { codigo, recienEnviada, error, ok }) {
     error,
     ok,
     puedeEntregar: jam.entregaAbierta(base.edicion, base.fase),
-    correoActivo: envios.activo(),
+    correoActivo: envios.aDestinatario(),
   };
 }
 

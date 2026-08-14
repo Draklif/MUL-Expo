@@ -14,4 +14,7 @@
     <a href="/tablero" class="<%= typeof active !== 'undefined' && active === 'tablero' ? 'active' : '' %>">Tablero en vivo</a>
     <a href="/expo">Página de la Expo</a>
   </nav>
+  <%/* Solo del lado del docente, que es donde hay botones que mandan correo.
+       Al estudiante no le sirve saber cómo está el .env. */%>
+  <%- include('correo-estado') %>
   <% } %>

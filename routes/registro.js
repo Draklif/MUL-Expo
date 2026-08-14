@@ -207,7 +207,7 @@ router.get("/listo/:codigo", (req, res) => {
     codigo: solicitud.codigo,
     recienEnviada: true,
     error: null,
-    correoActivo: envios.activo(),
+    correoActivo: envios.aDestinatario(),
   });
 });
 
@@ -220,7 +220,7 @@ router.get("/estado", (req, res) => {
     codigo,
     recienEnviada: false,
     error: codigo && !solicitud ? "No encontramos ningún registro con ese código." : null,
-    correoActivo: envios.activo(),
+    correoActivo: envios.aDestinatario(),
   });
 });
 

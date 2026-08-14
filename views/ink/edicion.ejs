@@ -242,12 +242,18 @@
         </p>
 
         <div class="acciones">
-          <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/enviar-enlace" style="margin:0">
+          <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/enviar-enlace" style="margin:0"
+                onsubmit="return <%- confirmaCorreo(
+                  "Se le manda el enlace de la carpeta a los " + sinEnlace + " participantes que todavía no lo tienen."
+                ) %>">
             <button type="submit" class="btn chico" <%= correoActivo && edicion.drive_url && sinEnlace ? "" : "disabled" %>>
               Mandar el enlace a los <%= sinEnlace %> que no lo tienen
             </button>
           </form>
-          <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/enviar-enlace" style="margin:0">
+          <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/enviar-enlace" style="margin:0"
+                onsubmit="return <%- confirmaCorreo(
+                  "Se le manda el enlace OTRA VEZ a todos los admitidos de la edición, incluidos los que ya lo recibieron."
+                ) %>">
             <input type="hidden" name="todos" value="1" />
             <button type="submit" class="btn chico" <%= correoActivo && edicion.drive_url ? "" : "disabled" %>>
               Mandarlo otra vez a todos
@@ -300,9 +306,18 @@
                 <input type="text" name="nota_docente" id="nota-<%= p.id %>" maxlength="400"
                        placeholder="Qué tiene que ajustar" />
               </div>
+              <%/* Cada botón con lo suyo: admitir manda el enlace de la
+                   carpeta, no admitir manda el motivo. */%>
               <div class="acciones">
-                <button type="submit" name="estado" value="aprobado" class="btn chico">Admitir</button>
-                <button type="submit" name="estado" value="rechazado" class="btn chico peligro">No admitir</button>
+                <button type="submit" name="estado" value="aprobado" class="btn chico"
+                        onclick="return <%- confirmaCorreo(
+                          "Se admite a " + p.nombre + " y se le manda un correo (" + p.email +
+                          ") con el enlace de la carpeta y cómo tiene que nombrar sus archivos."
+                        ) %>">Admitir</button>
+                <button type="submit" name="estado" value="rechazado" class="btn chico peligro"
+                        onclick="return <%- confirmaCorreo(
+                          "Se le avisa a " + p.nombre + " (" + p.email + ") que no quedó admitido, con la nota que hayas escrito arriba."
+                        ) %>">No admitir</button>
               </div>
             </form>
           </div>
@@ -539,7 +554,10 @@
       <% }); %>
 
       <div style="margin-top:20px;padding-top:22px;border-top:2px dashed var(--linea)">
-        <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/avisar-podio" style="margin:0">
+        <form method="POST" action="/ink/panel/ediciones/<%= edicion.id %>/avisar-podio" style="margin:0"
+              onsubmit="return <%- confirmaCorreo(
+                "Se le manda un correo a cada persona que quedó en el podio, con los reconocimientos que tiene AHORA MISMO. Hazlo cuando el jurado ya haya decidido."
+              ) %>">
           <button type="submit" class="btn chico" <%= correoActivo && edicion.resultados_publicos ? "" : "disabled" %>>
             Avisarle por correo a quienes quedaron
           </button>

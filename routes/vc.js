@@ -463,7 +463,7 @@ function vistaEstado(req, { codigo, recienEnviada, error }) {
     codigo: codigo || "",
     recienEnviada,
     error,
-    correoActivo: envios.activo(),
+    correoActivo: envios.aDestinatario(),
   };
 }
 

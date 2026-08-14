@@ -345,7 +345,7 @@ router.get("/music/inscripcion/listo/:codigo", publica, (req, res) => {
       certificados: certificadosDeHallado(hallado),
       codigo: req.params.codigo.toUpperCase(),
       error: null,
-      correoActivo: envios.activo(),
+      correoActivo: envios.aDestinatario(),
     })
   );
 });
@@ -364,7 +364,7 @@ router.get("/music/inscripcion/estado", publica, (req, res) => {
       certificados: certificadosDeHallado(hallado),
       codigo,
       error: codigo && !hallado ? "No encontramos ese código. Revisa que esté bien escrito." : null,
-      correoActivo: envios.activo(),
+      correoActivo: envios.aDestinatario(),
     })
   );
 });

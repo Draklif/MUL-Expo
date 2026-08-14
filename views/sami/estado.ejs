@@ -99,7 +99,7 @@
           <% } %>
         </div>
 
-        <%- include('partials/escalera', { estados: estados, actual: proyecto.estado_info }) %>
+        <%- include('partials/escalera', { estados: estados, actual: proyecto.estado_info, venia: proyecto.cancelado_desde }) %>
 
         <div class="ficha" style="margin-top:16px">
           <div class="f">

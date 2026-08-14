@@ -49,8 +49,17 @@
       </form>
     <% } %>
 
+    <%/* La pregunta solo cuando el correo va a salir de verdad: el veredicto se
+         avisa una sola vez y avisado_at ya lo tiene sellado. Preguntar por un
+         correo que no se manda es la manera de que nadie vuelva a leer la
+         pregunta cuando sí importe. */%>
     <% if (a.estado !== 'confirmado') { %>
-      <form method="POST" action="/music/panel/actos/<%= a.id %>/revisar">
+      <form method="POST" action="/music/panel/actos/<%= a.id %>/revisar"
+            <% if (!a.avisado_at) { %>
+              onsubmit="return <%- confirmaCorreo(
+                "Entra al cartel y se le avisa a " + a.contacto_nombre + " (" + a.contacto_email + ")."
+              ) %>"
+            <% } %>>
         <input type="hidden" name="estado" value="confirmado" />
         <button type="submit" class="btn chico">Al cartel</button>
       </form>
@@ -82,7 +91,12 @@
            decir por qué es lo que después llega como un reclamo. */%>
       <details>
         <summary class="mini" style="cursor:pointer">No admitir</summary>
-        <form method="POST" action="/music/panel/actos/<%= a.id %>/revisar" style="margin-top:10px">
+        <form method="POST" action="/music/panel/actos/<%= a.id %>/revisar" style="margin-top:10px"
+              <% if (!a.avisado_at) { %>
+                onsubmit="return <%- confirmaCorreo(
+                  "Se le avisa a " + a.contacto_nombre + " (" + a.contacto_email + ") que no quedó en el cartel, con el motivo que escribas."
+                ) %>"
+              <% } %>>
           <input type="hidden" name="estado" value="rechazado" />
           <div class="campo" style="margin-bottom:10px">
             <label for="nota<%= a.id %>">Por qué (le llega en el correo)</label>

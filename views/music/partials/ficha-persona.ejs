@@ -26,8 +26,15 @@
   </div>
 
   <div class="ficha-acciones">
+    <%/* Igual que en la ficha del acto: la pregunta solo si el correo va a
+         salir. avisado_at sella el primer veredicto y no hay segundo. */%>
     <% if (p.estado !== 'confirmado') { %>
-      <form method="POST" action="/music/panel/produccion/<%= p.id %>/revisar">
+      <form method="POST" action="/music/panel/produccion/<%= p.id %>/revisar"
+            <% if (!p.avisado_at) { %>
+              onsubmit="return <%- confirmaCorreo(
+                "Entra al equipo de producción y se le avisa a " + p.nombre + " (" + p.email + ")."
+              ) %>"
+            <% } %>>
         <input type="hidden" name="estado" value="confirmado" />
         <button type="submit" class="btn chico">Al equipo</button>
       </form>
@@ -36,7 +43,12 @@
     <% if (p.estado !== 'rechazado') { %>
       <details>
         <summary class="mini" style="cursor:pointer">No admitir</summary>
-        <form method="POST" action="/music/panel/produccion/<%= p.id %>/revisar" style="margin-top:10px">
+        <form method="POST" action="/music/panel/produccion/<%= p.id %>/revisar" style="margin-top:10px"
+              <% if (!p.avisado_at) { %>
+                onsubmit="return <%- confirmaCorreo(
+                  "Se le avisa a " + p.nombre + " (" + p.email + ") que no quedó en el equipo, con el motivo que escribas."
+                ) %>"
+              <% } %>>
           <input type="hidden" name="estado" value="rechazado" />
           <div class="campo" style="margin-bottom:10px">
             <label for="npro<%= p.id %>">Por qué (le llega en el correo)</label>

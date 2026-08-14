@@ -197,7 +197,18 @@
                   <%/* El formulario manda el estado completo de las dos
                        casillas, no un "sumar uno": así se ve lo mismo que se
                        guarda y un clic equivocado se deshace desmarcando. */%>
-                  <form method="POST" action="/salidas/panel/registros/<%= r.id %>/pagos" class="pagos">
+                  <%/* La pregunta sale solo cuando este Guardar es el que
+                       dispara el correo: con las DOS casillas marcadas y sin
+                       haber avisado antes. Marcar únicamente el transporte no
+                       le escribe a nadie, y preguntarlo ahí enseñaría a darle a
+                       Aceptar sin leer. */%>
+                  <form method="POST" action="/salidas/panel/registros/<%= r.id %>/pagos" class="pagos"
+                        <% if (!r.avisado_at) { %>
+                          onsubmit="return !(this.pago_transporte.checked && this.pago_poliza.checked) || <%- confirmaCorreo(
+                            "Con los dos pagos marcados el cupo queda confirmado y se le manda a " + r.nombre +
+                            " (" + r.email + ") el correo con los datos de la salida."
+                          ) %>"
+                        <% } %>>
                     <label class="pago">
                       <input type="checkbox" name="pago_transporte" value="1" <%= r.pago_transporte ? "checked" : "" %> />
                       Transporte
@@ -269,7 +280,10 @@
                   <button type="submit" form="nota<%= r.id %>" class="btn ghost">Guardar la nota</button>
 
                   <% if (r.confirmado) { %>
-                    <form method="POST" action="/salidas/panel/registros/<%= r.id %>/reenviar">
+                    <form method="POST" action="/salidas/panel/registros/<%= r.id %>/reenviar"
+                          onsubmit="return <%- confirmaCorreo(
+                            "Se le vuelve a mandar el correo de confirmación a " + r.nombre + " (" + r.email + ")."
+                          ) %>">
                       <button type="submit" class="btn ghost" <%= correoActivo ? "" : "disabled" %>>
                         Reenviar confirmación
                       </button>

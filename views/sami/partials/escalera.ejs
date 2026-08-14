@@ -5,17 +5,39 @@
      qué va este proyecto?"— sin obligar a leer una tabla. Se lee de
      izquierda a derecha: lo azul ya pasó, el peldaño lleno es dónde está.
 
-     Uno finalizado se pinta entero de verde y uno que no llegó —retirado o
-     cancelado— de ladrillo: en los dos casos la barra ya no es un avance, es
-     un desenlace.
+     DOCE y no catorce: 'retirado' y 'cancelado' no se dibujan. No son pasos
+     del trámite —nadie avanza hacia ellos— y colgados al final dejaban
+     'Finalizado' en el penúltimo sitio, que es justo lo contrario de lo que
+     esta barra tiene que decir: que terminar es llegar al final. Son
+     desenlaces, y un desenlace no es un peldaño.
+
+     Los dos siguen contándose, pero con el color de la barra entera y no con
+     un peldaño propio: uno finalizado se pinta de verde y uno que se paró, de
+     ladrillo.
+
+     Y ese que se paró no se pinta entero: se marca hasta DONDE IBA cuando lo
+     cancelaron, que es lo que dice `cancelado_desde`. Pintar los doce de rojo
+     diría que recorrió el trámite completo y falló al final, cuando lo normal
+     es que se haya caído en la propuesta. De un retirado no hay ese dato —el
+     estado no guarda de dónde venía—, así que no se marca ninguno: la barra
+     queda en blanco y el chip de al lado es el que lo explica.
 
      Locals:
        estados — sami.ESTADOS.
-       actual  — el estado_info del proyecto. */%>
+       actual  — el estado_info del proyecto.
+       venia   — opcional: la clave del estado del que se canceló. */%>
+<%
+  const peldanos = estados.filter(function (e) { return !e.libera; });
+
+  // Dónde marcar. Si el proyecto se paró, donde iba; si no, donde está.
+  const donde = actual.libera
+    ? peldanos.find(function (e) { return e.clave === (typeof venia !== "undefined" ? venia : null); }) || null
+    : actual;
+%>
 <ol class="escalera <%= actual.clave === "finalizado" ? "cerrada" : actual.fase === "cerrado" ? "malo" : "" %>"
     aria-label="Avance del trámite">
-  <% estados.forEach(function (e) { %>
-    <li class="<%= e.orden < actual.orden ? "pasado" : e.orden === actual.orden ? "aqui" : "" %> <%= e.clave === "aprobada" ? "corte" : "" %>"
+  <% peldanos.forEach(function (e) { %>
+    <li class="<%= donde && e.orden < donde.orden ? "pasado" : donde && e.orden === donde.orden ? "aqui" : "" %> <%= e.clave === "aprobada" ? "corte" : "" %>"
         title="<%= e.label %>"></li>
   <% }); %>
 </ol>

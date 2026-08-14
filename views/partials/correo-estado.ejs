@@ -1,0 +1,44 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     EN QUÉ ESTADO ESTÁ EL CORREO
+
+     Una franja arriba de todos los paneles, y solo cuando el correo NO se
+     comporta como se espera: apagado, desviado o bloqueado. En el estado
+     normal no se dibuja nada, porque un aviso permanente que dice "todo
+     bien" es un aviso que se deja de leer justo el día que cambia.
+
+     Existe porque las tres cosas se encienden en el .env —lejos de aquí, a
+     veces hace semanas— y desde el panel no se notan: los botones se ven
+     igual y guardar responde igual. La confirmación de cada acción ya lo
+     dice, pero eso llega cuando el dedo ya está en el botón; esto se ve al
+     entrar.
+
+     Va con estilos en línea a propósito: se incluye desde siete paneles con
+     siete hojas de estilo distintas, y ninguna comparte nombres de clase
+     para una pieza que no existía en ninguna.
+     ───────────────────────────────────────────────────────────────── */%>
+<% if (correo && (correo.roto || correo.desvio || !correo.activo)) { %>
+  <%
+    const tono = correo.roto
+      ? { fondo: "#fbe9e7", borde: "#a3271c", texto: "#7a1d15" }
+      : correo.desvio
+        ? { fondo: "#fbf1de", borde: "#a86a0c", texto: "#7d4f09" }
+        : { fondo: "#eef0f4", borde: "#7c879a", texto: "#46536a" };
+  %>
+  <div role="status" style="background:<%= tono.fondo %>;border-bottom:2px solid <%= tono.borde %>;color:<%= tono.texto %>;
+              font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+              font-size:13.5px;line-height:1.5;padding:9px 22px;text-align:center">
+    <% if (correo.roto) { %>
+      <strong>No sale ningún correo.</strong>
+      CORREOS_DESVIO en el .env tiene algo escrito que no es una dirección, y hasta
+      que se arregle el envío está bloqueado entero.
+    <% } else if (correo.desvio) { %>
+      <strong>Correos desviados.</strong>
+      Todo lo que se mande va a <strong><%= correo.desvio %></strong> y a nadie más:
+      a los estudiantes no les llega.
+    <% } else { %>
+      <strong>Correos apagados.</strong>
+      Lo que hagas aquí se guarda, pero no sale ningún aviso.
+      <% if (correo.off) { %>Es CORREOS=off en el .env.<% } else { %>Falta SMTP_USER y SMTP_PASS en el .env.<% } %>
+    <% } %>
+  </div>
+<% } %>

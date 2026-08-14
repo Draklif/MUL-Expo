@@ -109,7 +109,7 @@
       </div>
     </div>
 
-    <%- include('partials/escalera', { estados: estados, actual: proyecto.estado_info }) %>
+    <%- include('partials/escalera', { estados: estados, actual: proyecto.estado_info, venia: proyecto.cancelado_desde }) %>
 
     <% if (proyecto.excedido) { %>
       <div class="aviso ojo">
@@ -634,7 +634,23 @@
     <div class="grid dos">
       <div class="tarjeta">
         <h3>Estado y semestre</h3>
-        <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/estado" style="margin-top:14px">
+        <%/* Pasar a "Propuesta aprobada" le manda un correo a los integrantes
+             con el nombre de su director, y solo ese peldaño lo manda: por eso
+             la pregunta mira el selector en vez de salir en cada Guardar.
+             Preguntar al mover de 'carta' a 'propuesta' —donde no se escribe a
+             nadie— enseñaría a darle a Aceptar sin leer, que es como se pierde
+             la única confirmación que sí importaba.
+
+             Y si avisado_at ya está sellado no se pregunta nada, porque ese
+             correo no se manda dos veces. */%>
+        <form method="POST" action="/semillero/panel/proyecto/<%= proyecto.id %>/estado" style="margin-top:14px"
+              <% if (!proyecto.avisado_at) { %>
+                onsubmit="return this.estado.value !== 'aprobada' || <%- confirmaCorreo(
+                  "Se le manda un correo a " + activos.map(function (e) { return e.nombre; }).join(" y ") +
+                  " diciéndole que la propuesta quedó aprobada y quién es su director (" +
+                  (proyecto.director || "todavía sin asignar") + ")."
+                ) %>"
+              <% } %>>
           <div class="campo">
             <label for="estado">En qué va</label>
             <%/* Sin "Cancelado": ese no es un peldaño al que se llega andando,
