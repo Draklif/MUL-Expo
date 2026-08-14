@@ -766,116 +766,116 @@
     }
   },
   "mapa": {
-    "_comentario": "Plano provisional. La cuadrícula es de 'cols' x 'filas' unidades y cada espacio se ubica con x, y (esquina superior izquierda), w (ancho) y h (alto) en esas unidades. Se admiten decimales. tipo: sala | pasillo | acceso | servicio. Un espacio con tipo 'sala' toma nombre y color de la experiencia indicada en 'sala'. Cuando lleguen los planos reales, se reemplazan las medidas aquí y la landing se actualiza sola.",
+    "_comentario": "Plano provisional. La cuadrícula es de 'cols' x 'filas' unidades y cada espacio se ubica con x, y (esquina superior izquierda), w (ancho) y h (alto) en esas unidades. Se admiten decimales. tipo: sala | pasillo | acceso | servicio. Un espacio con tipo 'sala' toma nombre y color de la experiencia indicada en 'sala'. Cuando lleguen los planos reales, se reemplazan las medidas aquí y la landing se actualiza sola. Las medidas de abajo salen del croquis a mano del montaje, regularizadas a una retícula de medias unidades: la escala es aproximada y los tamaños se ajustaron para que cada rótulo quepa, pero las proporciones y las vecindades entre espacios sí son las del croquis.",
     "titulo": "Distribución tentativa",
     "nota": "Este plano es un borrador para ubicarse: las medidas y los espacios definitivos se publicarán aquí cuando esté listo el montaje.",
-    "cols": 12,
-    "filas": 10,
+    "cols": 25.5,
+    "filas": 13,
     "espacios": [
+      {
+        "id": "e-indie-alley",
+        "tipo": "sala",
+        "sala": "indie-alley",
+        "x": 10.5,
+        "y": 0,
+        "w": 9,
+        "h": 5
+      },
+      {
+        "id": "e-pasillo-buho",
+        "tipo": "pasillo",
+        "name": "Pasillo del Búho",
+        "desc": "Eje del recorrido: baja desde Indie Alley y reparte hacia Tunja 2040, Trazo Cero y Tras Bambalinas.",
+        "x": 12,
+        "y": 5,
+        "w": 6.5,
+        "h": 3
+      },
+      {
+        "id": "e-tunja-2040",
+        "tipo": "sala",
+        "sala": "tunja-2040",
+        "x": 5,
+        "y": 5,
+        "w": 7,
+        "h": 3
+      },
       {
         "id": "e-trazo-cero",
         "tipo": "sala",
         "sala": "trazo-cero",
-        "x": 0,
-        "y": 0,
-        "w": 5.5,
+        "x": 18.5,
+        "y": 5,
+        "w": 7,
+        "h": 3
+      },
+      {
+        "id": "e-vestibulo-oeste",
+        "tipo": "pasillo",
+        "name": "Vestíbulo oeste",
+        "desc": "Zona de circulación al costado oeste, entre Origen y la cafetería.",
+        "x": 0.5,
+        "y": 6.5,
+        "w": 4.5,
+        "h": 4.5
+      },
+      {
+        "id": "e-cafeteria",
+        "tipo": "servicio",
+        "name": "Cafetería",
+        "desc": "Punto de comida y bebida durante la jornada, al costado oeste del Pasillo del Búho.",
+        "x": 5,
+        "y": 8,
+        "w": 4,
+        "h": 4.5
+      },
+      {
+        "id": "e-banos-oeste",
+        "tipo": "servicio",
+        "name": "Baños",
+        "desc": "Servicios sanitarios, entre la cafetería y Tras Bambalinas.",
+        "x": 9,
+        "y": 8,
+        "w": 1.4,
+        "h": 3.5
+      },
+      {
+        "id": "e-banos-este",
+        "tipo": "servicio",
+        "name": "Baños",
+        "desc": "Servicios sanitarios, entre la cafetería y Tras Bambalinas.",
+        "x": 10.6,
+        "y": 8,
+        "w": 1.4,
         "h": 3.5
       },
       {
         "id": "e-tras-bambalinas",
         "tipo": "sala",
         "sala": "tras-bambalinas",
-        "x": 6.5,
-        "y": 0,
-        "w": 5.5,
+        "x": 12,
+        "y": 8,
+        "w": 5,
+        "h": 4.5
+      },
+      {
+        "id": "e-ramal-este",
+        "tipo": "pasillo",
+        "name": "Ramal este",
+        "desc": "Brazo del Pasillo del Búho que bordea Tras Bambalinas por el costado este.",
+        "x": 17,
+        "y": 8,
+        "w": 1.5,
         "h": 3.5
       },
       {
-        "id": "e-pasillo-central",
-        "tipo": "pasillo",
-        "name": "Pasillo central",
-        "desc": "Eje del recorrido: conecta las cuatro salas y baja hasta el ingreso.",
-        "x": 5.5,
-        "y": 0,
-        "w": 1,
-        "h": 10
-      },
-      {
-        "id": "e-pasillo-oeste",
-        "tipo": "pasillo",
-        "name": "Pasillo oeste",
-        "desc": "Une Trazo Cero con Indie Alley.",
-        "x": 0,
-        "y": 3.5,
-        "w": 5.5,
-        "h": 1
-      },
-      {
-        "id": "e-pasillo-este",
-        "tipo": "pasillo",
-        "name": "Pasillo este",
-        "desc": "Une Tras Bambalinas con Tunja 2040.",
-        "x": 6.5,
-        "y": 3.5,
-        "w": 5.5,
-        "h": 1
-      },
-      {
-        "id": "e-indie-alley",
-        "tipo": "sala",
-        "sala": "indie-alley",
-        "x": 0,
-        "y": 4.5,
-        "w": 5.5,
-        "h": 3.5
-      },
-      {
-        "id": "e-tunja-2040",
-        "tipo": "sala",
-        "sala": "tunja-2040",
-        "x": 6.5,
-        "y": 4.5,
-        "w": 5.5,
-        "h": 3.5
-      },
-      {
-        "id": "e-ingreso",
-        "tipo": "acceso",
-        "name": "Ingreso",
-        "desc": "Entrada principal y punto de partida del recorrido.",
-        "x": 0,
-        "y": 8,
-        "w": 3,
-        "h": 2
-      },
-      {
-        "id": "e-registro",
+        "id": "e-origen",
         "tipo": "servicio",
-        "name": "Registro",
-        "desc": "Registro de visitantes y entrega del mapa del recorrido.",
-        "x": 3,
-        "y": 8,
-        "w": 2.5,
-        "h": 2
-      },
-      {
-        "id": "e-informacion",
-        "tipo": "servicio",
-        "name": "Información",
-        "desc": "Horarios de las funciones y ayuda para ubicarse.",
-        "x": 6.5,
-        "y": 8,
-        "w": 2.5,
-        "h": 2
-      },
-      {
-        "id": "e-descanso",
-        "tipo": "servicio",
-        "name": "Zona de descanso",
-        "desc": "Espacio para tomar aire entre salas.",
-        "x": 9,
-        "y": 8,
-        "w": 3,
+        "name": "Origen",
+        "desc": "Centro de innovación, en el costado sur del recinto.",
+        "x": 0,
+        "y": 11,
+        "w": 5,
         "h": 2
       }
     ]

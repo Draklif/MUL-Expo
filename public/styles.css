@@ -2204,9 +2204,11 @@ a.logo:hover { border-color: var(--border-strong); text-decoration: none; }
   border-color: var(--sala);
   color: var(--ink);
 }
+/* El rótulo tiene que caber dentro del rectángulo, y el nombre más largo
+   —"Tras Bambalinas"— manda: a 18px se salía de su espacio en el plano. */
 .espacio.tipo-sala .espacio-nombre {
   font-family: var(--font-display);
-  font-size: clamp(13px, 2.4vw, 18px);
+  font-size: clamp(11px, 1.7vw, 15px);
   font-weight: 500;
   letter-spacing: -0.01em;
   color: var(--sala);
