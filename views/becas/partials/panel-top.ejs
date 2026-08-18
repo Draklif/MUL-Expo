@@ -1,0 +1,41 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     Cabecera del panel. La misma idea que en los demás: aquí no hay marca
+     grande ni pestañas de sitio público, solo dónde estás, quién eres y qué
+     semestre estás mirando.
+
+     El selector de semestre va aquí arriba y no dentro de cada página porque
+     es el contexto de TODO lo que se ve: la beca se asigna semestre a
+     semestre, y mirar otro es mirar otro documento.
+
+     Lo que esta cabecera NO lleva, a diferencia de los otros seis paneles: la
+     franja del estado del correo. Este módulo no le escribe a nadie —no hay
+     estudiante al otro lado—, así que un aviso sobre el correo aquí sería un
+     aviso sobre algo que esta página no hace.
+     ───────────────────────────────────────────────────────────────── */%>
+<header class="bec-top panel-top">
+  <div class="bec-top-in">
+    <a href="/becas/panel" class="bec-marca">Panel <em>Becas</em></a>
+    <nav class="bec-nav">
+      <a href="/becas/panel">Becarios</a>
+      <a href="/becas/panel/importar">Cargar listado</a>
+      <a href="/becas/panel/bitacora.csv">Bitácora en CSV</a>
+    </nav>
+    <div class="panel-quien">
+      <% if (typeof periodos !== "undefined" && periodos && periodos.length > 1) { %>
+        <form method="GET" action="<%= rutaPeriodo || '/becas/panel' %>">
+          <select name="periodo" onchange="this.form.submit()" aria-label="Semestre">
+            <% periodos.forEach(function (p) { %>
+              <option value="<%= p.id %>" <%= periodo && p.id === periodo.id ? "selected" : "" %>>
+                <%= p.codigo %><%= p.activo ? " · en curso" : "" %>
+              </option>
+            <% }); %>
+          </select>
+        </form>
+      <% } %>
+      <span class="mini"><%= docenteBecas.name %></span>
+      <form method="POST" action="/becas/salir">
+        <button type="submit" class="btn ghost chico">Salir</button>
+      </form>
+    </div>
+  </div>
+</header>

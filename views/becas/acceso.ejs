@@ -1,0 +1,48 @@
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+
+<main class="bec angosto" style="max-width:430px;padding-top:64px">
+  <p class="eyebrow">Servicio Universitario</p>
+  <h2 style="margin-bottom:12px">Acceso docentes</h2>
+  <%/* Se dice de entrada que aquí no hay nada para un estudiante. Es la única
+       dirección del sitio que no lleva a ninguna página pública, y quien llegue
+       por curiosidad merece saberlo antes de probar su correo. */%>
+  <p class="sec-lead" style="margin-bottom:28px">
+    Las horas de los becarios del programa. Es una herramienta de docentes: los
+    estudiantes no se registran ni consultan nada aquí.
+  </p>
+
+  <% if (!configurado) { %>
+    <div class="aviso malo">
+      <p style="margin:0">
+        El panel todavía no está habilitado. Falta <code>PASSWORD_BECAS</code>
+        en el archivo <code>.env</code> del servidor.
+      </p>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="aviso malo"><p style="margin:0"><%= error %></p></div>
+  <% } %>
+
+  <form method="POST" action="/becas/acceso">
+    <div class="campo">
+      <label for="email">Correo institucional</label>
+      <%/* Solo el nombre de usuario: el dominio va pegado al lado y lo completa
+           el servidor. Si alguien pega el correo entero también entra —lo
+           resuelve conDominio() en lib/correos.js—. */%>
+      <div class="correo">
+        <input type="text" name="email" id="email" required autofocus
+               autocomplete="username" autocapitalize="none" spellcheck="false"
+               placeholder="tunombre" value="<%= email %>" />
+        <span class="dominio">@<%= DOMINIO %></span>
+      </div>
+    </div>
+    <div class="campo">
+      <label for="password">Contraseña de becas</label>
+      <input type="password" name="password" id="password" required />
+    </div>
+    <button type="submit" class="btn block">Entrar</button>
+  </form>
+</main>
+
+<%- include('../partials/footer') %>

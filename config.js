@@ -815,6 +815,90 @@ const SAMI = {
 // semestre, que es dato de otra naturaleza que una inscripción a un torneo.
 const PASSWORD_SAMI = String(process.env.PASSWORD_SAMI || "").trim();
 
+// ---------------------------------------------------------------------
+//  SERVICIO UNIVERSITARIO — LAS HORAS DE LOS BECARIOS
+// ---------------------------------------------------------------------
+// Tampoco es un evento, y a diferencia de todo lo demás del sitio, tampoco
+// tiene página pública: el estudiante NO entra aquí. Es una herramienta de
+// docente y nada más, y por eso no lleva renglón en APROBADO —lo que no se
+// anuncia no hace falta apagarlo—. Vive en /becas.
+//
+// QUÉ ES. Un becario devuelve unas horas de trabajo al programa a cambio de su
+// beca. Quien responde por que esas horas se cumplan es el director del
+// programa, y la Universidad se lo pide en un Excel en línea —"FORMATO
+// SEGUIMIENTO SERVICIO UNIVERSITARIO"— con una hoja BITÁCORA donde va una fila
+// por sesión de trabajo. Ese archivo NO se reemplaza: sigue siendo el
+// documento oficial y hay que llenarlo. Lo que hace este módulo es llevar la
+// cuenta aquí —que es donde de verdad se sabe qué hizo cada quien— y soltar al
+// final el CSV que se pega en esa bitácora de un solo golpe.
+//
+// De ahí salen las dos reglas del módulo:
+//
+//   · las HORAS REALIZADAS y el ESTADO no se guardan nunca, se cuentan. En el
+//     Excel son fórmulas (columnas J, K y L de "ESTUDIANTES BECARIOS") y aquí
+//     son un SUM sobre las actividades. Es la misma lección del semillero: una
+//     cifra guardada es una cifra que algún día va a estar mentida.
+//   · los NOMBRES se guardan tal como vienen del listado institucional, en
+//     mayúsculas y con sus tildes. No se corrigen ni se capitalizan bonito: en
+//     la hoja de la Universidad la columna ESTUDIANTE es una lista desplegable
+//     cerrada, y un nombre "arreglado" no coincide con ninguna de sus opciones
+//     y deja la fila sin pegar.
+//
+// Lo que hay aquí abajo es lo que cambia de un semestre a otro o de un programa
+// a otro. Lo que NO está aquí y conviene saber dónde está: las diez
+// ASIGNACIONES (autoevaluación, eventos, difusión…) viven en lib/becas.js,
+// porque son la lista de validación de la hoja institucional y no una
+// preferencia del programa: cambiar una clave aquí dejaría sin traducir las
+// actividades ya registradas. Para pedir una nueva hay que escribirle a
+// becas@uniboyaca.edu.co, que es lo que dice el propio formato.
+//
+//   dependencia   — el programa o dependencia al que están asignados los
+//                   becarios, tal como aparece en la hoja "DEPENDENCIA BECA".
+//   responsable   — quién responde por el seguimiento ante el Comité de Becas.
+//                   Es un texto y no un docente de DOCENTES a propósito: en la
+//                   hoja es el jefe o director, que puede no ser ninguno de los
+//                   que entran al panel.
+//
+//                   Es solo el que traen los becarios nuevos. Después se
+//                   reparte desde el panel —de a uno o marcando varios—, porque
+//                   en la práctica cada docente sigue a los suyos aunque ante
+//                   el Comité responda el director. Es por lo que se filtra la
+//                   lista.
+//   desde         — el semestre más antiguo que ofrece el selector del panel.
+//                   La tabla `periodos` es de la app entera y arrastra
+//                   semestres viejos de la Expo y del torneo; sin esto el
+//                   selector ofrecería semestres en los que no había becarios.
+//
+//                   Con esto puesto se puede ABRIR un semestre anterior y
+//                   cargarle su listado, que es como se mete el historial: el
+//                   archivo de la Universidad va por semestres y el primero que
+//                   hay es el de 2026-10.
+//   horas_defecto — las que trae un becario nuevo cuando se carga a mano y no
+//                   desde la hoja. En el listado real son 20 o 30 según el
+//                   porcentaje de la beca, así que esto es solo un punto de
+//                   partida: se corrige por estudiante.
+//   correo_becas  — a dónde se reclama lo que este módulo no puede arreglar
+//                   (un becario que falta en el listado, una asignación nueva).
+//                   Sale escrito en el panel para no tener que buscarlo.
+const BECAS = {
+  nombre: "Servicio Universitario",
+  dependencia: "INGENIERÍA EN MULTIMEDIA",
+  responsable: "OCHOA ECHEVERRIA MAURICIO",
+  horas_defecto: 20,
+  correo_becas: "becas@uniboyaca.edu.co",
+
+  // Del servicio universitario solo hay datos desde este semestre. Un semestre
+  // con becarios cargados se ofrece igual aunque sea anterior a esta línea: lo
+  // que tiene datos no se esconde nunca.
+  desde: "2026-10",
+};
+
+// Contraseña del panel de las becas (PASSWORD_BECAS en el .env). Octava
+// herramienta, octava clave. Aquí se lleva el cumplimiento de una beca —que en
+// la práctica es plata—, y eso no tiene por qué abrirse con la misma clave con
+// la que se califica un proyecto.
+const PASSWORD_BECAS = String(process.env.PASSWORD_BECAS || "").trim();
+
 // Contraseña del panel de Virtual Champions. Es DISTINTA a la de la Expo a
 // propósito: los mismos docentes, pero dos herramientas separadas. Va en el
 // .env (PASSWORD_VC). Sin ella el panel del torneo queda cerrado, pero el
@@ -900,6 +984,7 @@ module.exports = {
   SALIDAS,
   INK,
   SAMI,
+  BECAS,
   PATROCINIOS,
   PASSWORD,
   PASSWORD_VC,
@@ -908,6 +993,7 @@ module.exports = {
   PASSWORD_SALIDAS,
   PASSWORD_INK,
   PASSWORD_SAMI,
+  PASSWORD_BECAS,
   DOCENTES,
   CORREO,
   CRITERIOS,

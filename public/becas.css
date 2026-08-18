@@ -1,0 +1,871 @@
+/* =====================================================================
+   SERVICIO UNIVERSITARIO — LAS HORAS DE LOS BECARIOS
+   Hoja completa y aparte: reemplaza a styles.css, no se apila encima.
+
+   Las caras del sitio, y de dónde sale esta:
+
+     Expo Multimedia   — editorial, serif, papel.
+     Virtual Champions — negro, condensada, esports.
+     Jam de Altura     — píxel, verde consola sobre violeta.
+     Music Fest        — afiche, Anton, mayúsculas.
+     INKreible         — marcador y cuaderno.
+     Salidas           — papel crema con pauta: un formato que se llena a mano.
+     SAMI              — cuaderno de investigación: cuadrícula y tinta azul.
+     Becas             — esto: PLANILLA DE CONTROL.
+
+   Es prima de las dos anteriores —las tres son documentos y no afiches— pero
+   tiene que distinguirse de las dos en el primer vistazo, porque un docente
+   puede tener los tres paneles abiertos en tres pestañas.
+
+   La diferencia es la trama: aquí son COLUMNAS, no renglones (salidas) ni
+   cuadrícula (SAMI). Una planilla de control se lee de arriba abajo, columna
+   por columna, y eso es exactamente lo que se hace en esta página: recorrer
+   una lista de nombres mirando quién va corto de horas.
+
+   Y la tinta es de pizarra, un azul apagado y sin brillo. No compite con los
+   tres colores que sí significan algo, que son los mismos del resto del sitio:
+   verde lo cumplido, ámbar lo que falta, ladrillo lo que salió mal. Un docente
+   que ya usó el panel de salidas no tiene por qué reaprender qué es un chip
+   ámbar.
+
+   LA PIEZA CLAVE es .barra: las horas de cada becario dibujadas. Es lo único
+   que esta hoja tiene y las otras no, y responde de un vistazo a la única
+   pregunta que se hace aquí —"¿a quién le falta?"— sin leer dos números y
+   restarlos de cabeza.
+   ===================================================================== */
+
+:root {
+  --papel: #f3f4f5;
+  --papel-hondo: #e8eaec;
+  --papel-alto: #ffffff;
+  --linea: #dadde0;
+  --linea-fuerte: #b6bcc3;
+
+  --tinta: #191d21;
+  --tinta-dim: #4a545e;
+  --tinta-mute: #7f8892;
+
+  /* Azul de pizarra: el color de la marca, de los enlaces y de los botones. NO
+     significa nada por sí solo —lo que está cumplido y lo que falta se dicen
+     con los tres de abajo—. */
+  --tinte: #2c4a5e;
+  --tinte-hondo: #1f3746;
+  --tinte-claro: #e4eaef;
+
+  --monte: #17795a;      /* cumplido, finalizado, lo que ya está */
+  --monte-claro: #e3f1eb;
+  --ambar: #a86a0c;      /* en proceso, pendiente, lo que falta */
+  --ambar-claro: #fbf1de;
+  --ladrillo: #a3271c;   /* lo que salió mal */
+  --ladrillo-claro: #fbe9e7;
+
+  --display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  --sombra: 0 2px 0 rgba(25, 29, 33, .05), 0 1px 3px rgba(25, 29, 33, .07);
+  --radio: 4px;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--body);
+  font-size: 15.5px;
+  line-height: 1.65;
+  /* La trama de la planilla: una vertical cada 30px, tan tenue que solo se
+     nota como textura. Un gradiente y no una imagen, para no pedir un archivo
+     por una línea. */
+  background-image: linear-gradient(90deg, rgba(182, 188, 195, .18) 1px, transparent 1px);
+  background-size: 30px 100%;
+  background-attachment: fixed;
+}
+
+a { color: var(--tinte); }
+
+h1, h2, h3, h4 {
+  font-family: var(--display);
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
+  letter-spacing: -.01em;
+}
+
+h1 { font-size: clamp(29px, 5.4vw, 46px); }
+h2 { font-size: clamp(21px, 3.2vw, 30px); }
+h3 { font-size: 17px; }
+h4 { font-size: 14px; }
+
+p { margin: 0 0 1em; }
+img { max-width: 100%; }
+
+/* ---------------------------------------------------------------------
+   Piezas base
+   --------------------------------------------------------------------- */
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--tinte);
+  margin: 0 0 10px;
+  /* A un renglón: es un rótulo de contexto, y en dos se lee como un párrafo. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sec-lead {
+  color: var(--tinta-dim);
+  max-width: 64ch;
+  margin: 12px 0 0;
+}
+
+.mini { font-size: 12.5px; color: var(--tinta-mute); }
+.cod { font-family: var(--mono); letter-spacing: .04em; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  line-height: 1;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  color: var(--tinta-dim);
+  white-space: nowrap;
+}
+
+.chip.ok     { color: var(--monte);    border-color: var(--monte);    background: var(--monte-claro); }
+.chip.alerta { color: var(--ambar);    border-color: var(--ambar);    background: var(--ambar-claro); }
+.chip.malo   { color: var(--ladrillo); border-color: var(--ladrillo); background: var(--ladrillo-claro); }
+.chip.no     { color: var(--tinta-mute); }
+
+.acciones { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+
+/* ---------------------------------------------------------------------
+   Botones
+   --------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 13px 22px;
+  border: 1px solid var(--tinte);
+  border-radius: var(--radio);
+  background: var(--tinte);
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--sombra);
+  transition: background .12s ease, border-color .12s ease, transform .06s ease;
+}
+
+.btn:hover { background: var(--tinte-hondo); border-color: var(--tinte-hondo); }
+.btn:active { transform: translateY(1px); }
+
+.btn.ghost {
+  background: var(--papel-alto);
+  color: var(--tinta);
+  border-color: var(--linea-fuerte);
+}
+
+.btn.ghost:hover { background: var(--papel-hondo); border-color: var(--tinta-mute); }
+
+.btn.peligro { background: var(--papel-alto); color: var(--ladrillo); border-color: #e0bdb8; }
+.btn.peligro:hover { background: var(--ladrillo-claro); border-color: var(--ladrillo); }
+
+.btn.chico { font-size: 12.5px; padding: 8px 13px; }
+.btn.block { width: 100%; }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+
+/* ---------------------------------------------------------------------
+   Estructura
+   --------------------------------------------------------------------- */
+.bec {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px 80px;
+}
+
+.bec.angosto { max-width: 780px; }
+
+.bec-sec { padding: 44px 0 0; }
+
+.sec-top {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* El título de sección y su rótulo, a un ancho que deja sitio a los botones de
+   la derecha en vez de empujarlos a otro renglón. */
+.sec-top > div:first-child { min-width: 0; flex: 1 1 auto; }
+.sec-top h2 { overflow: hidden; text-overflow: ellipsis; }
+
+.tarjeta {
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  padding: 20px;
+  box-shadow: var(--sombra);
+}
+
+.vacio {
+  border: 1px dashed var(--linea-fuerte);
+  border-radius: var(--radio);
+  padding: 26px 20px;
+  text-align: center;
+  color: var(--tinta-mute);
+  background: var(--papel-alto);
+}
+
+.vacio code, .sec-lead code, .mini code, p code {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--papel-hondo);
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: var(--tinta-dim);
+}
+
+/* ---------------------------------------------------------------------
+   Cabecera
+   Nada envuelve aquí: si no cabe, cede espaciado y letra. Una cabecera
+   pegajosa que crece a dos renglones se come media pantalla en cada scroll.
+   --------------------------------------------------------------------- */
+.bec-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--papel-hondo);
+  border-bottom: 1px solid var(--linea-fuerte);
+}
+
+.bec-top-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 11px 22px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.bec-marca {
+  font-family: var(--display);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  color: var(--tinta);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.bec-marca em { font-style: normal; color: var(--tinte); }
+
+/* El cuadrito de la planilla, a modo de marca provisional. */
+.bec-marca::before {
+  content: "";
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--tinte);
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent 6px, var(--tinte) 6px, var(--tinte) 7px, transparent 7px);
+}
+
+.bec-nav {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.bec-nav a {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tinta-dim);
+  text-decoration: none;
+  padding: 7px 11px;
+  border-radius: var(--radio);
+  white-space: nowrap;
+}
+
+.bec-nav a:hover { background: var(--papel-alto); color: var(--tinta); }
+
+.panel-quien {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.panel-quien .mini { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 18ch; }
+.panel-quien form { margin: 0; flex: 0 0 auto; }
+.panel-quien select { font-size: 12.5px; padding: 7px 9px; width: auto; }
+
+/* ---------------------------------------------------------------------
+   Cifras
+   Casilla fija por dato: la rejilla se barre con la vista y los números
+   tienen que caer siempre en el mismo renglón, midan lo que midan.
+   --------------------------------------------------------------------- */
+.datos {
+  display: grid;
+  gap: 16px 22px;
+  grid-template-columns: repeat(auto-fit, minmax(min(140px, 100%), 1fr));
+}
+
+.dato .k {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  margin-bottom: 4px;
+  height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dato .v { font-size: 15.5px; line-height: 1.45; }
+
+.dato .v.grande {
+  font-family: var(--display);
+  font-size: 22px;
+  font-weight: 700;
+  height: 32px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* El "de 640" que va detrás de las horas hechas: es el contexto del número, no
+   otro número, y por eso va más chico y en gris. */
+.dato .v.grande .de { font-family: var(--body); font-size: 13px; font-weight: 500; color: var(--tinta-mute); }
+
+.dato .v.ok      { color: var(--monte); }
+.dato .v.alerta  { color: var(--ambar); }
+.dato .v.malo    { color: var(--ladrillo); }
+.dato .v.apagado { color: var(--tinta-mute); }
+
+/* ---------------------------------------------------------------------
+   LA BARRA DE HORAS — la pieza de esta hoja
+
+   Rectangular y con filete, como una casilla de planilla que se va llenando.
+   Nada de bordes redondeados ni degradados: esto no es un indicador de carga,
+   es cuánto de un compromiso está cumplido.
+
+   El ancho lo pone el servidor en un style en línea y va acotado a 100 aunque
+   las horas se pasen: la casilla se llena y ya. Lo que sobra se dice con el
+   número de al lado, que es donde de verdad se lee.
+   --------------------------------------------------------------------- */
+.barra {
+  position: relative;
+  height: 10px;
+  background: var(--papel-hondo);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.barra .llena {
+  display: block;
+  height: 100%;
+  background: var(--tinta-mute);
+  transition: width .2s ease;
+}
+
+.barra .llena.ok     { background: var(--monte); }
+.barra .llena.alerta { background: var(--ambar); }
+/* Sin horas todavía: la casilla se queda vacía, que es exactamente lo que
+   pasa. No hay color para el cero. */
+.barra .llena.no     { background: transparent; }
+
+.barra.grande { height: 16px; }
+
+/* ---------------------------------------------------------------------
+   Ficha de datos (pares rótulo / valor)
+   --------------------------------------------------------------------- */
+.ficha { margin: 0; }
+
+.ficha .f {
+  display: flex;
+  gap: 14px;
+  padding: 8px 0;
+  border-bottom: 1px dotted var(--linea);
+  font-size: 14.5px;
+}
+
+.ficha .f:last-child { border-bottom: 0; }
+
+.ficha .f .k {
+  flex: 0 0 190px;
+  max-width: 45%;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  padding-top: 3px;
+}
+
+.ficha .f .v { flex: 1; min-width: 0; word-break: break-word; }
+
+/* ---------------------------------------------------------------------
+   Avisos
+   --------------------------------------------------------------------- */
+.aviso {
+  border: 1px solid var(--linea-fuerte);
+  border-left: 4px solid var(--tinta-mute);
+  border-radius: var(--radio);
+  background: var(--papel-alto);
+  padding: 16px 18px;
+  margin-top: 22px;
+  font-size: 14.5px;
+}
+
+.aviso p:last-child { margin-bottom: 0; }
+.aviso ul { margin: 8px 0 0; padding-left: 20px; }
+.aviso li { margin-bottom: 4px; }
+.aviso.bueno { border-left-color: var(--monte); background: var(--monte-claro); border-color: #b6dcca; }
+.aviso.malo  { border-left-color: var(--ladrillo); background: var(--ladrillo-claro); border-color: #e8c4c0; }
+.aviso.ojo   { border-left-color: var(--ambar); background: var(--ambar-claro); border-color: #e8d3a8; }
+
+.aviso .t {
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin: 0 0 6px;
+}
+
+/* ---------------------------------------------------------------------
+   Formularios
+   --------------------------------------------------------------------- */
+fieldset { border: 0; margin: 0; padding: 0; }
+
+label {
+  display: block;
+  font-family: var(--display);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .09em;
+  text-transform: uppercase;
+  color: var(--tinta-dim);
+  margin-bottom: 7px;
+}
+
+/* La casilla y su texto en la misma línea: una casilla con el rótulo encima se
+   lee como un campo aparte y no como lo que es. */
+label.linea {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--body);
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+input, select, textarea {
+  width: 100%;
+  font-family: var(--body);
+  font-size: 15.5px;
+  color: var(--tinta);
+  background: var(--papel-alto);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: var(--radio);
+  padding: 11px 13px;
+  line-height: 1.4;
+}
+
+textarea { min-height: 84px; resize: vertical; }
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--tinte);
+  box-shadow: 0 0 0 3px var(--tinte-claro);
+}
+
+input::placeholder, textarea::placeholder { color: var(--tinta-mute); }
+
+input[type="checkbox"], input[type="radio"] { width: auto; accent-color: var(--tinte); }
+input[type="checkbox"] { width: 17px; height: 17px; }
+
+.campo { margin-bottom: 20px; }
+.campo .ayuda { font-size: 12.5px; color: var(--tinta-mute); margin: 7px 0 0; }
+
+/* Lo que no hay que llenar, dicho en el rótulo y no debajo. Va en minúscula y
+   sin peso: es una licencia, no una instrucción más. */
+.opcional {
+  font-family: var(--body);
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tinta-mute);
+  margin-left: 6px;
+}
+
+label > a { float: right; text-transform: none; letter-spacing: 0; font-weight: 600; }
+
+/* ---------------------------------------------------------------------
+   La barra de filtro
+
+   Un rótulo y un desplegable que se manda solo, en una línea. No es un
+   formulario: es el mando con el que se decide a quién se está mirando, así
+   que no lleva botón de "aplicar" ni ocupa una tarjeta.
+   --------------------------------------------------------------------- */
+.filtro {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.filtro label { margin: 0; flex: 0 0 auto; }
+.filtro select { width: auto; min-width: 0; flex: 0 1 26rem; padding: 8px 11px; font-size: 14px; }
+.filtro a { flex: 0 0 auto; }
+
+.fila {
+  display: grid;
+  gap: 0 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+}
+
+.fila.tres   { grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr)); }
+/* La fila de la sesión: fecha, asignación, horas y descripción. La descripción
+   se lleva el doble porque es la única que trae una frase. */
+.fila.cuatro { grid-template-columns: minmax(150px, .9fr) minmax(160px, 1fr) minmax(90px, .6fr) minmax(220px, 2fr); }
+
+.correo { display: flex; align-items: stretch; min-width: 0; }
+
+.correo input {
+  border-radius: var(--radio) 0 0 var(--radio);
+  border-right: 0;
+  min-width: 0;
+}
+
+.correo .dominio {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--papel-hondo);
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 0 var(--radio) var(--radio) 0;
+  color: var(--tinta-mute);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.correo:focus-within input,
+.correo:focus-within .dominio { border-color: var(--tinte); }
+
+/* ---------------------------------------------------------------------
+   Los desplegables discretos (rangos de fecha, alta a mano, borrar)
+   Cosas que se usan una vez cada tanto y que estorban abiertas.
+   --------------------------------------------------------------------- */
+details.fino { margin-top: 18px; }
+
+details.fino > summary {
+  cursor: pointer;
+  color: var(--tinte);
+  font-size: 12.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  list-style: none;
+  padding: 4px 0;
+}
+
+details.fino > summary::-webkit-details-marker { display: none; }
+
+details.fino > summary::before {
+  content: "+";
+  font-family: var(--mono);
+  font-weight: 700;
+  width: 15px;
+  height: 15px;
+  line-height: 13px;
+  text-align: center;
+  border: 1px solid var(--linea-fuerte);
+  border-radius: 2px;
+  background: var(--papel-alto);
+}
+
+details.fino[open] > summary::before { content: "−"; }
+
+/* ---------------------------------------------------------------------
+   La tabla
+   Una línea por celda y lo que no quepa con puntos suspensivos: estas tablas
+   son para barrerlas con la vista, no para leerlas despacio. Lo truncado no se
+   pierde, va completo en el `title` de la celda.
+
+   Y sin ancho mínimo ni scroll de lado: lo que no cabe en una pantalla chica
+   se esconde con .col-op, que es la columna que se puede perder sin dejar la
+   fila sin sentido.
+   --------------------------------------------------------------------- */
+table.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--papel-alto);
+  font-size: 13.5px;
+  table-layout: fixed;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+  margin-top: 18px;
+}
+
+table.tabla th {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--tinta-mute);
+  text-align: left;
+  padding: 11px 12px;
+  border-bottom: 2px solid var(--linea-fuerte);
+  white-space: nowrap;
+}
+
+table.tabla td {
+  padding: 10px 12px;
+  border-bottom: 1px dotted var(--linea-fuerte);
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+table.tabla td > div {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* La celda de la casilla no recorta: el borde de foco se dibuja por fuera del
+   control y recortarlo dejaría el campo activo sin señal de estarlo. */
+table.tabla td:has(input) { overflow: visible; }
+
+table.tabla td .chip { max-width: 100%; }
+table.tabla tr:last-child td { border-bottom: 0; }
+table.tabla tbody tr:hover { background: var(--papel-hondo); }
+table.tabla a { text-decoration: none; font-weight: 600; color: var(--tinta); }
+table.tabla a:hover { color: var(--tinte); text-decoration: underline; }
+
+table.tabla .centro  { text-align: center; }
+table.tabla .derecha { text-align: right; }
+table.tabla .derecha b { font-family: var(--display); font-size: 15px; }
+table.tabla .derecha b.ok     { color: var(--monte); }
+table.tabla .derecha b.alerta { color: var(--ambar); }
+
+/* Quien ya no tiene la beca: la fila se apaga, no se esconde. */
+table.tabla tr.ido { opacity: .6; }
+
+/* La tabla de referencia del importador —ocho rótulos, uno por columna— no se
+   reparte a partes iguales: a cuarenta píxeles no se leería ninguno. Esa va al
+   ancho de su contenido y envuelve, que para eso está dentro de un
+   desplegable. */
+table.tabla.auto { table-layout: auto; }
+table.tabla.auto td { white-space: normal; overflow: visible; }
+
+/* ---------------------------------------------------------------------
+   Las sesiones de un becario
+
+   Un <details> por sesión: cerrada es un renglón que se lee de un vistazo
+   —día, asignación, horas, qué se hizo y quién lo registró—, y abierta trae
+   sus campos para corregirla en el sitio.
+   --------------------------------------------------------------------- */
+.regs { display: grid; gap: 8px; margin-top: 18px; }
+
+.reg {
+  background: var(--papel-alto);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio);
+}
+
+.reg[open] { border-color: var(--linea-fuerte); box-shadow: var(--sombra); }
+
+.reg-cab {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 16px;
+  min-width: 0;
+  /* Sin wrap: cada sesión mide exactamente un renglón, siempre. Lo que no
+     quepa se recorta —la descripción es lo primero que cede— y el renglón
+     completo se lee al abrirlo. */
+  flex-wrap: nowrap;
+}
+
+.reg-cab::-webkit-details-marker { display: none; }
+.reg-cab:hover { background: var(--papel-hondo); }
+
+.reg-fecha { flex: 0 0 auto; font-size: 12.5px; color: var(--tinta-dim); width: 6.5rem; }
+.reg-cab .chip { flex: 0 0 auto; }
+
+.reg-horas {
+  flex: 0 0 auto;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  width: 3.6rem;
+  text-align: right;
+}
+
+.reg-que {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  color: var(--tinta-dim);
+}
+
+/* El clip de la evidencia: un sí o un no en el renglón cerrado. Ancho fijo
+   aunque no haya enlace no hace falta —es lo último antes del docente y no
+   desalinea nada—, pero sí un sitio propio para que no se pegue al texto. */
+.reg-clip { flex: 0 0 auto; font-size: 13px; line-height: 1; opacity: .75; }
+
+.reg-quien {
+  flex: 0 0 auto;
+  width: 9rem;
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reg-mas { padding: 4px 16px 16px; border-top: 1px dotted var(--linea-fuerte); }
+.reg-mas .campo { margin-bottom: 14px; }
+.reg-mas form { margin: 14px 0 0; }
+
+.reg-acciones { display: flex; gap: 12px; align-items: center; }
+
+/* ---------------------------------------------------------------------
+   Pie
+   --------------------------------------------------------------------- */
+body:has(> .bec-foot) { display: flex; flex-direction: column; min-height: 100vh; }
+body:has(> .bec-foot) > main { flex: 1 0 auto; min-width: 0; width: 100%; }
+
+.bec-foot {
+  border-top: 1px solid var(--linea-fuerte);
+  background: var(--papel-alto);
+  padding: 26px 0;
+  margin-top: auto;
+  font-size: 13px;
+}
+
+.bec-foot-in {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 22px;
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.bec-foot strong { display: block; font-family: var(--display); color: var(--tinta); }
+.bec-foot span { display: block; color: var(--tinta-mute); }
+.bec-foot a { color: var(--tinta-dim); }
+.bec-foot .der { margin-left: auto; display: flex; gap: 18px; flex-wrap: wrap; }
+
+.foot-acceso { color: var(--tinta-mute); text-decoration: none; font-size: 12.5px; }
+.foot-acceso:hover { color: var(--tinte); }
+
+/* ---------------------------------------------------------------------
+   Pantallas chicas
+   Nada se va de lado: lo que sobra se esconde o se encoge.
+   --------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .bec-top-in { gap: 12px; padding: 9px 16px; }
+  .bec-nav a { padding: 7px 8px; font-size: 12.5px; }
+  .panel-quien { gap: 8px; }
+  .panel-quien .mini { max-width: 10ch; }
+}
+
+@media (max-width: 760px) {
+  /* Las columnas prescindibles: el código, el semestre, el estado y la nota.
+     La fila sigue diciendo lo que importa —quién y cuántas horas lleva— y el
+     resto está a un toque, en su ficha. El estado no se pierde: la barra ya lo
+     dice con su color. */
+  .col-op { display: none; }
+
+  .bec { padding: 0 16px 70px; }
+
+  /* La marca sola en la barra de arriba; el menú, debajo. Es el único sitio
+     donde se permite un segundo renglón, y es porque la cabecera de celular no
+     tiene de dónde más sacar el ancho. */
+  .bec-top-in { flex-wrap: wrap; }
+  .bec-nav { order: 3; flex-basis: 100%; overflow-x: hidden; }
+  .bec-nav a { padding: 6px 9px; }
+  .panel-quien { margin-left: auto; }
+
+  .ficha .f { flex-direction: column; gap: 3px; }
+  .ficha .f .k { flex: none; max-width: none; }
+
+  /* En una pantalla de teléfono la sesión se lee en dos renglones: arriba
+     cuándo, qué y cuánto; abajo la descripción entera. Quién la registró se
+     ve al abrirla. */
+  .reg-cab { flex-wrap: wrap; gap: 10px; }
+  .reg-que { flex-basis: 100%; order: 5; }
+  .reg-quien { display: none; }
+  .reg-horas { margin-left: auto; }
+
+  /* El filtro se queda en una línea: el rótulo cede y el desplegable se lleva
+     lo que sobre. Es el mando de la lista y tiene que verse entero. */
+  .filtro label { font-size: 11px; }
+  .filtro select { flex: 1 1 auto; }
+}
+
+@media (max-width: 520px) {
+  .fila.cuatro { grid-template-columns: 1fr 1fr; }
+}
+
+@media print {
+  .bec-top, .bec-nav, .bec-foot, .btn, details.fino { display: none !important; }
+  body { background: #fff; background-image: none; }
+  .reg-mas { display: none !important; }
+}

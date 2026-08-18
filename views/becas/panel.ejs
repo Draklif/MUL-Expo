@@ -1,0 +1,493 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA PORTADA DEL PANEL
+
+     Tres bloques, en el orden en que le importan a quien entra:
+
+       1. CÓMO VA EL SEMESTRE — las cifras que en la hoja de la Universidad
+          son fórmulas y que aquí se cuentan solas.
+       2. REGISTRAR UNA SESIÓN — el formulario arriba y la lista debajo, y
+          los dos dentro del MISMO form. Esa es toda la idea del módulo: se
+          escribe la sesión una vez, se marcan los becarios que estuvieron y
+          se guarda. Un evento del programa lo montan cinco personas el mismo
+          día; escribir cinco veces lo mismo era el trabajo que sobraba.
+       3. LOS QUE YA NO ESTÁN — al final, plegados: perdieron la beca o se
+          retiraron, y sus horas se quedan como constancia.
+
+     La barra de cada fila es la pieza de esta hoja. Responde de un vistazo a
+     la única pregunta que se hace aquí —"¿a quién le falta?"— sin leer dos
+     números y restarlos de cabeza.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="bec">
+  <%/* Las sugerencias de responsable, una sola vez para los tres sitios que las
+       usan: el reparto en lote, el alta a mano y —en la otra página— la ficha.
+       Un <datalist> no dibuja nada; solo lo ofrece al escribir. */%>
+  <datalist id="lista-responsables">
+    <% responsables.forEach(function (r) { %><option value="<%= r.nombre %>"></option><% }); %>
+    <option value="<%= becas.responsable %>"></option>
+  </datalist>
+
+  <% if (aviso.registradas) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Se registr<%= Number(aviso.registradas) === 1 ? "ó" : "aron" %>
+        <strong><%= aviso.registradas %></strong>
+        sesi<%= Number(aviso.registradas) === 1 ? "ón" : "ones" %> de trabajo.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.cargados !== undefined) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Se cargaron <strong><%= aviso.cargados %></strong> becario<%= Number(aviso.cargados) === 1 ? "" : "s" %>.
+        <% if (Number(aviso.omitidos)) { %>
+          Se omitieron <%= aviso.omitidos %> que ya estaban en este semestre.
+        <% } %>
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.repartidos) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">
+        Se cambió el responsable de <strong><%= aviso.repartidos %></strong>
+        becario<%= Number(aviso.repartidos) === 1 ? "" : "s" %>.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.eliminado) { %>
+    <div class="aviso bueno" style="margin-top:24px">
+      <p style="margin:0">Se eliminó a <strong><%= aviso.eliminado %></strong> con todas sus sesiones.</p>
+    </div>
+  <% } %>
+  <% if (aviso.error === "sin_becario") { %>
+    <div class="aviso ojo" style="margin-top:24px">
+      <p style="margin:0">No marcaste a nadie. La sesión se registra sobre los becarios que la trabajaron.</p>
+    </div>
+  <% } %>
+  <% if (aviso.error === "inactivo") { %>
+    <div class="aviso ojo" style="margin-top:24px">
+      <p style="margin:0">
+        No se registró nada: a quien marcaste no le corresponde este semestre o ya no
+        tiene la beca.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.error === "datos") { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0">
+        No se guardó nada. Revisa la fecha —tiene que ser de hoy o de antes— y las horas,
+        que van entre 0 y 24 y admiten decimales.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.error === "repetido") { %>
+    <div class="aviso ojo" style="margin-top:24px">
+      <p style="margin:0">
+        Ese código ya está cargado en este semestre.
+        <% if (aviso.id) { %><a href="/becas/panel/becario/<%= aviso.id %>">Ver su ficha</a>.<% } %>
+      </p>
+    </div>
+  <% } %>
+
+  <section class="bec-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %> · <%= becas.dependencia %></p>
+        <h2>Servicio Universitario</h2>
+      </div>
+      <div class="acciones">
+        <a href="/becas/panel/importar" class="btn ghost chico">Cargar listado</a>
+        <a href="/becas/panel/bitacora.csv" class="btn chico">Bitácora en CSV</a>
+      </div>
+    </div>
+
+    <div class="tarjeta">
+      <div class="datos cifras">
+        <div class="dato">
+          <div class="k">Becarios</div>
+          <div class="v grande"><%= resumen.becarios %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Horas realizadas</div>
+          <div class="v grande"><%= resumen.horas_hechas %> <span class="de">de <%= resumen.horas_meta %></span></div>
+        </div>
+        <div class="dato">
+          <div class="k">Pendientes</div>
+          <div class="v grande <%= resumen.pendientes ? "alerta" : "ok" %>"><%= resumen.pendientes %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Finalizados</div>
+          <div class="v grande ok"><%= resumen.finalizados %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Sin iniciar</div>
+          <div class="v grande <%= resumen.sin_iniciar ? "alerta" : "apagado" %>"><%= resumen.sin_iniciar %></div>
+        </div>
+      </div>
+
+      <%/* La barra del programa entero. Es la misma pieza de cada fila y aquí
+           dice lo único que el Comité de Becas pregunta: cuánto se ha cumplido
+           de todo lo asignado. */%>
+      <div class="barra grande" style="margin-top:18px" role="img"
+           aria-label="<%= resumen.avance %> por ciento de las horas del semestre">
+        <span class="llena <%= resumen.avance >= 100 ? "ok" : "" %>" style="width:<%= resumen.avance %>%"></span>
+      </div>
+      <p class="mini" style="margin:8px 0 0">
+        <%= resumen.avance %> % de las horas asignadas · <%= resumen.sesiones %> sesiones registradas
+      </p>
+    </div>
+
+    <%/* El CSV con rango de fechas, plegado: lo normal es bajarse el semestre
+         entero, y quien pega semana a semana necesita acotar para no repegar lo
+         de la vez pasada. */%>
+    <details class="fino">
+      <summary class="mini">Bajar un rango o con los enlaces</summary>
+      <form method="GET" action="/becas/panel/bitacora.csv" style="margin-top:12px">
+        <div class="fila tres">
+          <div class="campo">
+            <label for="desde">Desde</label>
+            <input type="date" name="desde" id="desde" max="<%= hoy %>" />
+          </div>
+          <div class="campo">
+            <label for="hasta">Hasta</label>
+            <input type="date" name="hasta" id="hasta" max="<%= hoy %>" />
+          </div>
+          <div class="campo" style="align-self:end">
+            <button type="submit" class="btn ghost">Descargar</button>
+          </div>
+        </div>
+        <div class="campo">
+          <label class="linea">
+            <input type="checkbox" name="evidencias" value="1" />
+            Pegar los enlaces de evidencia al final de cada descripción
+          </label>
+          <p class="ayuda">
+            La hoja tiene cinco columnas y no admite una más, así que el enlace va dentro de
+            la descripción. Apagado, la columna queda limpia; encendido, la evidencia viaja
+            con el registro.
+          </p>
+        </div>
+      </form>
+      <p class="mini" style="margin:0">
+        Cinco columnas, de <code>FECHA</code> a <code>DESCRIPCIÓN</code>, sin la del
+        <code>ID</code>: en la hoja esa se genera sola. Se pega en <code>C6</code> hacia abajo.
+      </p>
+    </details>
+  </section>
+
+  <%/* El filtro por responsable. Va pegado a la lista y no arriba del todo
+       porque es de la lista: lo primero que hace un docente al entrar es
+       quedarse con los suyos.
+
+       Es un <select> que se manda solo, como el de semestre: dos clics en vez
+       de tres, y ningún botón que se quede sin apretar. Se recuerda en la
+       sesión, así que volver de una ficha no lo suelta. */%>
+  <% if (responsables.length > 1 || responsable) { %>
+    <section class="bec-sec" style="padding-top:26px">
+      <form method="GET" action="/becas/panel" class="filtro">
+        <label for="responsable">Responsable</label>
+        <select name="responsable" id="responsable" onchange="this.form.submit()">
+          <option value="">Todos · <%= total %></option>
+          <% responsables.forEach(function (r) { %>
+            <option value="<%= r.nombre %>" <%= r.nombre === responsable ? "selected" : "" %>>
+              <%= r.nombre %> · <%= r.n %>
+            </option>
+          <% }); %>
+        </select>
+        <% if (responsable) { %>
+          <a href="/becas/panel?responsable=" class="mini">Ver todos</a>
+        <% } %>
+      </form>
+    </section>
+  <% } %>
+
+  <% if (!activos.length) { %>
+    <section class="bec-sec">
+      <div class="vacio">
+        <% if (responsable) { %>
+          Nadie a cargo de <strong><%= responsable %></strong> en
+          <%= periodo ? periodo.codigo : "este semestre" %>.
+          <a href="/becas/panel?responsable=">Ver todos</a>.
+        <% } else { %>
+          No hay becarios cargados en <%= periodo ? periodo.codigo : "este semestre" %>.
+          <a href="/becas/panel/importar">Cargar el listado</a>.
+        <% } %>
+      </div>
+    </section>
+  <% } else { %>
+
+    <%/* UN SOLO FORM para la sesión y para la lista. Los dos bloques de abajo
+         viven dentro de él: arriba qué se hizo, abajo quién lo hizo. */%>
+    <form method="POST" action="/becas/panel/actividad" id="sesion">
+      <section class="bec-sec">
+        <div class="sec-top">
+          <div>
+            <p class="eyebrow">Lo que se trabajó</p>
+            <h2>Registrar una sesión</h2>
+          </div>
+        </div>
+
+        <div class="tarjeta">
+          <div class="fila cuatro">
+            <div class="campo">
+              <label for="fecha">Fecha</label>
+              <%/* Con el tope en hoy: la bitácora es de lo que ya se hizo. El
+                   servidor lo vuelve a comprobar, que el atributo se salta. */%>
+              <input type="date" name="fecha" id="fecha" required value="<%= hoy %>" max="<%= hoy %>" />
+            </div>
+            <div class="campo">
+              <label for="asignacion">Asignación</label>
+              <select name="asignacion" id="asignacion" required>
+                <% asignaciones.forEach(function (a) { %>
+                  <option value="<%= a.clave %>"><%= a.label %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="horas">Horas</label>
+              <input type="number" name="horas" id="horas" required min="0.25" max="24" step="0.25"
+                     inputmode="decimal" placeholder="2" />
+            </div>
+            <div class="campo">
+              <label for="descripcion">Descripción de la actividad</label>
+              <input type="text" name="descripcion" id="descripcion" maxlength="500"
+                     placeholder="Pieza pancarta Expomultimedia" />
+            </div>
+          </div>
+
+          <%/* La evidencia va sola en su renglón y no apretada con las otras
+               cuatro: es opcional, así que no puede robarle sitio a lo que sí
+               hay que llenar, y es lo único que lleva una dirección larga. */%>
+          <div class="campo">
+            <label for="evidencia">Enlace a la evidencia <span class="opcional">opcional</span></label>
+            <input type="url" name="evidencia" id="evidencia" maxlength="500"
+                   placeholder="https://drive.google.com/… la carpeta, el video, el documento" />
+          </div>
+
+          <p class="mini" style="margin:0">
+            Se guarda una sesión igual para cada becario que marques abajo, a tu nombre.
+            Las mismas horas y el mismo enlace para todos: si uno trabajó distinto, va en su ficha.
+          </p>
+        </div>
+      </section>
+
+      <section class="bec-sec">
+        <div class="sec-top">
+          <div>
+            <p class="eyebrow">Quiénes la trabajaron</p>
+            <h2>Becarios</h2>
+          </div>
+          <span class="chip"><%= activos.length %></span>
+        </div>
+
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th style="width:2.6rem" class="centro">
+                <%/* Marcar todos de un golpe. Es un control de la página y no
+                     un dato, así que no lleva name: no viaja al servidor. */%>
+                <input type="checkbox" id="todos" aria-label="Marcar todos" />
+              </th>
+              <th>Estudiante</th>
+              <th style="width:7.5rem" class="col-op">Código</th>
+              <%/* El responsable solo cuando hay más de uno. Con el listado
+                   recién cargado son treinta filas diciendo lo mismo, y una
+                   columna que repite el mismo nombre treinta veces es una
+                   columna que le quita sitio a las que sí distinguen. */%>
+              <% if (responsables.length > 1) { %>
+                <th style="width:12rem" class="col-op">Responsable</th>
+              <% } %>
+              <th style="width:3.5rem" class="col-op centro">Sem.</th>
+              <th style="width:12rem">Horas</th>
+              <th style="width:6.5rem" class="derecha">Pendientes</th>
+              <th style="width:9rem" class="col-op">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% activos.forEach(function (b) { %>
+              <tr>
+                <td class="centro">
+                  <input type="checkbox" name="becarios" value="<%= b.id %>"
+                         aria-label="<%= b.nombre %>" />
+                </td>
+                <td title="<%= b.nombre %>">
+                  <a href="/becas/panel/becario/<%= b.id %>"><%= b.nombre %></a>
+                </td>
+                <td class="cod col-op"><%= b.codigo %></td>
+                <% if (responsables.length > 1) { %>
+                  <td class="mini col-op" title="<%= b.responsable || "" %>"><%= b.responsable || "—" %></td>
+                <% } %>
+                <td class="centro col-op"><%= b.semestre || "—" %></td>
+                <td>
+                  <div class="barra" role="img"
+                       aria-label="<%= b.horas_hechas %> de <%= b.horas_meta %> horas">
+                    <span class="llena <%= b.estado_info.cls %>" style="width:<%= b.avance %>%"></span>
+                  </div>
+                  <div class="mini"><%= b.horas_hechas %> de <%= b.horas_meta %> h</div>
+                </td>
+                <td class="derecha">
+                  <% if (b.pendientes) { %>
+                    <b class="alerta"><%= b.pendientes %></b>
+                  <% } else { %>
+                    <b class="ok">0</b>
+                    <% if (b.excedidas) { %><div class="mini">+<%= b.excedidas %> de más</div><% } %>
+                  <% } %>
+                </td>
+                <td class="col-op">
+                  <span class="chip <%= b.estado_info.cls %>"><%= b.estado_info.label %></span>
+                </td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+
+        <div class="acciones" style="margin-top:20px">
+          <button type="submit" class="btn">Registrar la sesión<span id="cuantos"></span></button>
+          <span class="mini">Se escribe una fila por becario marcado.</span>
+        </div>
+
+        <%/* La otra cosa que se hace con las mismas casillas. Va dentro del
+             mismo form y cambia a dónde se manda con formaction: sin eso serían
+             dos formularios con dos listas de casillas, y marcar en una no
+             marcaría en la otra.
+
+             Plegado porque es de una vez por semestre: el listado llega con el
+             director del programa en todas las filas y hay que repartirlo. */%>
+        <details class="fino">
+          <summary class="mini">Repartir el responsable de los marcados</summary>
+          <div class="fila" style="margin-top:12px;align-items:end">
+            <div class="campo">
+              <label for="nuevo-responsable">Responsable</label>
+              <%/* Con lista de sugerencias y no un desplegable cerrado: el
+                   primero de cada semestre no está en ninguna lista todavía, y
+                   un nombre nuevo tiene que poder escribirse. */%>
+              <input type="text" name="responsable" id="nuevo-responsable" maxlength="120"
+                     list="lista-responsables" placeholder="<%= becas.responsable %>" />
+            </div>
+            <div class="campo">
+              <button type="submit" class="btn ghost" formaction="/becas/panel/responsable"
+                      formnovalidate>
+                Asignar a los marcados
+              </button>
+            </div>
+          </div>
+          <p class="mini" style="margin:0">
+            Cambia solo quién responde por esas horas; no toca las sesiones ya registradas.
+            En blanco los deja sin responsable.
+          </p>
+        </details>
+      </section>
+    </form>
+
+    <%/* Lo justo para que el botón diga a cuántos va y para marcar de un golpe.
+         Sin esto la página funciona igual —el servidor avisa si no marcaste a
+         nadie—, así que es una comodidad y no una pieza de la que dependa
+         nada. */%>
+    <script>
+      (function () {
+        var form = document.getElementById("sesion");
+        var todos = document.getElementById("todos");
+        var cuantos = document.getElementById("cuantos");
+        if (!form || !todos || !cuantos) return;
+
+        var casillas = form.querySelectorAll('input[name="becarios"]');
+
+        function contar() {
+          var n = 0;
+          casillas.forEach(function (c) { if (c.checked) n++; });
+          cuantos.textContent = n ? " · " + n : "";
+        }
+
+        todos.addEventListener("change", function () {
+          casillas.forEach(function (c) { c.checked = todos.checked; });
+          contar();
+        });
+        casillas.forEach(function (c) { c.addEventListener("change", contar); });
+      })();
+    </script>
+  <% } %>
+
+  <% if (inactivos.length) { %>
+    <section class="bec-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Ya no cuentan en las cifras de arriba</p>
+          <h2>Sin beca este semestre</h2>
+        </div>
+        <span class="chip"><%= inactivos.length %></span>
+      </div>
+
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Estudiante</th>
+            <th style="width:7.5rem" class="col-op">Código</th>
+            <th style="width:9rem" class="derecha">Horas hechas</th>
+            <th style="width:40%" class="col-op">Nota</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% inactivos.forEach(function (b) { %>
+            <tr class="ido">
+              <td title="<%= b.nombre %>"><a href="/becas/panel/becario/<%= b.id %>"><%= b.nombre %></a></td>
+              <td class="cod col-op"><%= b.codigo %></td>
+              <td class="derecha"><%= b.horas_hechas %> de <%= b.horas_meta %></td>
+              <td class="mini col-op" title="<%= b.nota || "" %>"><%= b.nota || "—" %></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </section>
+  <% } %>
+
+  <section class="bec-sec">
+    <details class="fino">
+      <summary class="mini">Agregar un becario a mano</summary>
+      <%/* Un renglón y no un párrafo: lo de pegar el listado ya está en el botón
+           de arriba. Lo único que aquí no es obvio es que agregar a alguien que
+           la Universidad no tiene en su listado no sirve de nada. */%>
+      <p class="mini" style="margin:10px 0 0">
+        Si falta en el listado de la Universidad hay que avisarle a
+        <code><%= becas.correo_becas %></code>: agregarlo solo aquí lo deja fuera del
+        desplegable de la hoja, y su fila no se podrá pegar.
+      </p>
+      <form method="POST" action="/becas/panel/becario" style="margin-top:14px">
+        <div class="fila cuatro">
+          <div class="campo">
+            <label for="nombre">Nombre</label>
+            <input type="text" name="nombre" id="nombre" required maxlength="120"
+                   placeholder="ANA MARÍA CADENA PÉREZ" />
+          </div>
+          <div class="campo">
+            <label for="codigo">Código</label>
+            <input type="text" name="codigo" id="codigo" required inputmode="numeric" placeholder="55826004" />
+          </div>
+          <div class="campo">
+            <label for="semestre-nuevo">Semestre</label>
+            <input type="number" name="semestre" id="semestre-nuevo" min="1" max="12" placeholder="1" />
+          </div>
+          <div class="campo">
+            <label for="horas_meta">Horas a realizar</label>
+            <input type="number" name="horas_meta" id="horas_meta" required min="1" max="1000" step="0.5"
+                   value="<%= becas.horas_defecto %>" />
+          </div>
+        </div>
+        <div class="fila">
+          <div class="campo">
+            <label for="responsable-nuevo">Responsable</label>
+            <input type="text" name="responsable" id="responsable-nuevo" maxlength="120"
+                   list="lista-responsables" placeholder="<%= becas.responsable %>" />
+          </div>
+          <div class="campo" style="align-self:end">
+            <button type="submit" class="btn ghost">Agregar</button>
+          </div>
+        </div>
+      </form>
+    </details>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

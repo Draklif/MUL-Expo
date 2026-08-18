@@ -1,0 +1,176 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     CARGAR EL LISTADO
+
+     Los becarios no se inventan aquí: los asigna la Universidad y llegan en la
+     hoja ESTUDIANTES BECARIOS del formato. Se seleccionan allá, se copian y se
+     pegan aquí; el portapapeles de Excel trae las celdas separadas por
+     tabuladores, que es justo lo que espera el parser.
+
+     La página no explica el procedimiento y es a propósito: quien entra a este
+     panel es el que lleva las becas del programa y se sabe de memoria cuál es
+     la hoja y cuáles las filas. Un párrafo contándoselo cada vez es un párrafo
+     que se salta, y el que se salta se lleva por delante el renglón que sí
+     importaba. Queda una línea con lo único que puede cambiar —EN QUÉ SEMESTRE
+     entran— y el detalle de las columnas plegado, para el día que algo no
+     cuadre.
+
+     Dos pasos y no uno. Primero se ve qué va a entrar —con los repetidos
+     marcados—, y solo entonces se guarda.
+
+     No hay subida de archivos, y es la misma decisión del resto del sitio:
+     pegar no pide una dependencia nueva, funciona desde cualquier equipo y no
+     deja un .xlsx del semestre pasado tirado en el servidor.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="bec">
+  <section class="bec-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">Semestre <%= periodo ? periodo.codigo : "—" %></p>
+        <h2>Cargar el listado</h2>
+      </div>
+      <a href="/becas/panel" class="btn ghost chico">Volver al panel</a>
+    </div>
+
+    <%/* Lo único que hay que leer aquí, y va en grande: el semestre. Se pega el
+         listado que se pega y entra donde diga el selector de arriba, así que
+         cargar el de un semestre anterior es cambiarlo antes de pegar. */%>
+    <p class="sec-lead">
+      Pega las filas de <code>ESTUDIANTES BECARIOS</code>. Entran en
+      <strong><%= periodo ? periodo.codigo : "el semestre en curso" %></strong>; para cargar
+      otro semestre, cámbialo arriba antes de pegar.
+    </p>
+
+    <details class="fino">
+      <summary class="mini">Qué columnas espera</summary>
+      <%/* Al ancho de su contenido y no a partes iguales: son ocho rótulos, y
+           repartidos en columnas fijas no se leería ninguno. */%>
+      <table class="tabla auto" style="margin-top:10px">
+        <thead>
+          <tr><% columnas.forEach(function (c, i) { %><th><%= String.fromCharCode(66 + i) %></th><% }); %></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <% columnas.forEach(function (c) { %>
+              <td class="mini"><%= c.rotulo %><% if (c.fuera) { %> <span class="chip no">no se guarda</span><% } %></td>
+            <% }); %>
+          </tr>
+        </tbody>
+      </table>
+      <p class="mini" style="margin-top:12px">
+        De la <code>B</code> a la <code>I</code>. La cabecera y las tres columnas de fórmulas
+        (<code>J</code>, <code>K</code>, <code>L</code>) se ignoran solas. También se aceptan
+        <strong>tres columnas</strong> —
+        <% columnasCortas.forEach(function (c, i) { %><%= i ? " · " : "" %><code><%= c.rotulo %></code><% }); %>—
+        para cargar media docena a mano; la forma se reconoce contando celdas.
+      </p>
+    </details>
+  </section>
+
+  <% if (errores.length) { %>
+    <div class="aviso ojo">
+      <div class="t">Esto se va a quedar fuera</div>
+      <ul style="margin:0;padding-left:20px">
+        <% errores.forEach(function (e) { %><li><%= e %></li><% }); %>
+      </ul>
+    </div>
+  <% } %>
+
+  <section class="bec-sec">
+    <form method="POST" action="/becas/panel/importar">
+      <div class="campo">
+        <label for="pegado">Pega aquí las filas</label>
+        <textarea name="pegado" id="pegado" style="min-height:220px;font-family:var(--mono);font-size:13px;white-space:pre"
+                  placeholder="91523&#9;ANA MARÍA CADENA PÉREZ&#9;55826004&#9;INGENIERÍA EN MULTIMEDIA&#9;1&#9;…"><%= pegado %></textarea>
+      </div>
+      <button type="submit" class="btn">Ver qué va a entrar</button>
+    </form>
+  </section>
+
+  <% if (lote) { %>
+    <%
+      const repetidos = lote.filter(function (b) { return b.ya; });
+      const entran = lote.length - repetidos.length;
+      const conCambio = lote.filter(function (b) { return b.cambio_meta !== null; });
+    %>
+
+    <section class="bec-sec">
+      <div class="sec-top">
+        <div>
+          <p class="eyebrow">Vista previa · todavía no se ha guardado nada</p>
+          <h2><%= lote.length %> fila<%= lote.length === 1 ? "" : "s" %> reconocida<%= lote.length === 1 ? "" : "s" %></h2>
+        </div>
+      </div>
+
+      <% if (!lote.length) { %>
+        <div class="vacio">
+          No se reconoció ninguna fila. Revisa que hayas copiado las columnas de la
+          <code>B</code> a la <code>I</code> y que cada fila traiga nombre, código y horas.
+        </div>
+      <% } else { %>
+
+        <% if (repetidos.length) { %>
+          <div class="aviso ojo">
+            <div class="t"><%= repetidos.length %> se van a omitir</div>
+            <p style="margin:0">
+              Ya están cargados en este semestre. Pasa al volver a pegar el listado después de
+              corregir una fila, y omitirlos es lo correcto: cargarlos otra vez borraría las
+              horas que ya tienen registradas.
+            </p>
+          </div>
+        <% } %>
+
+        <% if (conCambio.length) { %>
+          <div class="aviso ojo">
+            <div class="t">A <%= conCambio.length %> les cambiaron las horas en la hoja</div>
+            <p style="margin:0">
+              <% conCambio.forEach(function (b, i) { %><%= i ? " · " : "" %><%= b.nombre %> (<%= b.cambio_meta %> → <%= b.horas_meta %>)<% }); %>.
+              No se tocan desde aquí: se corrigen a mano en su ficha, para que quede claro
+              quién cambió qué.
+            </p>
+          </div>
+        <% } %>
+
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th style="width:6rem"></th>
+              <th>Estudiante</th>
+              <th style="width:7.5rem" class="col-op">Código</th>
+              <th style="width:3.5rem" class="col-op centro">Sem.</th>
+              <th style="width:6rem" class="derecha">Horas</th>
+              <th class="col-op">Programa</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% lote.forEach(function (b) { %>
+              <tr style="<%= b.ya ? "opacity:.5" : "" %>">
+                <td><span class="chip <%= b.ya ? "malo" : "ok" %>"><%= b.ya ? "Se omite" : "Entra" %></span></td>
+                <td title="<%= b.nombre %>"><%= b.nombre %></td>
+                <td class="cod col-op"><%= b.codigo %></td>
+                <td class="centro col-op"><%= b.semestre || "—" %></td>
+                <td class="derecha"><%= b.horas_meta %></td>
+                <td class="mini col-op" title="<%= b.programa || "" %>"><%= b.programa || "—" %></td>
+              </tr>
+            <% }); %>
+          </tbody>
+        </table>
+
+        <% if (entran) { %>
+          <form method="POST" action="/becas/panel/importar/confirmar" style="margin-top:22px"
+                onsubmit="return confirm('Se van a cargar <%= entran %> becarios en <%= periodo ? periodo.codigo : "" %>. ¿Seguimos?')">
+            <input type="hidden" name="pegado" value="<%= pegado %>" />
+            <button type="submit" class="btn">
+              Cargar <%= entran %> becario<%= entran === 1 ? "" : "s" %>
+            </button>
+          </form>
+        <% } %>
+      <% } %>
+    </section>
+  <% } %>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>

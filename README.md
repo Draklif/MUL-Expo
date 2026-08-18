@@ -40,7 +40,7 @@ Copia `.env.example` como `.env` —lo secreto— y llénalo:
 | Variable | Para qué | ¿Obligatoria? |
 |---|---|---|
 | `PASSWORD_DOCENTES` | La contraseña compartida de los docentes | **Sí**: sin ella la app no arranca |
-| `PASSWORD_VC`, `PASSWORD_JAM`, `PASSWORD_INK` | Los paneles del torneo, la jam y el reto de dibujo: [una clave por herramienta](#las-dos-caras-de-la-app) | No: sin una de ellas ese panel queda cerrado y el resto del sitio funciona igual |
+| `PASSWORD_VC`, `PASSWORD_JAM`, `PASSWORD_INK`, `PASSWORD_MUSIC`, `PASSWORD_SALIDAS`, `PASSWORD_SAMI`, `PASSWORD_BECAS` | Los paneles del torneo, la jam, el reto de dibujo, el festival, las salidas, el semillero y las becas: [una clave por herramienta](#las-dos-caras-de-la-app) | No: sin una de ellas ese panel queda cerrado y el resto del sitio funciona igual |
 | `SESSION_SECRET` | Firma las cookies de sesión | No, pero sin ella cada reinicio cierra las sesiones |
 | `PORT` | Puerto del servidor (vacío = 3000) | No |
 | `EVENTO` | Clava la raíz en un [evento](#los-eventos) (vacío = manda la fecha) | No |
@@ -91,6 +91,8 @@ Verás (la primera línea es el evento que esté vigente):
   ✓ Panel Virtual Champions: http://localhost:3000/vc/acceso
   ✓ Panel Jam de Altura:     http://localhost:3000/jam/acceso
   ✓ Panel INKreible:         http://localhost:3000/ink/acceso
+  ✓ Panel semillero SAMI:    http://localhost:3000/semillero/acceso
+  ✓ Panel becas:             http://localhost:3000/becas
   ✓ Para exponer con ngrok:  ngrok http 3000
 ```
 
@@ -130,12 +132,14 @@ Abre `http://localhost:3000` en el navegador del PC.
 | `/semillero/registro` | Estudiantes, sin login | Registro de la intención de entrar al semillero |
 | `/semillero/estado` | Estudiantes, sin login | Consulta del código: en qué va el trámite y qué se comprometió a entregar |
 | `/semillero/acceso`, `/semillero/panel` | Docentes | Panel del semillero: el trámite, las reuniones y las notas, con la suya |
+| `/becas` | **Solo docentes** | Las [horas de servicio universitario](#servicio-universitario-becas). Es el único módulo **sin cara pública**: su raíz lleva derecho al acceso |
 
-Son **siete herramientas con siete contraseñas**: la de la Expo
+Son **ocho herramientas con ocho contraseñas**: la de la Expo
 (`PASSWORD_DOCENTES`), la del torneo (`PASSWORD_VC`), la de la jam
 (`PASSWORD_JAM`), la del festival (`PASSWORD_MUSIC`), la del reto de dibujo
-(`PASSWORD_INK`), la de las salidas (`PASSWORD_SALIDAS`) y la del semillero
-(`PASSWORD_SAMI`). Los docentes son los mismos —la lista de `config.js`— pero
+(`PASSWORD_INK`), la de las salidas (`PASSWORD_SALIDAS`), la del semillero
+(`PASSWORD_SAMI`) y la de las becas (`PASSWORD_BECAS`). Los docentes son los
+mismos —la lista de `config.js`— pero
 entrar a una no abre las otras. Si a una le falta su clave en el `.env`, ese panel
 queda cerrado y todo lo demás funciona igual.
 
@@ -1069,6 +1073,285 @@ En `config.js`, el bloque `SAMI`.
   los proyectos reales entran por [cargar un lote](#cargar-un-lote-desde-la-hoja).
   Los nombres, documentos y teléfonos de las hojas tampoco podrían quedar ahí:
   son datos personales de estudiantes y ese archivo va a git.
+
+## Servicio Universitario (becas)
+
+Un becario devuelve unas horas de trabajo al programa a cambio de su beca. Quien
+responde por que esas horas se cumplan es el director del programa, y la
+Universidad se lo pide en un Excel en línea —**FORMATO SEGUIMIENTO SERVICIO
+UNIVERSITARIO**, con una hoja `BITÁCORA` donde va una fila por sesión de
+trabajo—. Este módulo lleva la cuenta aquí y suelta al final el **CSV que se
+pega en esa bitácora** de un solo golpe.
+
+Vive en `/becas`, tiene identidad propia (`public/becas.css`, planilla de
+control), su propia base (`becas_*`) y su propia contraseña.
+
+Es el módulo más chico del sitio y el único **sin cara pública**: el estudiante
+no entra, no se inscribe y no consulta nada. `/becas` lleva derecho al acceso de
+docentes. Por eso tampoco tiene renglón en `config.APROBADO` —lo que no se
+anuncia no hace falta apagarlo— ni aparece en `/info`.
+
+### Lo que este módulo NO reemplaza
+
+El archivo de la Universidad **sigue siendo el documento oficial**. Está enlazado
+a un tablero del Comité de Becas, se llena en línea y hay que llenarlo. Lo que
+cambia es de dónde sale lo que se escribe ahí: en vez de teclear ochenta filas a
+mano al final del semestre, se registra cada sesión aquí el día que pasa y se
+pega el CSV cuando toque.
+
+De ahí sale la regla que explica casi todo el diseño: **los nombres y las
+etiquetas son de la Universidad y no se tocan**. En la hoja, las columnas
+`ESTUDIANTE` y `ASIGNACIÓN` son listas desplegables cerradas; un nombre
+capitalizado bonito o una asignación escrita "en bonito" no coinciden con
+ninguna opción y dejan la fila sin poder pegar. Por eso los nombres se guardan
+tal como vienen del listado —en mayúsculas y con sus tildes— y el CSV escribe
+`AUTOEVALUACIÓN`, no `Autoevaluación`.
+
+### Las cifras se cuentan, nunca se guardan
+
+En la hoja, las horas realizadas, las pendientes y el estado son fórmulas
+(columnas `J`, `K` y `L` de `ESTUDIANTES BECARIOS`). Aquí son un `SUM` sobre las
+actividades, resuelto cada vez que se pide. Es la misma lección del semillero, y
+aquí pesa más: la cifra que se guarda mal es la que decide si alguien cumplió con
+su beca.
+
+El **estado tampoco se decide, se deduce**, y esto es lo contrario del semillero:
+allá "en qué va un proyecto" es un juicio del comité que ninguna columna puede
+deducir; aquí es aritmética y no hay nada que opinar.
+
+| Estado | Cuándo | En la hoja |
+|---|---|---|
+| No se ha iniciado | Cero sesiones registradas | `NO SE HA INICIADO` |
+| En proceso | Algunas horas, menos de las asignadas | `EN PROCESO` |
+| Finalizado | Horas hechas **≥** horas a realizar | `FINALIZADO` |
+
+El `≥` es a propósito: en el listado real hay quien va en 22 de 20 y en 33 de 30,
+porque una sesión no se parte por la mitad para cuadrar un total. **Pasarse no es
+un error**: el panel avisa —"lleva 4 h de más: ya no hay que asignarle más
+tiempo"— pero no lo impide. Perder el registro de una tarde de trabajo por
+cuadrar un número sería peor.
+
+### Las diez asignaciones
+
+Son la lista de validación de la hoja, en su orden: acompañamiento docencia,
+autoevaluación, difusión, eventos, investigación, laboratorios, proyección
+social, seguimiento de egresados, tutorías y otra.
+
+Viven en `lib/becas.js` y **no en `config.js`**, por la misma razón que la
+escalera de estados del semillero: no son una preferencia del programa sino una
+lista cerrada de la Universidad, y cambiar una clave dejaría sin traducir las
+actividades ya registradas. Para pedir una nueva hay que escribir a
+`becas@uniboyaca.edu.co`, que es lo que dice el propio formato.
+
+### El panel
+
+| Dónde | Qué se hace |
+|---|---|
+| `/becas/panel` | La lista del semestre con la barra de horas de cada quien, las cifras de arriba y el **formulario de sesión** |
+| `/becas/panel/becario/:id` | Su ficha: todas sus sesiones, corregirlas o borrarlas, y sus datos |
+| `/becas/panel/importar` | Pegar el listado desde la hoja `ESTUDIANTES BECARIOS` |
+| `/becas/panel/bitacora.csv` | El CSV para pegar en la hoja |
+
+**Un solo permiso**, a diferencia del semillero: todo docente que entra ve y toca
+todo. Repartir permisos aquí solo serviría para que una tarde de trabajo se quede
+sin registrar porque el que estaba a la mano no podía escribirla.
+
+Cada actividad queda **con el docente que la registró y su fecha**. Se corrige y
+se borra, pero no queda anónima.
+
+### El responsable, que es por lo que se filtra
+
+Ante el Comité de Becas responde uno solo —el director del programa, y así llega
+el listado: las treinta filas con su nombre en la columna `RESPONSABLE`—. El
+trabajo de verdad lo reparte cada docente con los suyos, y eso es lo que se hace
+aquí: se cambia el responsable y la lista se puede filtrar por él.
+
+Dos maneras de cambiarlo, según cuántos sean:
+
+- **De a uno**, en la ficha del becario, junto con todos sus demás datos.
+- **A varios de un golpe**, marcando sus casillas en la portada y usando
+  «repartir el responsable de los marcados». Son las mismas casillas con las que
+  se registra una sesión; solo cambia el botón. Es lo que se usa una vez por
+  semestre, cuando llega el listado con el director en todas las filas.
+
+Es **texto libre y no un docente de `config.DOCENTES`**: en la hoja es un nombre
+escrito a la manera de Registro y Control (`OCHOA ECHEVERRIA MAURICIO`), que no
+tiene por qué coincidir con ninguno de los que entran al panel, y un responsable
+puede ser alguien que no entra nunca. Al escribirlo se ofrecen los que ya están
+en uso, para que el mismo nombre no termine escrito de tres maneras.
+
+El filtro de la lista **se recuerda en la sesión y por semestre**: volver de una
+ficha no lo suelta. Las cifras de arriba se filtran con la lista —unas cifras del
+programa entero encima de diez becarios se leerían como si fueran de esos diez— y
+un filtro que ya no le corresponde a nadie se suelta solo, para que la página no
+se quede vacía sin manera obvia de salir.
+
+### Los datos de un becario se corrigen
+
+Todos, desde su ficha: nombre, código, programa, semestre, dependencia,
+responsable, horas a realizar y la nota interna. El listado llega con erratas
+—nombres cortados, semestres viejos, horas que cambiaron— y volver a cargarlo no
+sirve, porque [el que ya está no se pisa](#cargar-el-listado).
+
+El **código** también se cambia, aunque sea la identidad: si llegó mal escrito,
+obligar a eliminar y volver a cargar se llevaría por delante las sesiones que ya
+tenga. Lo único que no puede es chocar con otro del mismo semestre.
+
+### La evidencia de una sesión
+
+Cada sesión admite un **enlace opcional**: la carpeta con las piezas, el video
+subido, el documento. Es solo la dirección —los archivos no viven en esta app,
+igual que en INKreible y en el semillero— y sirve para sustentar el trabajo
+cuando alguien pregunte.
+
+Solo se aceptan `http` y `https`, y esa lista corta es una regla de seguridad y
+no una manía: lo que se guarde ahí termina en el `href` de un enlace del panel, y
+un `javascript:` ahí es código que corre en la sesión del docente que le dé clic.
+Se puede pegar sin el `https://`, que es como se copia de la barra del navegador.
+
+Un enlace que no sirve **se descarta sin tumbar el registro**: la sesión de
+trabajo pasó, y perderla porque alguien pegó mal una dirección sería cambiar lo
+importante por lo accesorio.
+
+En la lista de sesiones se anuncia con un clip; la dirección entera se ve —y se
+abre— al desplegar la sesión.
+
+### Una sesión, varios becarios
+
+El formulario de la portada escribe la sesión una vez y la registra en **todos
+los becarios marcados**. Esa es toda la idea del módulo: una salida pedagógica o
+el montaje de un evento los trabajan cinco personas el mismo día y con las mismas
+horas, y escribir la misma fila cinco veces era el trabajo que sobraba.
+
+Se guardan como cinco actividades independientes, que es lo que son: si después
+una se corrige, se corrige sola. Si uno de los cinco trabajó horas distintas, esa
+va en su ficha.
+
+### La beca es de un semestre
+
+Cada becario es una fila **de un semestre**: la beca se asigna semestre a
+semestre y con ella las horas. La misma persona vuelve a aparecer el semestre
+siguiente como una fila nueva, y eso es lo que permite abrir el semestre pasado y
+ver cómo cerró en vez de un acumulado que ya no responde a nada.
+
+El selector de la cabecera ofrece **los que tienen becarios cargados y los que
+sean de `config.BECAS.desde` en adelante**, aunque estén vacíos. Eso segundo es
+lo que permite **abrir un semestre anterior y cargarle su listado**, que es como
+se mete el historial: el archivo de la Universidad va por semestres y hay que
+poder subir los de atrás. Si ese semestre no existía en la base, se abre solo al
+arrancar —inactivo, sin tocar al que esté en curso—.
+
+Y para **registrar horas en un semestre anterior** no hace falta ni cambiar el
+selector: una sesión cae en el semestre **del becario**, que es el único al que
+puede pertenecer. Desde la ficha de alguien de 2026-10 se le registra trabajo
+aunque arriba diga 2026-20; la ficha dice en qué bitácora va a caer. Lo que sí es
+del selector es lo que se **ve**: la lista, las cifras y el CSV.
+
+Quien pierde la beca a mitad de semestre se marca **inactivo**, no se borra: deja
+de contar en las cifras y no admite sesiones nuevas, pero sus horas hechas siguen
+ahí como constancia. Eliminar de verdad existe para deshacer un listado mal
+pegado, y se lleva sus sesiones por delante.
+
+### Cargar el listado
+
+Los becarios los asigna la Universidad; aquí no se inventan. Se abre la hoja
+`ESTUDIANTES BECARIOS`, se seleccionan las filas de la `B` a la `I` y se pegan en
+`/becas/panel/importar`.
+
+| Col. | Rótulo en la hoja | |
+|---|---|---|
+| B | `ASPIRANTE ID` | **no se guarda** |
+| C | `ESTUDIANTE` | |
+| D | `CÓDIGO` | |
+| E | `PROGRAMA ESTUDIANTE` | |
+| F | `SEMESTRE ACTUAL` | |
+| G | `DEPENDENCIA ASIGNADA` | |
+| H | `RESPONSABLE` | |
+| I | `HORAS A REALIZAR` | |
+
+El `ASPIRANTE ID` se cuenta pero no se guarda: es la llave del sistema de becas
+de la Universidad y aquí no abre nada —a la persona se la reconoce por su código
+de estudiante—. Sigue ocupando su sitio en el pegado porque es la primera columna
+del bloque que se copia, y quitarla del conteo correría todas las demás.
+
+Las tres siguientes (`J`, `K`, `L`) son las fórmulas y se ignoran si vienen
+pegadas: eso se cuenta aquí. La cabecera también se ignora sola. Para cargar
+media docena sin abrir el Excel se aceptan **tres columnas** a secas —estudiante,
+código y horas—; la forma se reconoce sola contando celdas.
+
+La página no explica nada de esto, y es a propósito: quien entra a este panel
+lleva las becas del programa y se sabe cuál es la hoja y cuáles las filas. Queda
+una línea con lo único que puede cambiar —**en qué semestre entran**— y el
+detalle de las columnas plegado, para el día que algo no cuadre.
+
+Dos pasos, como en el semillero: primero se ve qué va a entrar y solo entonces se
+guarda. **El que ya está no se pisa.** Volver a pegar el mismo listado es lo más
+normal del mundo —se corrige una fila y se copia todo otra vez— y sobrescribir
+borraría las horas que alguien ya registró; los repetidos se marcan y se omiten.
+Si a alguno le cambiaron las horas en la hoja, el importador lo dice y se corrige
+a mano en su ficha, para que quede claro quién cambió qué.
+
+¿Falta alguien en el listado de la Universidad? Eso se reclama a
+`becas@uniboyaca.edu.co`: agregarlo aquí a mano lo deja fuera del desplegable de
+la hoja, y su fila no se podrá pegar.
+
+### El CSV de la bitácora
+
+Cinco columnas, en el orden de la hoja y con sus mismas etiquetas:
+
+```
+FECHA;ESTUDIANTE;ASIGNACIÓN;HORAS A REGISTRAR;DESCRIPCIÓN ACTIVIDADES / OBSERVACIONES
+16/08/2026;ANA MARÍA CADENA PÉREZ;AUTOEVALUACIÓN;5;Guía de alternativas de grado
+```
+
+**Sin la columna `ID`**, y eso es lo importante: la instrucción 2 del formato dice
+que esa columna no se toca porque la secuencia se genera sola. Se pega en `C6`
+hacia abajo y el ID se llena solo.
+
+Lo demás está pensado para que Excel en español no lo estropee: punto y coma como
+separador, BOM al principio, fecha en `DD/MM/AAAA` y las horas con **coma
+decimal** —con `1.5` media hora se convertiría en texto en una columna que se
+suma—.
+
+Se baja **el semestre que se esté mirando**: entero, o un rango de fechas para no
+repegar lo que ya se pegó la semana pasada.
+
+Los [enlaces de evidencia](#la-evidencia-de-una-sesión) se pueden pegar al final
+de cada descripción, con una casilla al descargar. **Apagado por defecto**: la
+hoja la leen otros, y ochenta celdas con una dirección de Drive detrás se leen
+peor que ochenta descripciones limpias. No es una columna nueva —la hoja tiene
+cinco y solo cinco— sino el mismo campo, que es donde el formato dice que se
+escribe libremente.
+
+### Lo que se configura
+
+En `config.js`, el bloque `BECAS`.
+
+| Campo | Para qué |
+|---|---|
+| `dependencia` | El programa o dependencia al que están asignados los becarios, como en la hoja `DEPENDENCIA BECA` |
+| `responsable` | El que traen los becarios nuevos. Después [se reparte desde el panel](#el-responsable-que-es-por-lo-que-se-filtra). Es texto y no un docente de `DOCENTES`: en la hoja es el jefe o director, que puede no ser ninguno de los que entran al panel |
+| `horas_defecto` | Las que trae un becario nuevo cargado a mano. En el listado real son 20 o 30 según el porcentaje de la beca, así que es solo un punto de partida |
+| `desde` | El semestre más antiguo que ofrece el selector del panel. Se abre solo en la base si no existía, y es lo que permite [cargar el historial de semestres anteriores](#la-beca-es-de-un-semestre) |
+| `correo_becas` | A dónde se reclama lo que este módulo no puede arreglar. Sale escrito en el panel para no tener que buscarlo |
+
+Las asignaciones **no están aquí** a propósito: ver [las diez
+asignaciones](#las-diez-asignaciones).
+
+### Lo que no hace, y por qué
+
+- **No manda correos.** No hay estudiante al otro lado a quien escribirle. Es el
+  único panel sin la franja del estado del correo, porque sería un aviso sobre
+  algo que esta página no hace.
+- **No emite certificados ni constancias.** La constancia de haber cumplido el
+  servicio la expide la Universidad desde su propio archivo.
+- **No impide pasarse de horas.** Avisa. Ver [las cifras se
+  cuentan](#las-cifras-se-cuentan-nunca-se-guardan).
+- **No sube archivos.** Las evidencias del trabajo de cada becario son
+  responsabilidad de quien lo dirige y hay que tenerlas disponibles si el Comité
+  las pide; esta app guarda el enlace, no el archivo, igual que en INKreible y en
+  el semillero.
+- **No guarda el `ASPIRANTE ID`.** Ver [cargar el listado](#cargar-el-listado).
 
 ## INKreible
 

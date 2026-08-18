@@ -35,6 +35,7 @@ const inkRouter = require("./routes/ink");
 const inkPanelRouter = require("./routes/ink-panel");
 const samiRouter = require("./routes/sami");
 const samiPanelRouter = require("./routes/sami-panel");
+const becasPanelRouter = require("./routes/becas-panel");
 const infoRouter = require("./routes/info");
 const { conPeriodo } = require("./lib/periodos");
 const envios = require("./lib/envios");
@@ -44,6 +45,7 @@ const { configurado: musicConfigurado } = require("./lib/music-auth");
 const { configurado: salidasConfigurado } = require("./lib/salidas-auth");
 const { configurado: inkConfigurado } = require("./lib/ink-auth");
 const { configurado: samiConfigurado } = require("./lib/sami-auth");
+const { configurado: becasConfigurado } = require("./lib/becas-auth");
 
 // Sin contraseña no entra ningún docente. Mejor decirlo aquí y de frente que
 // dejar un login que rechaza a todo el mundo sin explicar por qué.
@@ -113,6 +115,7 @@ app.use((req, res, next) => {
   res.locals.docenteSalidas = req.session.docenteSalidas || null;
   res.locals.docenteInk = req.session.docenteInk || null;
   res.locals.docenteSami = req.session.docenteSami || null;
+  res.locals.docenteBecas = req.session.docenteBecas || null;
   res.locals.query = req.query;
   // El confirmar de todo lo que le escribe a un estudiante. Va aquí y no en
   // cada router porque son dieciséis formularios en siete paneles y la pregunta
@@ -271,6 +274,13 @@ app.use("/salidas", salidasPanelRouter);
 app.use("/", samiRouter);
 app.use("/semillero", samiPanelRouter);
 
+// Servicio Universitario: las horas de los becarios. Es el único módulo del
+// sitio que NO tiene cara pública —un becario no se inscribe ni consulta nada,
+// la Universidad manda su listado y el programa responde por las horas—, así
+// que aquí no hay un router público antes que el panel: /becas ES el panel, y
+// su raíz lleva derecho al acceso de docentes.
+app.use("/becas", becasPanelRouter);
+
 // Certificados (públicos: el QR de cada uno apunta a su página)
 app.use("/certificado", certificadosRouter);
 
@@ -391,6 +401,11 @@ app.listen(PORT, "0.0.0.0", () => {
     samiConfigurado()
       ? `  ✓ Panel semillero SAMI:    http://localhost:${PORT}/semillero/acceso`
       : "  · Panel semillero SAMI:    cerrado (falta PASSWORD_SAMI en .env)"
+  );
+  console.log(
+    becasConfigurado()
+      ? `  ✓ Panel becas:             http://localhost:${PORT}/becas`
+      : "  · Panel becas:             cerrado (falta PASSWORD_BECAS en .env)"
   );
   console.log(
     aprobado("salidas")

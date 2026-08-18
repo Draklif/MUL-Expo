@@ -1,6 +1,6 @@
 const { DatabaseSync } = require("node:sqlite");
 const path = require("path");
-const { DOCENTES, PERIODO, VC, JAM, MUSIC, INK } = require("../config");
+const { DOCENTES, PERIODO, VC, JAM, MUSIC, INK, BECAS } = require("../config");
 
 const db = new DatabaseSync(path.join(__dirname, "expo.db"));
 db.exec("PRAGMA journal_mode = WAL");
@@ -996,6 +996,101 @@ db.exec(`
   );
 
   CREATE INDEX IF NOT EXISTS idx_ink_prem_edicion ON ink_premios(edicion_id, tipo);
+
+  -- =================================================================
+  --  SERVICIO UNIVERSITARIO (BECAS)
+  --  Las horas que un becario le devuelve al programa a cambio de su
+  --  beca. Dos tablas y ninguna cifra guardada: cuántas lleva, cuántas
+  --  le faltan y en qué estado va se cuentan sobre las actividades cada
+  --  vez que se piden. En el Excel de la Universidad esas tres columnas
+  --  son fórmulas; aquí son un SUM, y por la misma razón que en el
+  --  semillero: una cifra guardada es una cifra que algún día va a
+  --  estar mentida.
+  -- =================================================================
+
+  -- El becario de UN semestre. La beca se asigna semestre a semestre y con
+  -- ella las horas, así que la misma persona vuelve a aparecer en el semestre
+  -- siguiente como una fila nueva: es lo que permite abrir el semestre pasado
+  -- y ver cómo cerró, en vez de un acumulado que ya no responde a nada.
+  --
+  -- Lo que NO está aquí: el ASPIRANTE ID de la hoja. Es la llave del sistema de
+  -- becas de la Universidad y aquí no abre ninguna puerta —a la persona se la
+  -- reconoce por su código de estudiante—, así que guardarlo era arrastrar un
+  -- dato de otro sistema por si acaso. La columna se sigue saltando al pegar,
+  -- porque en la hoja está y no se puede correr el resto.
+  CREATE TABLE IF NOT EXISTS becas_becarios (
+    id            INTEGER PRIMARY KEY AUTOINCREMENT,
+    periodo_id    INTEGER NOT NULL,
+    -- Tal como está en el listado institucional: MAYÚSCULAS y con tildes. NO
+    -- se capitaliza bonito. En la hoja de la Universidad la columna ESTUDIANTE
+    -- es una lista desplegable cerrada, y un nombre "arreglado" no coincide
+    -- con ninguna de sus opciones y deja la fila sin poder pegar.
+    nombre        TEXT NOT NULL,
+    codigo        TEXT NOT NULL,
+    programa      TEXT,
+    -- El semestre de la CARRERA, como en el semillero: se guarda tal como
+    -- estaba el día de la carga y no se toca más.
+    semestre      INTEGER,
+    dependencia   TEXT,
+    -- Quién responde por estas horas ante el Comité de Becas. Empieza siendo el
+    -- de la hoja —el director del programa para todos— y se reparte desde el
+    -- panel: es por lo que se filtra la lista, porque lo primero que hace un
+    -- docente al entrar es buscar a los suyos.
+    --
+    -- Texto libre y no una llave a docentes: en la hoja es un nombre escrito a
+    -- la manera de Registro y Control ("OCHOA ECHEVERRIA MAURICIO"), que no
+    -- tiene por qué coincidir con ninguno de config.DOCENTES, y un responsable
+    -- puede ser alguien que no entra a este panel.
+    responsable   TEXT,
+    horas_meta    REAL NOT NULL,
+    -- 'activo' en 0 es quien perdió la beca o se retiró a mitad de semestre.
+    -- La fila NO se borra: las horas que alcanzó a hacer siguen siendo ciertas
+    -- y son la constancia de lo que sí trabajó mientras estuvo.
+    activo        INTEGER NOT NULL DEFAULT 1,
+    nota          TEXT,
+    created_at    DATETIME DEFAULT CURRENT_TIMESTAMP,
+    -- Un código, un cupo por semestre. El código del estudiante es la
+    -- identidad aquí y no el correo, porque el listado de becas viene de
+    -- Registro y Control y trae código, no correo.
+    UNIQUE (periodo_id, codigo),
+    FOREIGN KEY (periodo_id) REFERENCES periodos(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_becas_bec ON becas_becarios(periodo_id, nombre);
+
+  -- Una sesión de trabajo: un renglón de la BITÁCORA. Es lo único que se
+  -- escribe a mano en todo el módulo.
+  --
+  -- 'horas' es REAL porque el propio formato lo dice: "indique únicamente el
+  -- número correspondiente (puede usar decimales)". Media hora es media hora.
+  --
+  -- 'docente_id' es quien la registró, igual que en las reuniones del
+  -- semillero: una fila escrita desde una sesión con nombre y fecha dice más
+  -- que una firma. No es quien acompañó al estudiante —eso, si hace falta, va
+  -- en la descripción—, es quien responde por que este renglón exista.
+  CREATE TABLE IF NOT EXISTS becas_actividades (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    becario_id  INTEGER NOT NULL,
+    fecha       DATE NOT NULL,
+    -- La clave de una de las diez de lib/becas.js. Se guarda la clave y no la
+    -- etiqueta de la hoja para que el día que la Universidad reescriba
+    -- "PROYECCIÓN SOCIAL" no haya que tocar las filas viejas.
+    asignacion  TEXT NOT NULL,
+    horas       REAL NOT NULL,
+    descripcion TEXT,
+    -- Un enlace a la evidencia del trabajo: la carpeta con las piezas, el video
+    -- subido, el documento. Opcional siempre —hay sesiones que no dejan un
+    -- archivo—, y es solo la DIRECCIÓN: los archivos no viven en esta app, como
+    -- en INKreible y en el semillero. Nada más que http y https, que es lo
+    -- único en lo que se puede hacer clic sin peligro.
+    evidencia   TEXT,
+    docente_id  INTEGER NOT NULL,
+    created_at  DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (becario_id) REFERENCES becas_becarios(id) ON DELETE CASCADE,
+    FOREIGN KEY (docente_id) REFERENCES docentes(id)
+  );
+
+  CREATE INDEX IF NOT EXISTS idx_becas_act ON becas_actividades(becario_id, fecha);
 `);
 
 // ---------- Migraciones suaves ----------
@@ -1006,6 +1101,20 @@ function agregarColumna(tabla, columna, definicion) {
     .all()
     .some((c) => c.name === columna);
   if (!existe) db.exec(`ALTER TABLE ${tabla} ADD COLUMN ${columna} ${definicion}`);
+}
+
+// Y la contraria, para el dato que se decidió NO guardar. Un CREATE TABLE con
+// la columna quitada no la quita de la base que ya existe: se queda ahí, vacía,
+// y el que lea el esquema dentro de un año no va a saber cuál de los dos manda.
+//
+// Se usa con cuidado, que esto sí borra: solo para columnas que se retiraron a
+// propósito y cuyo contenido no hay que conservar.
+function quitarColumna(tabla, columna) {
+  const existe = db
+    .prepare(`PRAGMA table_info(${tabla})`)
+    .all()
+    .some((c) => c.name === columna);
+  if (existe) db.exec(`ALTER TABLE ${tabla} DROP COLUMN ${columna}`);
 }
 
 agregarColumna("estudiantes", "email", "TEXT");
@@ -1052,6 +1161,16 @@ agregarColumna("sami_proyectos", "cancelado_desde", "TEXT");
 // —en los proyectos que vinieron de la hoja vieja es el día de la importación—.
 agregarColumna("sami_proyectos", "ingreso_at", "DATE");
 
+// El enlace a la evidencia de una sesión de servicio universitario. Llegó
+// después de las primeras cargas: la bitácora dice qué se hizo, y esto es dónde
+// está lo que se hizo.
+agregarColumna("becas_actividades", "evidencia", "TEXT");
+
+// El ASPIRANTE ID de la hoja de becas, que se guardó al principio y se decidió
+// no guardar: es la llave de otro sistema y aquí no abre nada, que a la persona
+// se la reconoce por su código de estudiante.
+quitarColumna("becas_becarios", "aspirante_id");
+
 // ---------- Semestres ----------
 // La base tiene que tener al menos uno antes de poder repartir nada.
 if (!db.prepare("SELECT COUNT(*) AS n FROM periodos").get().n) {
@@ -1091,6 +1210,21 @@ if (!periodoActual.activo) {
     db.exec("ROLLBACK");
     throw e;
   }
+}
+
+// ---------- El semestre más viejo del que hay becarios ----------
+// El servicio universitario tiene historial hacia atrás: el archivo de la
+// Universidad va por semestres y hay que poder subir los que ya pasaron. Para
+// colgarle datos a un semestre, ese semestre tiene que existir aquí, y los
+// anteriores al primer arranque de la app no existen —esta tabla solo la llena
+// config.PERIODO, un semestre cada vez—.
+//
+// Así que se abre el de config.BECAS.desde si falta, INACTIVO y sin tocar al
+// que esté en curso: no es "empezar" ese semestre, es reconocer que existió.
+// Es idempotente y no crea la cadena entera; solo el que se pide.
+if (BECAS.desde && !db.prepare("SELECT 1 FROM periodos WHERE codigo = ?").get(BECAS.desde)) {
+  db.prepare("INSERT INTO periodos (codigo, activo) VALUES (?, 0)").run(BECAS.desde);
+  console.log(`  ✓ Semestre ${BECAS.desde} abierto para el historial de becas.`);
 }
 
 // ---------- La temporada: lo que cada evento necesita para recibir ----------

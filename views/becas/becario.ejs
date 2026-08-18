@@ -1,0 +1,376 @@
+<%/* ─────────────────────────────────────────────────────────────────
+     LA FICHA DE UN BECARIO
+
+     Todo lo suyo en una página: cuánto lleva, cuánto le falta y qué hizo cada
+     día. Es la vista que se abre cuando alguien pregunta por una persona en
+     concreto —"¿este ya cumplió?"— y la única desde donde se corrige una
+     sesión mal escrita.
+
+     Las sesiones van de la más reciente a la más vieja, al revés que el CSV.
+     Aquí se viene a ver lo último y a arreglar lo que se acaba de escribir; el
+     CSV se pega en una bitácora, y una bitácora se lee hacia adelante.
+
+     Cada sesión se abre en su sitio para corregirla, sin cambiar de página:
+     una fila mal escrita se arregla donde se ve, no en otra pantalla.
+     ───────────────────────────────────────────────────────────────── */%>
+<%- include('../partials/head', { title: title, css: css, themeColor: themeColor }) %>
+<%- include('partials/panel-top') %>
+
+<main class="bec">
+  <% if (aviso.ok) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Guardado.</p></div>
+  <% } %>
+  <% if (aviso.registradas) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se registró la sesión.</p></div>
+  <% } %>
+  <% if (aviso.borrada) { %>
+    <div class="aviso bueno" style="margin-top:24px"><p style="margin:0">Se borró la sesión.</p></div>
+  <% } %>
+  <% if (aviso.error === "inactivo") { %>
+    <div class="aviso ojo" style="margin-top:24px">
+      <p style="margin:0">
+        No se registró nada: ya no tiene la beca este semestre. Se vuelve a activar en
+        «corregir sus datos», ahí abajo.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.error === "datos") { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0">
+        No se guardó nada. La fecha tiene que ser de hoy o de antes y las horas van
+        entre 0 y 24; se pueden escribir con decimales.
+      </p>
+    </div>
+  <% } %>
+  <% if (aviso.error === "codigo_repetido") { %>
+    <div class="aviso malo" style="margin-top:24px">
+      <p style="margin:0">
+        Ese código ya es de otro becario en este semestre. No se cambió nada.
+      </p>
+    </div>
+  <% } %>
+
+  <section class="bec-sec">
+    <div class="sec-top">
+      <div>
+        <%/* El semestre que se dice aquí es el DEL BECARIO y no el del selector
+             de arriba: sus horas son de ese, se esté mirando el que se esté
+             mirando. */%>
+        <p class="eyebrow">
+          Semestre <%= suyo ? suyo.codigo : "—" %> ·
+          <span class="cod"><%= becario.codigo %></span>
+        </p>
+        <%/* El nombre tal como está en el listado institucional: en mayúsculas
+             y sin arreglar. Es el que tiene que coincidir con el desplegable de
+             la hoja. */%>
+        <h2><%= becario.nombre %></h2>
+      </div>
+      <a href="/becas/panel" class="btn ghost chico">Volver a la lista</a>
+    </div>
+
+    <div class="tarjeta">
+      <div class="datos cifras">
+        <div class="dato">
+          <div class="k">Horas a realizar</div>
+          <div class="v grande"><%= becario.horas_meta %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Realizadas</div>
+          <div class="v grande"><%= becario.horas_hechas %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Pendientes</div>
+          <div class="v grande <%= becario.pendientes ? "alerta" : "ok" %>"><%= becario.pendientes %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Sesiones</div>
+          <div class="v grande"><%= becario.sesiones %></div>
+        </div>
+        <div class="dato">
+          <div class="k">Estado</div>
+          <div class="v grande <%= becario.estado_info.cls === "no" ? "apagado" : becario.estado_info.cls %>">
+            <%= becario.estado_info.label %>
+          </div>
+        </div>
+      </div>
+
+      <div class="barra grande" style="margin-top:18px" role="img"
+           aria-label="<%= becario.horas_hechas %> de <%= becario.horas_meta %> horas">
+        <span class="llena <%= becario.estado_info.cls %>" style="width:<%= becario.avance %>%"></span>
+      </div>
+      <p class="mini" style="margin:8px 0 0">
+        <%= becario.avance %> % de sus horas
+        <% if (becario.excedidas) { %>
+          · lleva <strong><%= becario.excedidas %> h de más</strong>: ya no hay que asignarle más tiempo
+        <% } %>
+      </p>
+
+      <div class="ficha" style="margin-top:18px;border-top:1px dotted var(--linea-fuerte);padding-top:6px">
+        <div class="f">
+          <div class="k">Responsable</div>
+          <div class="v">
+            <%= becario.responsable || "—" %>
+            <% if (becario.responsable) { %>
+              <a href="/becas/panel?responsable=<%= encodeURIComponent(becario.responsable) %>"
+                 class="mini">ver los suyos</a>
+            <% } %>
+          </div>
+        </div>
+        <div class="f"><div class="k">Programa</div><div class="v"><%= becario.programa || "—" %></div></div>
+        <div class="f"><div class="k">Semestre de la carrera</div><div class="v"><%= becario.semestre || "—" %></div></div>
+        <div class="f"><div class="k">Dependencia</div><div class="v"><%= becario.dependencia || "—" %></div></div>
+        <% if (becario.nota) { %>
+          <div class="f"><div class="k">Nota</div><div class="v"><%= becario.nota %></div></div>
+        <% } %>
+      </div>
+
+      <% if (!becario.activo) { %>
+        <div class="aviso ojo" style="margin-top:18px">
+          <div class="t">Sin beca este semestre</div>
+          <p style="margin:0">
+            No cuenta en las cifras del panel y no se le pueden registrar sesiones nuevas.
+            Las horas que alcanzó a hacer siguen aquí, que para eso no se borró.
+          </p>
+        </div>
+      <% } %>
+    </div>
+  </section>
+
+  <% if (becario.activo) { %>
+    <section class="bec-sec">
+      <div class="sec-top">
+        <div>
+          <%/* Se dice en qué semestre va a caer la sesión y no se da por
+               supuesto: desde aquí se le puede registrar trabajo a un becario
+               de un semestre anterior —así se mete el historial de la hoja— y
+               entonces el semestre del selector de arriba no es este. */%>
+          <p class="eyebrow">Una fila de la bitácora de <%= suyo ? suyo.codigo : "su semestre" %></p>
+          <h2>Registrar una sesión</h2>
+        </div>
+      </div>
+
+      <div class="tarjeta">
+        <form method="POST" action="/becas/panel/actividad">
+          <input type="hidden" name="becarios" value="<%= becario.id %>" />
+          <input type="hidden" name="volver" value="ficha" />
+          <div class="fila cuatro">
+            <div class="campo">
+              <label for="fecha">Fecha</label>
+              <input type="date" name="fecha" id="fecha" required value="<%= hoy %>" max="<%= hoy %>" />
+            </div>
+            <div class="campo">
+              <label for="asignacion">Asignación</label>
+              <select name="asignacion" id="asignacion" required>
+                <% asignaciones.forEach(function (a) { %>
+                  <option value="<%= a.clave %>"><%= a.label %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="campo">
+              <label for="horas">Horas</label>
+              <input type="number" name="horas" id="horas" required min="0.25" max="24" step="0.25"
+                     inputmode="decimal" placeholder="2" />
+            </div>
+            <div class="campo">
+              <label for="descripcion">Descripción de la actividad</label>
+              <input type="text" name="descripcion" id="descripcion" maxlength="500"
+                     placeholder="Avances PEP capítulo 2" />
+            </div>
+          </div>
+          <div class="campo">
+            <label for="evidencia">Enlace a la evidencia <span class="opcional">opcional</span></label>
+            <input type="url" name="evidencia" id="evidencia" maxlength="500"
+                   placeholder="https://drive.google.com/… la carpeta, el video, el documento" />
+          </div>
+          <button type="submit" class="btn">Registrar</button>
+        </form>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="bec-sec">
+    <div class="sec-top">
+      <div>
+        <p class="eyebrow">De la más reciente a la más vieja</p>
+        <h2>Sus sesiones</h2>
+      </div>
+      <span class="chip"><%= actividades.length %></span>
+    </div>
+
+    <% if (!actividades.length) { %>
+      <div class="vacio">Todavía no tiene ninguna sesión registrada.</div>
+    <% } else { %>
+      <div class="regs">
+        <% actividades.forEach(function (a) { %>
+          <details class="reg" id="a<%= a.id %>">
+            <summary class="reg-cab">
+              <span class="reg-fecha cod"><%= a.dia ? a.dia.diaCorto : a.fecha %></span>
+              <span class="chip"><%= a.asignacion_info.label %></span>
+              <span class="reg-horas"><%= a.horas %> h</span>
+              <span class="reg-que" title="<%= a.descripcion || "" %>"><%= a.descripcion || "Sin descripción" %></span>
+              <%/* La evidencia se anuncia con un clip en el renglón cerrado: es
+                   un sí o un no —o hay enlace o no lo hay—, y la dirección
+                   entera no se lee de todos modos. Se abre desde el formulario
+                   de abajo, que es donde cabe. */%>
+              <% if (a.evidencia) { %>
+                <span class="reg-clip" title="Tiene evidencia" aria-label="Tiene evidencia">🔗</span>
+              <% } %>
+              <span class="mini reg-quien" title="<%= a.docente || "" %>"><%= a.docente || "—" %></span>
+            </summary>
+
+            <div class="reg-mas">
+              <form method="POST" action="/becas/panel/actividad/<%= a.id %>">
+                <div class="fila cuatro">
+                  <div class="campo">
+                    <label for="f<%= a.id %>">Fecha</label>
+                    <input type="date" name="fecha" id="f<%= a.id %>" required value="<%= a.fecha %>" max="<%= hoy %>" />
+                  </div>
+                  <div class="campo">
+                    <label for="s<%= a.id %>">Asignación</label>
+                    <select name="asignacion" id="s<%= a.id %>" required>
+                      <% asignaciones.forEach(function (x) { %>
+                        <option value="<%= x.clave %>" <%= x.clave === a.asignacion ? "selected" : "" %>>
+                          <%= x.label %>
+                        </option>
+                      <% }); %>
+                    </select>
+                  </div>
+                  <div class="campo">
+                    <label for="h<%= a.id %>">Horas</label>
+                    <input type="number" name="horas" id="h<%= a.id %>" required min="0.25" max="24" step="0.25"
+                           value="<%= a.horas %>" />
+                  </div>
+                  <div class="campo">
+                    <label for="d<%= a.id %>">Descripción</label>
+                    <input type="text" name="descripcion" id="d<%= a.id %>" maxlength="500"
+                           value="<%= a.descripcion || "" %>" />
+                  </div>
+                </div>
+                <div class="campo">
+                  <label for="e<%= a.id %>">
+                    Enlace a la evidencia <span class="opcional">opcional</span>
+                    <% if (a.evidencia) { %>
+                      <%/* El enlace se abre en otra pestaña: quien lo revisa está
+                           en mitad de una lista y no quiere perder el sitio.
+                           rel="noreferrer" porque es una dirección de afuera. */%>
+                      <a href="<%= a.evidencia %>" target="_blank" rel="noopener noreferrer"
+                         class="mini">abrir</a>
+                    <% } %>
+                  </label>
+                  <input type="url" name="evidencia" id="e<%= a.id %>" maxlength="500"
+                         value="<%= a.evidencia || "" %>" placeholder="https://…" />
+                </div>
+                <div class="reg-acciones">
+                  <button type="submit" class="btn chico">Guardar cambios</button>
+                </div>
+              </form>
+
+              <form method="POST" action="/becas/panel/actividad/<%= a.id %>/borrar"
+                    onsubmit="return confirm('Se borra esta sesión de <%= a.horas %> h. ¿Seguimos?')">
+                <button type="submit" class="btn peligro chico">Borrar la sesión</button>
+              </form>
+            </div>
+          </details>
+        <% }); %>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="bec-sec">
+    <%/* Abierto de entrada y no plegado como los demás: de todo lo que hay en
+         esta página, cambiar el responsable es lo que más se hace después de
+         registrar horas, y esconderlo tras un clic era esconder media
+         herramienta. */%>
+    <details class="fino" open>
+      <summary class="mini">Sus datos</summary>
+      <form method="POST" action="/becas/panel/becario/<%= becario.id %>" style="margin-top:14px">
+        <div class="fila">
+          <div class="campo">
+            <label for="nombre">Nombre, como en el listado</label>
+            <input type="text" name="nombre" id="nombre" required maxlength="120" value="<%= becario.nombre %>" />
+            <p class="ayuda">
+              Tal como está en la hoja de la Universidad. Es lo que va al CSV, y ahí tiene
+              que coincidir con el desplegable de la bitácora.
+            </p>
+          </div>
+          <div class="campo">
+            <label for="responsable">Responsable</label>
+            <input type="text" name="responsable" id="responsable" maxlength="120"
+                   list="lista-responsables" value="<%= becario.responsable || "" %>"
+                   placeholder="<%= becas.responsable %>" />
+            <datalist id="lista-responsables">
+              <% responsables.forEach(function (r) { %><option value="<%= r.nombre %>"></option><% }); %>
+              <option value="<%= becas.responsable %>"></option>
+            </datalist>
+            <p class="ayuda">Quién le hace el seguimiento. Es por lo que se filtra la lista.</p>
+          </div>
+        </div>
+
+        <div class="fila tres">
+          <div class="campo">
+            <label for="codigo">Código</label>
+            <input type="text" name="codigo" id="codigo" maxlength="20" inputmode="numeric"
+                   value="<%= becario.codigo %>" />
+          </div>
+          <div class="campo">
+            <label for="semestre">Semestre de la carrera</label>
+            <input type="number" name="semestre" id="semestre" min="1" max="12" value="<%= becario.semestre || "" %>" />
+          </div>
+          <div class="campo">
+            <label for="horas_meta">Horas a realizar</label>
+            <input type="number" name="horas_meta" id="horas_meta" required min="1" max="1000" step="0.5"
+                   value="<%= becario.horas_meta %>" />
+          </div>
+        </div>
+
+        <div class="fila">
+          <div class="campo">
+            <label for="programa">Programa del estudiante</label>
+            <input type="text" name="programa" id="programa" maxlength="120" value="<%= becario.programa || "" %>" />
+          </div>
+          <div class="campo">
+            <label for="dependencia">Dependencia asignada</label>
+            <input type="text" name="dependencia" id="dependencia" maxlength="120"
+                   value="<%= becario.dependencia || "" %>" />
+          </div>
+        </div>
+
+        <div class="campo">
+          <label for="nota">Nota interna</label>
+          <input type="text" name="nota" id="nota" maxlength="500" value="<%= becario.nota || "" %>"
+                 placeholder="Se retira de la beca a mitad de semestre" />
+        </div>
+        <div class="campo">
+          <label class="linea">
+            <input type="checkbox" name="activo" value="1" <%= becario.activo ? "checked" : "" %> />
+            Sigue con la beca en <%= suyo ? suyo.codigo : "este semestre" %>
+          </label>
+          <p class="ayuda">
+            Desmarcado, deja de contar en las cifras del panel y no admite sesiones nuevas.
+            Es lo que se usa cuando alguien pierde la beca o se retira: sus horas se quedan.
+          </p>
+        </div>
+        <button type="submit" class="btn">Guardar</button>
+      </form>
+    </details>
+
+    <details class="fino">
+      <summary class="mini">Eliminarlo del semestre</summary>
+      <div class="aviso malo" style="margin-top:14px">
+        <div class="t">Esto borra también sus <%= actividades.length %> sesiones</div>
+        <p style="margin:0 0 14px">
+          Es para deshacer un listado mal pegado. Si lo que pasó es que perdió la beca,
+          lo correcto es desmarcar «sigue con la beca» ahí arriba: sus horas hechas
+          siguen siendo ciertas y el Comité puede preguntarlas.
+        </p>
+        <form method="POST" action="/becas/panel/becario/<%= becario.id %>/eliminar"
+              onsubmit="return confirm('Se elimina a <%= becario.nombre %> con sus <%= actividades.length %> sesiones. Esto no se deshace. ¿Seguimos?')">
+          <button type="submit" class="btn peligro">Eliminar del semestre</button>
+        </form>
+      </div>
+    </details>
+  </section>
+</main>
+
+<%- include('partials/pie') %>
+<%- include('../partials/footer') %>
